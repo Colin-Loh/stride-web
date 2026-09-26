@@ -1,4 +1,3 @@
-let cue: HTMLAudioElement | null = null
 let celebrationBuffer: Promise<AudioBuffer> | null = null
 let celebrationSource: AudioBufferSourceNode | null = null
 let celebrationRequest = 0
@@ -25,7 +24,7 @@ export function playTransitionChime(muted: boolean): void {
   output.connect(context.destination)
   chimeGain = output
 
-  // Two gently fading notes make the section change distinct from the loop.
+  // Two gently fading notes announce the section change.
   ;[659.25, 880].forEach((frequency, index) => {
     const oscillator = context.createOscillator()
     const envelope = context.createGain()
@@ -45,15 +44,6 @@ export function playTransitionChime(muted: boolean): void {
   })
 }
 
-function ensureCue(): HTMLAudioElement {
-  if (!cue) {
-    cue = new Audio(`${import.meta.env.BASE_URL}cue.wav`)
-    cue.loop = true
-    cue.volume = 0.06
-  }
-  return cue
-}
-
 function loadCelebration(): Promise<AudioBuffer> {
   const context = chimeContext
   if (!context) return Promise.reject(new Error('Audio unavailable'))
@@ -70,29 +60,18 @@ function loadCelebration(): Promise<AudioBuffer> {
   return celebrationBuffer
 }
 
-export async function startCue(muted: boolean): Promise<void> {
-  // Called by Start/Resume gestures so later transitions can play audio.
+export function prepareRunAudio(): void {
+  // Unlock audio on Start/Resume without playing any sound.
   prepareChime()
   void loadCelebration().catch(() => {})
-  const audio = ensureCue()
-  audio.muted = muted
-  try {
-    await audio.play()
-  } catch {
-    // Autoplay can fail until a later gesture.
-  }
 }
 
 export function setCueMuted(muted: boolean): void {
-  if (cue) cue.muted = muted
-  if (muted) chimeGain?.disconnect()
+  if (muted) stopCue()
 }
 
 export function stopCue(): void {
   chimeGain?.disconnect()
-  if (!cue) return
-  cue.pause()
-  cue.currentTime = 0
 }
 
 export async function playCelebration(): Promise<boolean> {

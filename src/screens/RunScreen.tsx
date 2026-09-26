@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { startCue, setCueMuted, stopCue, playTransitionChime } from '../audio'
+import { prepareRunAudio, setCueMuted, stopCue, playTransitionChime } from '../audio'
 import { formatDuration, formatKm, formatPaceRange, formatSpeedRange } from '../format'
 import { elapsedMs, type RunSession } from '../storage'
 import { requestWakeLock, releaseWakeLock } from '../wakeLock'
@@ -14,6 +14,10 @@ interface Props {
   onQuit: () => void
   onToggleMute: () => void
 }
+
+const SPEED_STEP = 0.1
+const MIN_SPEED_KMH = 0.5
+const MAX_SPEED_KMH = 25
 
 function progressFor(workout: ResolvedWorkout, elapsed: number) {
   let remaining = elapsed
@@ -50,6 +54,8 @@ export function RunScreen({
   onToggleMute,
 }: Props) {
   const [now, setNow] = useState(() => Date.now())
+  // Treadmill trim: offset in km/h applied on top of the segment's target speed.
+  const [speedOffset, setSpeedOffset] = useState(0)
   const elapsed = elapsedMs(session, now)
   const progress = useMemo(
     () => progressFor(workout, elapsed),
@@ -87,13 +93,13 @@ export function RunScreen({
     }
 
     void requestWakeLock()
-    void startCue(muted)
+    prepareRunAudio()
 
     const onVisibility = () => {
       setNow(Date.now())
       if (document.visibilityState === 'visible') {
         void requestWakeLock()
-        void startCue(muted)
+        prepareRunAudio()
       }
     }
     document.addEventListener('visibilitychange', onVisibility)
@@ -125,7 +131,7 @@ export function RunScreen({
     }
     onSession(started)
     void requestWakeLock()
-    void startCue(muted)
+    prepareRunAudio()
   }
 
   function pause() {
@@ -149,15 +155,31 @@ export function RunScreen({
       pauseStartedAt: undefined,
     })
     void requestWakeLock()
-    void startCue(muted)
+    prepareRunAudio()
   }
 
   const notStarted = !session.startedAt
 
+  const targetSpeed = Math.min(
+    MAX_SPEED_KMH,
+    Math.max(MIN_SPEED_KMH, Math.round((current.speed.minKmh + speedOffset) * 10) / 10),
+  )
+  const segmentTitle = current.label.replace(/-/g, ' ').toUpperCase()
+
+  function adjustSpeed(delta: number) {
+    setSpeedOffset((offset) => {
+      const next = Math.round((current.speed.minKmh + offset + delta) * 10) / 10
+      const clamped = Math.min(MAX_SPEED_KMH, Math.max(MIN_SPEED_KMH, next))
+      return Math.round((clamped - current.speed.minKmh) * 10) / 10
+    })
+  }
+
   return (
     <section className="card run">
       <p className="eyebrow">{workout.name}</p>
-      <h1>{current.label}</h1>
+      <h1>
+        {targetSpeed.toFixed(1)} km {segmentTitle}
+      </h1>
       <p className="lede">
         {formatKm(current.distanceKm)} ·{' '}
         {formatSpeedRange(current.speed.minKmh, current.speed.maxKmh)} ·{' '}
@@ -233,7 +255,30 @@ export function RunScreen({
             Pause
           </button>
         )}
-        <button type="button" className="ghost" onClick={onToggleMute}>
+        <div className="speed-adjust" role="group" aria-label="Treadmill speed">
+          <button
+            type="button"
+            className="step"
+            onClick={() => adjustSpeed(-SPEED_STEP)}
+            disabled={targetSpeed <= MIN_SPEED_KMH}
+            aria-label="Decrease treadmill speed"
+          >
+            −
+          </button>
+          <span className="speed-value" aria-live="polite">
+            {targetSpeed.toFixed(1)} km
+          </span>
+          <button
+            type="button"
+            className="step"
+            onClick={() => adjustSpeed(SPEED_STEP)}
+            disabled={targetSpeed >= MAX_SPEED_KMH}
+            aria-label="Increase treadmill speed"
+          >
+            +
+          </button>
+        </div>
+        <button type="button" className="link" onClick={onToggleMute}>
           {muted ? 'Unmute cue' : 'Mute cue'}
         </button>
         <button type="button" className="link" onClick={onQuit}>

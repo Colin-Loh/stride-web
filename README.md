@@ -8,7 +8,7 @@ Host this on **GitHub Pages**. Azure App Service **F1 is not a good fit** (no Al
 
 - The phone **powered off** cannot run the workout.
 - With the screen **locked**, browsers often freeze JavaScript. Elapsed time is stored as a wall-clock timestamp, so when you open Stride again the bar jumps to the right place.
-- While a run is active, Stride requests **screen wake lock** and plays a quiet looping cue so the timer can keep ticking. Mute the cue from the run screen if you want.
+- While a run is active, Stride requests **screen wake lock**. A chime plays at section changes, followed by celebration audio at completion. Mute section chimes from the run screen if you want.
 
 ## Local development
 

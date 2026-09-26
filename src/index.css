@@ -237,6 +237,36 @@ input {
   margin-top: 20px;
 }
 
+.speed-adjust {
+  display: grid;
+  grid-template-columns: 56px 1fr 56px;
+  align-items: center;
+  gap: 10px;
+}
+
+.speed-adjust .step {
+  height: 48px;
+  border-radius: 12px;
+  border: 1px solid var(--accent-dim);
+  background: transparent;
+  color: var(--text-h);
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.speed-adjust .step:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.speed-value {
+  text-align: center;
+  color: var(--text-h);
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+
 .complete .celebrate {
   font-size: 1.05rem;
   color: var(--accent);
