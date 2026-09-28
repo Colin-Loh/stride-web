@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { prepareRunAudio, setCueMuted, stopCue, playTransitionChime } from '../audio'
-import { formatDuration, formatKm, formatPaceRange, formatSpeedRange } from '../format'
-import { elapsedMs, type RunSession } from '../storage'
+import { formatDuration } from '../format'
+import { RunnerSprite } from '../RunnerSprite'
+import { elapsedMs, type Character, type RunSession } from '../storage'
 import { requestWakeLock, releaseWakeLock } from '../wakeLock'
 import type { ResolvedWorkout } from '../workouts'
 
@@ -9,6 +10,7 @@ interface Props {
   workout: ResolvedWorkout
   session: RunSession
   muted: boolean
+  character: Character
   onSession: (session: RunSession) => void
   onComplete: () => void
   onQuit: () => void
@@ -18,6 +20,28 @@ interface Props {
 const SPEED_STEP = 0.1
 const MIN_SPEED_KMH = 0.5
 const MAX_SPEED_KMH = 25
+
+/** A speed the runner held from `at` (ms into the run) until the next mark. */
+interface SpeedMark {
+  at: number
+  kmh: number
+}
+
+function clampSpeed(kmh: number): number {
+  return Math.min(MAX_SPEED_KMH, Math.max(MIN_SPEED_KMH, Math.round(kmh * 10) / 10))
+}
+
+function coveredKmFrom(marks: SpeedMark[], elapsed: number): number {
+  let km = 0
+  for (let i = 0; i < marks.length; i += 1) {
+    const start = marks[i].at
+    const end = Math.min(elapsed, marks[i + 1]?.at ?? elapsed)
+    if (end > start) {
+      km += (marks[i].kmh * (end - start)) / 3_600_000
+    }
+  }
+  return km
+}
 
 function progressFor(workout: ResolvedWorkout, elapsed: number) {
   let remaining = elapsed
@@ -48,6 +72,7 @@ export function RunScreen({
   workout,
   session,
   muted,
+  character,
   onSession,
   onComplete,
   onQuit,
@@ -64,6 +89,32 @@ export function RunScreen({
   const current = workout.segments[progress.index]
   const next = workout.segments[progress.index + 1]
   const previousSegment = useRef(progress.index)
+  const targetSpeed = clampSpeed(current.speed.minKmh + speedOffset)
+  const running =
+    Boolean(session.startedAt) && !session.paused && !session.completed
+
+  const [speedMarks, setSpeedMarks] = useState<SpeedMark[]>(() => [
+    { at: 0, kmh: targetSpeed },
+  ])
+  const live = useRef({ elapsed, speed: targetSpeed })
+
+  useEffect(() => {
+    live.current = { elapsed, speed: targetSpeed }
+  }, [elapsed, targetSpeed])
+
+  useEffect(() => {
+    setSpeedMarks([{ at: 0, kmh: live.current.speed }])
+  }, [session.startedAt])
+
+  useEffect(() => {
+    setSpeedMarks((marks) => {
+      const last = marks[marks.length - 1]
+      if (last && last.kmh === targetSpeed) {
+        return marks
+      }
+      return [...marks, { at: live.current.elapsed, kmh: targetSpeed }]
+    })
+  }, [targetSpeed])
 
   useEffect(() => {
     const changed = progress.index > previousSegment.current
@@ -85,7 +136,6 @@ export function RunScreen({
   }, [progress.done, session.paused, session.startedAt, onComplete])
 
   useEffect(() => {
-    const running = Boolean(session.startedAt) && !session.paused && !session.completed
     if (!running) {
       void releaseWakeLock()
       stopCue()
@@ -112,7 +162,7 @@ export function RunScreen({
       document.removeEventListener('visibilitychange', onVisibility)
       window.removeEventListener('beforeunload', onLeave)
     }
-  }, [session.startedAt, session.paused, session.completed, muted])
+  }, [running])
 
   useEffect(() => {
     setCueMuted(muted)
@@ -160,16 +210,13 @@ export function RunScreen({
 
   const notStarted = !session.startedAt
 
-  const targetSpeed = Math.min(
-    MAX_SPEED_KMH,
-    Math.max(MIN_SPEED_KMH, Math.round((current.speed.minKmh + speedOffset) * 10) / 10),
-  )
   const segmentTitle = current.label.replace(/-/g, ' ').toUpperCase()
+
+  const coveredKm = coveredKmFrom(speedMarks, elapsed)
 
   function adjustSpeed(delta: number) {
     setSpeedOffset((offset) => {
-      const next = Math.round((current.speed.minKmh + offset + delta) * 10) / 10
-      const clamped = Math.min(MAX_SPEED_KMH, Math.max(MIN_SPEED_KMH, next))
+      const clamped = clampSpeed(current.speed.minKmh + offset + delta)
       return Math.round((clamped - current.speed.minKmh) * 10) / 10
     })
   }
@@ -180,22 +227,52 @@ export function RunScreen({
       <h1>
         {targetSpeed.toFixed(1)} km {segmentTitle}
       </h1>
-      <p className="lede">
-        {formatKm(current.distanceKm)} ·{' '}
-        {formatSpeedRange(current.speed.minKmh, current.speed.maxKmh)} ·{' '}
-        {formatPaceRange(current.speed.minKmh, current.speed.maxKmh)} min/km
-      </p>
+      <div className="stats">
+        <div className="stat">
+          <span className="stat-label">Distance</span>
+          <strong className="stat-value">
+            {coveredKm.toFixed(2)}
+            <em>km</em>
+          </strong>
+        </div>
+        <div className="stat">
+          <span className="stat-label">Time left</span>
+          <strong className="stat-value">{formatDuration(remaining)}</strong>
+        </div>
+        <div className="stat">
+          <span className="stat-label">Speed</span>
+          <strong className="stat-value">
+            {targetSpeed.toFixed(1)}
+            <em>km/h</em>
+          </strong>
+        </div>
+      </div>
+      <div
+        className="stat-line"
+        role="progressbar"
+        aria-label="Run progress"
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={Math.round(progress.overall * 100)}
+      >
+        <span style={{ width: `${Math.min(100, progress.overall * 100)}%` }} />
+      </div>
 
-      <div className="timer">{formatDuration(elapsed)}</div>
+      <RunnerSprite
+        character={character}
+        state={running ? 'running' : 'idle'}
+      />
       <p className="muted">
         {notStarted
           ? `Ready · ${formatDuration(workout.totalDurationMs)} total`
           : session.paused
             ? 'Paused'
-            : `${formatDuration(remaining)} remaining`}
+            : `${formatDuration(elapsed)} elapsed`}
       </p>
 
-      <label className="progress-label">Overall</label>
+      <label className="progress-label">
+        Overall · {formatDuration(remaining)} left
+      </label>
       <div
         className="bar"
         role="progressbar"

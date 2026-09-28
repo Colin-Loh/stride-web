@@ -4,9 +4,12 @@ const PROFILE_KEY = 'stride.profile'
 const SESSION_KEY = 'stride.session'
 const MUTED_KEY = 'stride.muted'
 
+export type Character = 'boy' | 'girl'
+
 export interface Profile {
   name: string
   level: RunnerLevel
+  character: Character
 }
 
 export interface RunSession {

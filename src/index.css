@@ -177,6 +177,144 @@ input {
   margin: 8px 0 4px;
 }
 
+.runner {
+  display: block;
+  margin: 8px auto 4px;
+  background-repeat: no-repeat;
+  background-position: 0 0;
+  image-rendering: pixelated;
+  animation: run-cycle 0.65s steps(8) infinite;
+  animation-play-state: paused;
+}
+
+.runner[data-state='running'] {
+  animation-play-state: running;
+}
+
+.runner.small {
+  margin: 0 auto;
+}
+
+/*
+ * With background-size: 800%, the sheet is 8x the element width, so the visible
+ * frame index is (position / 100) * 7 -- 100% lands on the LAST frame, not past
+ * it. Ending at 100% would make steps(8) land between frames; 800/7 makes the
+ * eight steps hit 0, 1/7, ... 7/7 exactly, with no duplicate frame on loop.
+ */
+@keyframes run-cycle {
+  to {
+    background-position-x: 114.2857%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .runner {
+    animation: none;
+  }
+}
+
+.characters {
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+
+.characters legend {
+  padding: 0;
+  margin-bottom: 8px;
+}
+
+.character-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.character {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid var(--accent-dim);
+  background: #0c241c;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.character.selected {
+  border-color: var(--accent);
+  color: var(--text-h);
+}
+
+.run .muted {
+  text-align: center;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  align-items: end;
+  gap: 8px;
+  margin: 14px 0 10px;
+}
+
+.stat {
+  display: grid;
+  gap: 4px;
+  text-align: center;
+}
+
+.stat:first-child {
+  text-align: left;
+}
+
+.stat:last-child {
+  text-align: right;
+}
+
+.stat-label {
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 0.6rem;
+  color: var(--muted);
+}
+
+.stat-value {
+  color: var(--text-h);
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+
+.stat-value em {
+  font-style: normal;
+  font-size: 0.62em;
+  font-weight: 600;
+  margin-left: 1px;
+  color: var(--muted);
+}
+
+.stat-line {
+  height: 4px;
+  border-radius: 999px;
+  background-image: repeating-linear-gradient(to right,
+      var(--accent-dim) 0 6px,
+      transparent 6px 12px);
+  overflow: hidden;
+  margin-bottom: 18px;
+}
+
+.stat-line span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--accent);
+  width: 0;
+}
+
 .progress-label {
   display: block;
   font-size: 0.78rem;

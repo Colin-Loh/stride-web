@@ -1,12 +1,25 @@
 import { useState } from 'react'
+import { RunnerSprite } from '../RunnerSprite'
+import type { Character } from '../storage'
 
 interface Props {
   initialName?: string
-  onContinue: (name: string) => void
+  initialCharacter?: Character
+  onContinue: (name: string, character: Character) => void
 }
 
-export function NameScreen({ initialName = '', onContinue }: Props) {
+const CHARACTERS: { id: Character; label: string }[] = [
+  { id: 'boy', label: 'Boy' },
+  { id: 'girl', label: 'Girl' },
+]
+
+export function NameScreen({
+  initialName = '',
+  initialCharacter = 'boy',
+  onContinue,
+}: Props) {
   const [name, setName] = useState(initialName)
+  const [character, setCharacter] = useState<Character>(initialCharacter)
 
   return (
     <section className="card">
@@ -21,7 +34,7 @@ export function NameScreen({ initialName = '', onContinue }: Props) {
         onSubmit={(event) => {
           event.preventDefault()
           const trimmed = name.trim()
-          if (trimmed) onContinue(trimmed)
+          if (trimmed) onContinue(trimmed, character)
         }}
       >
         <label className="field">
@@ -34,6 +47,28 @@ export function NameScreen({ initialName = '', onContinue }: Props) {
             placeholder="Alex"
           />
         </label>
+        <fieldset className="field characters">
+          <legend>Your runner</legend>
+          <div className="character-options">
+            {CHARACTERS.map((option) => (
+              <button
+                key={option.id}
+                type="button"
+                className={`character${character === option.id ? ' selected' : ''}`}
+                aria-pressed={character === option.id}
+                onClick={() => setCharacter(option.id)}
+              >
+                <RunnerSprite
+                  character={option.id}
+                  state={character === option.id ? 'running' : 'idle'}
+                  scale={0.25}
+                  className="small"
+                />
+                {option.label}
+              </button>
+            ))}
+          </div>
+        </fieldset>
         <button type="submit" className="primary" disabled={!name.trim()}>
           Continue
         </button>

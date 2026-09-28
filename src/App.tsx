@@ -82,10 +82,12 @@ export default function App() {
       {view === 'name' ? (
         <NameScreen
           initialName={profile.name ?? ''}
-          onContinue={(name) => {
+          initialCharacter={profile.character ?? 'boy'}
+          onContinue={(name, character) => {
             persistProfile({
               name,
               level: profile.level ?? 'intermediate',
+              character,
             })
             setView('level')
           }}
@@ -98,7 +100,11 @@ export default function App() {
           selected={profile.level}
           onBack={() => setView('name')}
           onSelect={(level: RunnerLevel) => {
-            persistProfile({ name: profile.name!, level })
+            persistProfile({
+              name: profile.name!,
+              level,
+              character: profile.character ?? 'boy',
+            })
             setView('select')
           }}
         />
@@ -128,6 +134,7 @@ export default function App() {
           workout={workout}
           session={session}
           muted={muted}
+          character={profile.character ?? 'boy'}
           onSession={persistSession}
           onComplete={handleComplete}
           onQuit={quitRun}
