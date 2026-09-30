@@ -9,13 +9,13 @@ interface Props {
 }
 
 const CHARACTERS: { id: Character; label: string }[] = [
-  { id: 'boy', label: 'Boy' },
-  { id: 'girl', label: 'Girl' },
+  { id: 'shiba', label: 'Shiba' },
+  { id: 'cat', label: 'Cat' },
 ]
 
 export function NameScreen({
   initialName = '',
-  initialCharacter = 'boy',
+  initialCharacter = 'shiba',
   onContinue,
 }: Props) {
   const [name, setName] = useState(initialName)

@@ -46,6 +46,12 @@ h1 {
   font-size: clamp(1.7rem, 6vw, 2.2rem);
 }
 
+.card h2 {
+  margin-top: 26px;
+  padding-top: 20px;
+  border-top: 1px solid var(--accent-dim);
+}
+
 button,
 input {
   font: inherit;
@@ -91,6 +97,7 @@ input {
   display: grid;
   gap: 8px;
   color: var(--muted);
+  min-width: 0;
 }
 
 .field input {
@@ -99,6 +106,7 @@ input {
   color: var(--text-h);
   border-radius: 12px;
   padding: 12px 14px;
+  min-width: 0;
 }
 
 .primary,
@@ -195,15 +203,10 @@ input {
   margin: 0 auto;
 }
 
-/*
- * With background-size: 800%, the sheet is 8x the element width, so the visible
- * frame index is (position / 100) * 7 -- 100% lands on the LAST frame, not past
- * it. Ending at 100% would make steps(8) land between frames; 800/7 makes the
- * eight steps hit 0, 1/7, ... 7/7 exactly, with no duplicate frame on loop.
- */
+/* Duration, step count and --run-end come from the sheet, via RunnerSprite. */
 @keyframes run-cycle {
   to {
-    background-position-x: 114.2857%;
+    background-position-x: var(--run-end);
   }
 }
 
@@ -373,6 +376,77 @@ input {
   display: grid;
   gap: 10px;
   margin-top: 20px;
+}
+
+.pace-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 10px;
+}
+
+.stack+.field,
+.stack+.pace-row,
+.card>.field+.field {
+  margin-top: 16px;
+}
+
+.card>.field+.muted {
+  margin-top: 12px;
+}
+
+.reasons {
+  margin: 0 0 16px;
+  padding-left: 18px;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.reasons li {
+  margin-bottom: 4px;
+}
+
+.notice {
+  border: 1px solid var(--accent-dim);
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin: 12px 0;
+  font-size: 0.9rem;
+}
+
+.notice p {
+  margin: 0 0 6px;
+}
+
+.notice p:last-child {
+  margin-bottom: 0;
+}
+
+.plan-steps {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.plan-step {
+  background: #0c241c;
+  border: 1px solid var(--accent-dim);
+  border-radius: 12px;
+  padding: 12px;
+  min-width: 0;
+}
+
+.plan-step-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+  color: var(--text-h);
+}
+
+.plan-step .muted {
+  margin: 6px 0 0;
+  font-size: 0.82rem;
 }
 
 .speed-adjust {

@@ -1,10 +1,18 @@
+import type { BaselineAnswers, PersonalizedWorkout } from './plan/types'
 import type { RunnerLevel, WorkoutId } from './workouts'
 
 const PROFILE_KEY = 'stride.profile'
 const SESSION_KEY = 'stride.session'
 const MUTED_KEY = 'stride.muted'
+const BASELINE_KEY = 'stride.baseline'
+const PLAN_KEY = 'stride.plan'
 
-export type Character = 'boy' | 'girl'
+export type Character = 'shiba' | 'cat'
+
+/** Saved profiles may still hold the boy/girl the animals replaced. */
+export function toCharacter(value: unknown): Character {
+  return value === 'cat' || value === 'girl' ? 'cat' : 'shiba'
+}
 
 export interface Profile {
   name: string
@@ -57,6 +65,36 @@ export function loadMuted(): boolean {
 
 export function saveMuted(muted: boolean): void {
   localStorage.setItem(MUTED_KEY, muted ? '1' : '0')
+}
+
+export function loadBaseline(): BaselineAnswers {
+  try {
+    const raw = localStorage.getItem(BASELINE_KEY)
+    return raw ? (JSON.parse(raw) as BaselineAnswers) : {}
+  } catch {
+    return {}
+  }
+}
+
+export function saveBaseline(answers: BaselineAnswers): void {
+  localStorage.setItem(BASELINE_KEY, JSON.stringify(answers))
+}
+
+export function loadPlan(): PersonalizedWorkout | null {
+  try {
+    const raw = localStorage.getItem(PLAN_KEY)
+    return raw ? (JSON.parse(raw) as PersonalizedWorkout) : null
+  } catch {
+    return null
+  }
+}
+
+export function savePlan(plan: PersonalizedWorkout | null): void {
+  if (!plan) {
+    localStorage.removeItem(PLAN_KEY)
+    return
+  }
+  localStorage.setItem(PLAN_KEY, JSON.stringify(plan))
 }
 
 export function elapsedMs(session: RunSession, now = Date.now()): number {

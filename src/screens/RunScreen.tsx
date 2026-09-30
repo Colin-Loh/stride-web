@@ -14,7 +14,6 @@ interface Props {
   onSession: (session: RunSession) => void
   onComplete: () => void
   onQuit: () => void
-  onToggleMute: () => void
 }
 
 const SPEED_STEP = 0.1
@@ -43,28 +42,27 @@ function coveredKmFrom(marks: SpeedMark[], elapsed: number): number {
   return km
 }
 
-function progressFor(workout: ResolvedWorkout, elapsed: number) {
-  let remaining = elapsed
+function progressFor(workout: ResolvedWorkout, coveredKm: number) {
+  let start = 0
   let index = 0
-  for (const segment of workout.segments) {
-    if (remaining < segment.durationMs) {
-      return {
-        index,
-        segmentElapsed: remaining,
-        segmentProgress: remaining / segment.durationMs,
-        overall: elapsed / workout.totalDurationMs,
-        done: false,
-      }
-    }
-    remaining -= segment.durationMs
-    index += 1
+  for (let i = 0; i < workout.segments.length; i += 1) {
+    index = i
+    const end = start + workout.segments[i].distanceKm
+    if (coveredKm < end) break
+    if (i < workout.segments.length - 1) start = end
   }
+  const segment = workout.segments[index]
+  const segmentCoveredKm = Math.min(
+    Math.max(0, coveredKm - start),
+    segment.distanceKm,
+  )
   return {
-    index: workout.segments.length - 1,
-    segmentElapsed: workout.segments.at(-1)?.durationMs ?? 0,
-    segmentProgress: 1,
-    overall: 1,
-    done: true,
+    index,
+    segmentRemainingKm: segment.distanceKm - segmentCoveredKm,
+    segmentProgress:
+      segment.distanceKm > 0 ? segmentCoveredKm / segment.distanceKm : 1,
+    overall: Math.min(1, coveredKm / workout.totalDistanceKm),
+    done: coveredKm >= workout.totalDistanceKm,
   }
 }
 
@@ -76,15 +74,20 @@ export function RunScreen({
   onSession,
   onComplete,
   onQuit,
-  onToggleMute,
 }: Props) {
   const [now, setNow] = useState(() => Date.now())
   // Treadmill trim: offset in km/h applied on top of the segment's target speed.
   const [speedOffset, setSpeedOffset] = useState(0)
   const elapsed = elapsedMs(session, now)
+
+  const [speedMarks, setSpeedMarks] = useState<SpeedMark[]>(() => [
+    { at: 0, kmh: clampSpeed(workout.segments[0].speed.minKmh) },
+  ])
+
+  const coveredKm = coveredKmFrom(speedMarks, elapsed)
   const progress = useMemo(
-    () => progressFor(workout, elapsed),
-    [workout, elapsed],
+    () => progressFor(workout, coveredKm),
+    [workout, coveredKm],
   )
   const current = workout.segments[progress.index]
   const next = workout.segments[progress.index + 1]
@@ -93,9 +96,6 @@ export function RunScreen({
   const running =
     Boolean(session.startedAt) && !session.paused && !session.completed
 
-  const [speedMarks, setSpeedMarks] = useState<SpeedMark[]>(() => [
-    { at: 0, kmh: targetSpeed },
-  ])
   const live = useRef({ elapsed, speed: targetSpeed })
 
   useEffect(() => {
@@ -168,8 +168,10 @@ export function RunScreen({
     setCueMuted(muted)
   }, [muted])
 
-  const remaining = Math.max(0, workout.totalDurationMs - elapsed)
-  const segmentRemaining = Math.max(0, current.durationMs - progress.segmentElapsed)
+  // Time left is an ETA: whatever distance is left, at the speed set right now.
+  const msPerKm = 3_600_000 / targetSpeed
+  const remaining = Math.max(0, workout.totalDistanceKm - coveredKm) * msPerKm
+  const segmentRemaining = progress.segmentRemainingKm * msPerKm
 
   function start() {
     const started: RunSession = {
@@ -212,8 +214,6 @@ export function RunScreen({
 
   const segmentTitle = current.label.replace(/-/g, ' ').toUpperCase()
 
-  const coveredKm = coveredKmFrom(speedMarks, elapsed)
-
   function adjustSpeed(delta: number) {
     setSpeedOffset((offset) => {
       const clamped = clampSpeed(current.speed.minKmh + offset + delta)
@@ -232,7 +232,7 @@ export function RunScreen({
           <span className="stat-label">Distance</span>
           <strong className="stat-value">
             {coveredKm.toFixed(2)}
-            <em>km</em>
+            <em>/ {workout.totalDistanceKm.toFixed(1)} km</em>
           </strong>
         </div>
         <div className="stat">
@@ -261,27 +261,15 @@ export function RunScreen({
       <RunnerSprite
         character={character}
         state={running ? 'running' : 'idle'}
+        speedKmh={targetSpeed}
       />
       <p className="muted">
         {notStarted
-          ? `Ready · ${formatDuration(workout.totalDurationMs)} total`
+          ? `Ready · ${formatDuration(remaining)} at this speed`
           : session.paused
             ? 'Paused'
             : `${formatDuration(elapsed)} elapsed`}
       </p>
-
-      <label className="progress-label">
-        Overall · {formatDuration(remaining)} left
-      </label>
-      <div
-        className="bar"
-        role="progressbar"
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-valuenow={Math.round(progress.overall * 100)}
-      >
-        <span style={{ width: `${Math.min(100, progress.overall * 100)}%` }} />
-      </div>
 
       <label className="progress-label">
         {current.label} · {formatDuration(segmentRemaining)} left
@@ -355,9 +343,6 @@ export function RunScreen({
             +
           </button>
         </div>
-        <button type="button" className="link" onClick={onToggleMute}>
-          {muted ? 'Unmute cue' : 'Mute cue'}
-        </button>
         <button type="button" className="link" onClick={onQuit}>
           End run
         </button>

@@ -13,8 +13,8 @@ export function LevelScreen({ name, selected, onBack, onSelect }: Props) {
       <p className="eyebrow">Nice to meet you, {name}</p>
       <h1>How often do you run?</h1>
       <p className="lede">
-        We use this to nudge paces a little slower or faster. Distances stay the
-        same.
+        This sets how much of your comfortable distance the main run asks for.
+        Your pace always comes from your own running, never from this answer.
       </p>
       <div className="stack">
         {(Object.keys(LEVELS) as RunnerLevel[]).map((level) => {

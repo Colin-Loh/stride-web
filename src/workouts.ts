@@ -62,11 +62,11 @@ export const WORKOUTS: WorkoutTemplate[] = [
   {
     id: 'test',
     name: 'Test run',
-    blurb: 'Try the timer and audio cue: 30 seconds per section, 90 seconds total.',
+    blurb: 'One kilometre split across warm-up, steady, and cool-down.',
     segments: [
-      { kind: 'warmup', label: 'Warm-up', distanceKm: 0, fixedDurationMs: 10_000, speed: { minKmh: 7.5, maxKmh: 8 } },
-      { kind: 'steady', label: 'Steady section', distanceKm: 0, fixedDurationMs: 10_000, speed: { minKmh: 8.2, maxKmh: 8.8 } },
-      { kind: 'cooldown', label: 'Cool-down', distanceKm: 0, fixedDurationMs: 10_000, speed: { minKmh: 7, maxKmh: 7.5 } },
+      { kind: 'warmup', label: 'Warm-up', distanceKm: 0.2, speed: { minKmh: 7.5, maxKmh: 8 } },
+      { kind: 'steady', label: 'Run', distanceKm: 0.6, speed: { minKmh: 8.2, maxKmh: 8.8 } },
+      { kind: 'cooldown', label: 'Cool-down', distanceKm: 0.2, speed: { minKmh: 7, maxKmh: 7.5 } },
     ],
   },
   {
@@ -82,7 +82,7 @@ export const WORKOUTS: WorkoutTemplate[] = [
       },
       {
         kind: 'steady',
-        label: 'Steady section',
+        label: 'Run',
         distanceKm: 4,
         speed: { minKmh: 8.2, maxKmh: 8.8 },
       },
@@ -107,7 +107,7 @@ export const WORKOUTS: WorkoutTemplate[] = [
       },
       {
         kind: 'steady',
-        label: 'Steady section',
+        label: 'Run',
         distanceKm: 4,
         speed: { minKmh: 10.3, maxKmh: 10.7 },
       },
@@ -132,7 +132,7 @@ export const WORKOUTS: WorkoutTemplate[] = [
       },
       {
         kind: 'steady',
-        label: 'Steady section',
+        label: 'Run',
         distanceKm: 8.5,
         speed: { minKmh: 8.3, maxKmh: 8.7 },
       },
@@ -175,13 +175,15 @@ export function resolveWorkout(
   const segments = template.segments.map((segment) => {
     const speed = scaleRange(segment.speed, factor)
     const mid = midKmh(speed)
-    let durationMs = segment.fixedDurationMs ?? durationMsFor(segment.distanceKm, mid)
+    // Distance drives the run; fixed-duration segments state theirs as time.
+    let distanceKm =
+      segment.fixedDurationMs === undefined
+        ? segment.distanceKm
+        : (mid * segment.fixedDurationMs) / 3_600_000
     if (quick && segment.fixedDurationMs === undefined) {
-      durationMs = Math.max(5000, durationMs * 0.008)
+      distanceKm = Math.max(0.01, distanceKm * 0.008)
     }
-    const distanceKm = segment.fixedDurationMs === undefined
-      ? segment.distanceKm
-      : mid * durationMs / 3_600_000
+    const durationMs = durationMsFor(distanceKm, mid)
     return { ...segment, distanceKm, speed, midKmh: mid, durationMs }
   })
 
