@@ -1,6 +1,22 @@
+import { DurationInput } from '../components/DurationInput'
+import { NumberField as Num } from '../components/NumberField'
+import { PaceInput } from '../components/PaceInput'
 import { useState } from 'react'
-import { missingBaselineFields } from '../plan/baseline'
+import { missingBaselineFields, raceResult } from '../plan/baseline'
+import { formatPaceSeconds, paceSecondsPerKmFromSpeed } from '../plan/convert'
+import { DEFAULT_EASY_PACE_SECONDS } from '../plan/rules'
 import type { BaselineAnswers } from '../plan/types'
+import { danielsSpeeds, RACE_DISTANCES } from '../plan/vdot'
+
+const pace = (kmh: number) => formatPaceSeconds(paceSecondsPerKmFromSpeed(kmh))
+
+/** Live feedback once a race result adds up, so the runner sees what it means. */
+function racePreview(answers: BaselineAnswers): string | null {
+    const race = raceResult(answers)
+    if (!race) return null
+    const zones = danielsSpeeds(race.vdot)
+    return `That is a VDOT of ${race.vdot.toFixed(1)}: easy ${pace(zones.easyFastKmh)}–${pace(zones.easySlowKmh)}/km, threshold ${pace(zones.thresholdKmh)}/km, repetition ${pace(zones.repetitionKmh)}/km.`
+}
 
 interface Props {
     initial: BaselineAnswers
@@ -10,38 +26,6 @@ interface Props {
     onDone: (answers: BaselineAnswers) => void
 }
 
-function parse(value: string): number | undefined {
-    if (value.trim() === '') return undefined
-    const parsed = Number(value)
-    return Number.isFinite(parsed) ? parsed : undefined
-}
-
-function Num({
-    label,
-    value,
-    onChange,
-    step = 1,
-}: {
-    label: string
-    value: number | undefined
-    onChange: (value: number | undefined) => void
-    step?: number
-}) {
-    return (
-        <label className="field">
-            {label}
-            <input
-                type="number"
-                inputMode="decimal"
-                min={0}
-                step={step}
-                value={value ?? ''}
-                onChange={(event) => onChange(parse(event.target.value))}
-            />
-        </label>
-    )
-}
-
 export function BaselineScreen({ initial, editAll = false, onBack, onDone }: Props) {
     const [answers, setAnswers] = useState<BaselineAnswers>(initial)
     const patch = (next: Partial<BaselineAnswers>) =>
@@ -49,8 +33,10 @@ export function BaselineScreen({ initial, editAll = false, onBack, onDone }: Pro
 
     // Only ask for what we are still missing.
     const [needed] = useState(() => missingBaselineFields(initial))
-    const ask = (field: string) => editAll || needed.includes(field as never)
+    const ask = (field: typeof needed[number]) => editAll || needed.includes(field)
     const outstanding = missingBaselineFields(answers)
+    const preview = racePreview(answers)
+    const raceDoesNotAddUp = answers.raceKnown && Number.isFinite(answers.raceDistanceKm) && Number.isFinite(answers.raceSeconds) && preview === null
 
     return (
         <section className="card">
@@ -62,77 +48,119 @@ export function BaselineScreen({ initial, editAll = false, onBack, onDone }: Pro
                     : 'We only ask for what we do not already know. Everything here is about what you can do now, not a goal.'}
             </p>
 
-            {ask('capacity') ? (
+            {ask('race') ? (
                 <>
-                    <h2>What can you run comfortably?</h2>
+                    <h2>A recent race or all-out run?</h2>
+                    <p className="muted">
+                        This is the best guide to your training paces. Use your most recent all-out
+                        effort from the last six weeks, ideally a 5 km or 10 km.
+                    </p>
                     <div className="stack">
                         <button
                             type="button"
-                            className={`choice${answers.capacityBasis === 'distance' ? ' selected' : ''}`}
-                            onClick={() => patch({ capacityBasis: 'distance' })}
+                            className={`choice${answers.raceKnown === true ? ' selected' : ''}`}
+                            onClick={() => patch({ raceKnown: true, raceDistanceKm: answers.raceDistanceKm ?? 5 })}
                         >
-                            <strong>A distance</strong>
+                            <strong>Yes, I have one</strong>
                         </button>
                         <button
                             type="button"
-                            className={`choice${answers.capacityBasis === 'time' ? ' selected' : ''}`}
-                            onClick={() => patch({ capacityBasis: 'time' })}
+                            className={`choice${answers.raceKnown === false ? ' selected' : ''}`}
+                            onClick={() => patch({ raceKnown: false })}
                         >
-                            <strong>A duration</strong>
+                            <strong>No recent race</strong>
+                            <span className="muted">We will estimate your paces from your comfortable pace instead.</span>
                         </button>
                     </div>
-                    {answers.capacityBasis === 'distance' ? (
+                    {answers.raceKnown ? (
                         <>
-                            <Num
-                                label="Comfortable distance (km)"
-                                value={answers.capacityDistanceKm}
-                                onChange={(capacityDistanceKm) => patch({ capacityDistanceKm })}
-                                step={0.1}
+                            <label className="field">
+                                Distance
+                                <select
+                                    value={answers.raceDistanceKm ?? 5}
+                                    onChange={(e) => patch({ raceDistanceKm: Number(e.target.value) })}
+                                >
+                                    {RACE_DISTANCES.map((race) => (
+                                        <option key={race.label} value={race.km}>{race.label}</option>
+                                    ))}
+                                </select>
+                            </label>
+                            <DurationInput
+                                label="Finish time"
+                                required
+                                value={answers.raceSeconds ?? null}
+                                onChange={(seconds) => patch({ raceSeconds: seconds ?? undefined })}
                             />
-                            <Num
-                                label="How long that takes you (minutes, optional)"
-                                value={answers.capacityTimeMinutes}
-                                onChange={(capacityTimeMinutes) => patch({ capacityTimeMinutes })}
-                            />
-                            <p className="muted">
-                                A distance on its own does not tell us your speed. Add the time
-                                and we can work it out.
-                            </p>
+                            {preview ? <p className="muted">{preview}</p> : null}
+                            {raceDoesNotAddUp ? (
+                                <p className="field-error">That distance and time do not add up to a realistic run. Check both.</p>
+                            ) : null}
                         </>
                     ) : null}
-                    {answers.capacityBasis === 'time' ? (
-                        <Num
-                            label="Comfortable duration (minutes)"
-                            value={answers.capacityMinutes}
-                            onChange={(capacityMinutes) => patch({ capacityMinutes })}
-                        />
-                    ) : null}
+                </>
+            ) : null}
+
+            {ask('weekly') ? (
+                <>
+                    <h2>How far do you run in a typical week?</h2>
+                    <Num
+                        label="Kilometres per week"
+                        value={answers.weeklyKm}
+                        onChange={(weeklyKm) => patch({ weeklyKm })}
+                        step={1}
+                    />
+                    <p className="muted">
+                        Jack Daniels sizes every session as a share of your week: your easy and
+                        long runs, and how much tempo running you do.
+                    </p>
+                </>
+            ) : null}
+
+            {ask('days') ? (
+                <>
+                    <h2>How many days a week do you run?</h2>
+                    <Num
+                        label="Running days (1 to 7)"
+                        value={answers.daysPerWeek}
+                        onChange={(daysPerWeek) => patch({ daysPerWeek })}
+                        min={1}
+                        max={7}
+                        step={1}
+                    />
+                    {answers.daysPerWeek !== undefined && outstanding.includes('days') ? (
+                        <p className="field-error">Enter a whole number of days from 1 to 7.</p>
+                    ) : (
+                        <p className="muted">Your easy runs are your weekly distance shared across these days.</p>
+                    )}
                 </>
             ) : null}
 
             {ask('continuity') ? (
                 <>
-                    <h2>Is that continuous?</h2>
+                    <h2>Do you run without stopping?</h2>
                     <div className="stack">
                         <button
                             type="button"
                             className={`choice${answers.continuity === 'continuous' ? ' selected' : ''}`}
                             onClick={() => patch({ continuity: 'continuous' })}
                         >
-                            <strong>Continuous running</strong>
+                            <strong>Yes, I run continuously</strong>
                         </button>
                         <button
                             type="button"
                             className={`choice${answers.continuity === 'run-walk' ? ' selected' : ''}`}
                             onClick={() => patch({ continuity: 'run-walk' })}
                         >
-                            <strong>A mix of running and walking</strong>
+                            <strong>I mix running and walking</strong>
+                            <span className="muted">
+                                Your easy, long and tempo runs alternate short running and walking spells.
+                            </span>
                         </button>
                     </div>
                 </>
             ) : null}
 
-            {ask('pace') ? (
+            {ask('pace') && answers.raceKnown !== true ? (
                 <>
                     <h2>Your comfortable pace?</h2>
                     <div className="stack">
@@ -150,29 +178,20 @@ export function BaselineScreen({ initial, editAll = false, onBack, onDone }: Pro
                         >
                             <strong>I don&apos;t know</strong>
                             <span className="muted">
-                                We will build a time-based workout and leave speed, pace and
-                                distance blank rather than guessing.
+                                We will start you at {formatPaceSeconds(DEFAULT_EASY_PACE_SECONDS)}/km, a gentle
+                                jog most beginners can hold. You can change the speed during the run.
                             </span>
                         </button>
                     </div>
                     {answers.paceKnown ? (
-                        <div className="pace-row">
-                            <Num
-                                label="Minutes per km"
-                                value={answers.paceMinutes}
-                                onChange={(paceMinutes) => patch({ paceMinutes })}
-                            />
-                            <Num
-                                label="Seconds"
-                                value={answers.paceSeconds}
-                                onChange={(paceSeconds) => patch({ paceSeconds })}
-                            />
-                        </div>
+                        <PaceInput label="Pace (min/km)" required
+                            value={answers.paceMinutes === undefined && answers.paceSeconds === undefined ? null : (answers.paceMinutes ?? 0) * 60 + (answers.paceSeconds ?? 0)}
+                            onChange={seconds => patch({ paceMinutes: seconds === null ? undefined : Math.floor(seconds / 60), paceSeconds: seconds === null ? undefined : seconds % 60 })} />
                     ) : null}
                 </>
             ) : null}
 
-            {ask('walkPace') && answers.continuity === 'run-walk' ? (
+            {answers.continuity === 'run-walk' ? (
                 <>
                     <h2>Your walking pace</h2>
                     <div className="stack">
@@ -192,41 +211,40 @@ export function BaselineScreen({ initial, editAll = false, onBack, onDone }: Pro
                         </button>
                     </div>
                     {answers.walkPaceKnown ? (
-                        <div className="pace-row">
-                            <Num
-                                label="Minutes per km"
-                                value={answers.walkPaceMinutes}
-                                onChange={(walkPaceMinutes) => patch({ walkPaceMinutes })}
-                            />
-                            <Num
-                                label="Seconds"
-                                value={answers.walkPaceSeconds}
-                                onChange={(walkPaceSeconds) => patch({ walkPaceSeconds })}
-                            />
-                        </div>
+                        <PaceInput label="Walking pace (min/km)" required
+                            value={answers.walkPaceMinutes === undefined && answers.walkPaceSeconds === undefined ? null : (answers.walkPaceMinutes ?? 0) * 60 + (answers.walkPaceSeconds ?? 0)}
+                            onChange={seconds => patch({ walkPaceMinutes: seconds === null ? undefined : Math.floor(seconds / 60), walkPaceSeconds: seconds === null ? undefined : seconds % 60 })} />
                     ) : null}
                 </>
             ) : null}
 
-            {ask('available') ? (
-                <>
-                    <h2>Time for this workout</h2>
-                    <Num
-                        label="Total minutes available"
-                        value={answers.availableMinutes}
-                        onChange={(availableMinutes) => patch({ availableMinutes })}
-                    />
-                    <p className="muted">
-                        Warm-up and cool-down are counted inside this.
-                    </p>
-                </>
-            ) : null}
+            {answers.continuity === 'run-walk' && <>
+                <h2>Run / walk intervals</h2>
+                <p className="muted">Start with two minutes running and one minute walking, or edit both durations.</p>
+                <div className="pace-row">
+                    <Num label="Run minutes" min={0.1} step={0.1} value={answers.runMinutes ?? 2} onChange={runMinutes => patch({ runMinutes: runMinutes ?? 0 })} />
+                    <Num label="Walk minutes" min={0.1} step={0.1} value={answers.walkMinutes ?? 1} onChange={walkMinutes => patch({ walkMinutes: walkMinutes ?? 0 })} />
+                </div>
+            </>}
+
+            {/* Optional, and about today's session rather than the runner, so always offered. */}
+            <h2>Time for this workout</h2>
+            <Num
+                label="Total minutes available (optional)"
+                value={answers.availableMinutes}
+                onChange={(availableMinutes) => patch({ availableMinutes })}
+            />
+            <p className="muted">
+                Warm-up and cool-down are counted inside this. Leave it blank and we follow
+                Daniels&apos; limits instead: 20 minutes of tempo, long runs no longer than
+                150 minutes, and a 10-minute warm-up before hard sessions.
+            </p>
 
             <div className="actions">
                 <button
                     type="button"
                     className="primary"
-                    disabled={outstanding.includes('capacity') || outstanding.includes('available')}
+                    disabled={outstanding.length > 0}
                     onClick={() => onDone(answers)}
                 >
                     Build my workout

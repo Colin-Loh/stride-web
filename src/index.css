@@ -100,7 +100,8 @@ input {
   min-width: 0;
 }
 
-.field input {
+.field input,
+.field select {
   border: 1px solid var(--accent-dim);
   background: #0c241c;
   color: var(--text-h);
@@ -167,22 +168,6 @@ input {
 .choice:hover,
 .choice:focus-visible {
   border-color: var(--accent);
-}
-
-.choice.workout .preview {
-  margin: 8px 0 0;
-  padding-left: 16px;
-  color: var(--muted);
-  font-size: 0.86rem;
-}
-
-.timer {
-  font-size: 3.2rem;
-  font-variant-numeric: tabular-nums;
-  font-weight: 700;
-  color: var(--text-h);
-  letter-spacing: -0.04em;
-  margin: 8px 0 4px;
 }
 
 .runner {
@@ -483,3 +468,4 @@ input {
   font-size: 1.05rem;
   color: var(--accent);
 }
+.field-error { color: var(--danger); font-size: 0.85rem; }

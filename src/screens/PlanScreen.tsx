@@ -1,18 +1,17 @@
-import { useMemo } from 'react'
+import { PlanSectionEditor } from '../components/PlanSectionEditor'
+import { RULES_DISCLAIMER } from '../plan/rules'
+import { roundSpeedUp } from '../plan/convert'
+import { useMemo, useState } from 'react'
 import {
     formatPaceSeconds,
     formatSpan,
     isPositiveFinite,
 } from '../plan/convert'
 import {
-    calculateSectionMetrics,
     calculateWorkoutTotals,
-    setSectionPace,
-    setSectionSpeed,
-    setSectionTargetValue,
     validateWorkout,
 } from '../plan/generate'
-import { toResolvedWorkout } from '../plan/runnable'
+import { runnablePlan } from '../plan/runnable'
 import type { PersonalizedWorkout, PlanSection } from '../plan/types'
 
 interface Props {
@@ -23,12 +22,13 @@ interface Props {
 }
 
 export function PlanScreen({ workout, onChange, onStart, onBack }: Props) {
+    const [invalidInputs, setInvalidInputs] = useState<Record<string, boolean>>({})
     const totals = useMemo(
         () => calculateWorkoutTotals(workout.sections),
         [workout.sections],
     )
     const validation = useMemo(() => validateWorkout(workout), [workout])
-    const runnable = useMemo(() => toResolvedWorkout(workout), [workout])
+    const runnable = useMemo(() => runnablePlan(workout), [workout])
 
     const replace = (next: PlanSection) =>
         onChange({
@@ -38,100 +38,13 @@ export function PlanScreen({ workout, onChange, onStart, onBack }: Props) {
             ),
         })
 
-    const renderSection = (item: PlanSection) => {
-        const metrics = calculateSectionMetrics(item)
-        const pace = metrics.paceSecondsPerKm
-        return (
-            <div className="plan-step" key={item.id}>
-                <div className="plan-step-head">
-                    <strong>{item.label}</strong>
-                    <span className="muted">
-                        {item.target.basis === 'time' ? 'Time target' : 'Distance target'}
-                    </span>
-                </div>
-
-                <div className="pace-row">
-                    <label className="field">
-                        {item.target.basis === 'time' ? 'Duration (min)' : 'Distance (km)'}
-                        <input
-                            type="number"
-                            min={0}
-                            step={item.target.basis === 'time' ? 0.5 : 0.1}
-                            value={
-                                item.target.basis === 'time'
-                                    ? Number((item.target.durationSeconds / 60).toFixed(2))
-                                    : Number(item.target.distanceKm.toFixed(3))
-                            }
-                            onChange={(event) => {
-                                const value = Number(event.target.value)
-                                replace(
-                                    setSectionTargetValue(
-                                        item,
-                                        item.target.basis === 'time' ? value * 60 : value,
-                                    ),
-                                )
-                            }}
-                        />
-                    </label>
-                    <label className="field">
-                        Speed (km/h)
-                        <input
-                            type="number"
-                            min={0}
-                            step={0.1}
-                            placeholder="unknown"
-                            value={item.speedKmh === null ? '' : Number(item.speedKmh.toFixed(2))}
-                            onChange={(event) => {
-                                const raw = event.target.value
-                                replace(
-                                    setSectionSpeed(
-                                        item,
-                                        raw.trim() === '' ? null : Number(raw),
-                                    ),
-                                )
-                            }}
-                        />
-                    </label>
-                </div>
-
-                <div className="pace-row">
-                    <label className="field">
-                        Pace (min/km)
-                        <input
-                            type="text"
-                            placeholder="unknown"
-                            value={pace === null ? '' : formatPaceSeconds(pace)}
-                            onChange={(event) => {
-                                const [minutes, seconds] = event.target.value.split(':')
-                                const total =
-                                    (Number(minutes) || 0) * 60 + (Number(seconds) || 0)
-                                replace(setSectionPace(item, total > 0 ? total : null))
-                            }}
-                        />
-                    </label>
-                    <div className="field">
-                        Derived
-                        <p className="muted">
-                            {metrics.durationSeconds === null
-                                ? 'Duration unknown'
-                                : `${formatSpan(metrics.durationSeconds)}${metrics.durationEstimated ? ' (est.)' : ''}`}
-                            {' · '}
-                            {metrics.distanceKm === null
-                                ? 'Distance unknown'
-                                : `${metrics.distanceKm.toFixed(2)} km${metrics.distanceEstimated ? ' (est.)' : ''}`}
-                        </p>
-                    </div>
-                </div>
-
-                <p className="muted">{item.effort}</p>
-            </div>
-        )
-    }
 
     return (
         <section className="card">
             <p className="eyebrow">{workout.categoryName} · tailored</p>
             <h1>Your workout</h1>
+            <p className="muted">{RULES_DISCLAIMER}</p>
+            <p className="muted">Treadmill speeds round up to 0.1 km/h. Distance is estimated; time targets stay fixed.</p>
 
             <ul className="reasons">
                 {workout.explanation.map((line) => (
@@ -147,7 +60,8 @@ export function PlanScreen({ workout, onChange, onStart, onBack }: Props) {
                 </div>
             ) : null}
 
-            <div className="plan-steps">{workout.sections.map(renderSection)}</div>
+            <div className="plan-steps">{workout.sections.map(item => <PlanSectionEditor key={item.id} section={item} onChange={replace}
+                fixed={workout.category === 'test'} onValidity={valid => setInvalidInputs(current => ({ ...current, [item.id]: !valid }))} />)}</div>
 
             <h2>Totals</h2>
             <ul className="reasons">
@@ -172,7 +86,7 @@ export function PlanScreen({ workout, onChange, onStart, onBack }: Props) {
                 <li>
                     Average speed:{' '}
                     {isPositiveFinite(totals.averageSpeedKmh)
-                        ? `${totals.averageSpeedKmh.toFixed(2)} km/h`
+                        ? `${roundSpeedUp(totals.averageSpeedKmh).toFixed(1)} km/h`
                         : 'unavailable'}
                 </li>
                 {workout.baseline.availableSeconds ? (
@@ -194,15 +108,14 @@ export function PlanScreen({ workout, onChange, onStart, onBack }: Props) {
                 <button
                     type="button"
                     className="primary"
-                    disabled={!runnable || !validation.ok}
+                    disabled={!runnable || !validation.ok || Object.values(invalidInputs).some(Boolean)}
                     onClick={onStart}
                 >
                     Start this workout
                 </button>
                 {!runnable ? (
                     <p className="muted">
-                        Add a speed to every section to run it with live tracking. The plan
-                        above is still yours to follow by effort and time.
+                        Correct the plan above before starting. Timed sections can run without a speed.
                     </p>
                 ) : null}
                 <button type="button" className="link" onClick={onBack}>

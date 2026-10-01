@@ -1,32 +1,21 @@
-type WakeLockSentinelLike = {
-  released: boolean
-  release: () => Promise<void>
-  addEventListener: (type: 'release', listener: () => void) => void
-}
-
-let sentinel: WakeLockSentinelLike | null = null
-
+let sentinel: WakeLockSentinel | null = null
+let generation = 0
+let pending = false
 export async function requestWakeLock(): Promise<boolean> {
-  const nav = navigator as Navigator & {
-    wakeLock?: { request: (type: 'screen') => Promise<WakeLockSentinelLike> }
-  }
-  if (!nav.wakeLock) return false
+  if (sentinel && !sentinel.released) return true
+  if (pending || !navigator.wakeLock) return false
+  const requested = generation
+  pending = true
   try {
-    sentinel = await nav.wakeLock.request('screen')
-    sentinel.addEventListener('release', () => {
-      sentinel = null
-    })
+    const lock = await navigator.wakeLock.request('screen')
+    if (requested !== generation) { await lock.release(); return false }
+    sentinel = lock
+    lock.addEventListener('release', () => { if (sentinel === lock) sentinel = null })
     return true
-  } catch {
-    return false
-  }
+  } catch { return false } finally { pending = false }
 }
-
 export async function releaseWakeLock(): Promise<void> {
-  try {
-    await sentinel?.release()
-  } catch {
-    // ignore
-  }
-  sentinel = null
+  generation++
+  const lock = sentinel; sentinel = null
+  try { await lock?.release() } catch { /* Browser may already have released it. */ }
 }

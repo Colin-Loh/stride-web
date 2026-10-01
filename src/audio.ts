@@ -8,7 +8,7 @@ function prepareChime(): void {
   try {
     chimeContext ??= new AudioContext()
     if (chimeContext.state === 'suspended') {
-      void chimeContext.resume().catch(() => {})
+      void chimeContext.resume().catch(() => { })
     }
   } catch {
     // Keep the timer usable if Web Audio is unavailable.
@@ -24,24 +24,24 @@ export function playTransitionChime(muted: boolean): void {
   output.connect(context.destination)
   chimeGain = output
 
-  // Two gently fading notes announce the section change.
-  ;[659.25, 880].forEach((frequency, index) => {
-    const oscillator = context.createOscillator()
-    const envelope = context.createGain()
-    const start = context.currentTime + index * 0.2
-    oscillator.frequency.value = frequency
-    envelope.gain.setValueAtTime(0, start)
-    envelope.gain.linearRampToValueAtTime(0.7, start + 0.015)
-    envelope.gain.exponentialRampToValueAtTime(0.001, start + 0.7)
-    oscillator.connect(envelope)
-    envelope.connect(output)
-    oscillator.start(start)
-    oscillator.stop(start + 0.75)
-    oscillator.onended = () => {
-      oscillator.disconnect()
-      envelope.disconnect()
-    }
-  })
+    // Two gently fading notes announce the section change.
+    ;[659.25, 880].forEach((frequency, index) => {
+      const oscillator = context.createOscillator()
+      const envelope = context.createGain()
+      const start = context.currentTime + index * 0.2
+      oscillator.frequency.value = frequency
+      envelope.gain.setValueAtTime(0, start)
+      envelope.gain.linearRampToValueAtTime(0.7, start + 0.015)
+      envelope.gain.exponentialRampToValueAtTime(0.001, start + 0.7)
+      oscillator.connect(envelope)
+      envelope.connect(output)
+      oscillator.start(start)
+      oscillator.stop(start + 0.75)
+      oscillator.onended = () => {
+        oscillator.disconnect()
+        envelope.disconnect()
+      }
+    })
 }
 
 function loadCelebration(): Promise<AudioBuffer> {
@@ -63,7 +63,7 @@ function loadCelebration(): Promise<AudioBuffer> {
 export function prepareRunAudio(): void {
   // Unlock audio on Start/Resume without playing any sound.
   prepareChime()
-  void loadCelebration().catch(() => {})
+  void loadCelebration().catch(() => { })
 }
 
 export function setCueMuted(muted: boolean): void {
@@ -80,6 +80,7 @@ export async function playCelebration(): Promise<boolean> {
   const request = celebrationRequest
   prepareChime()
   try {
+    if (chimeContext?.state === 'suspended') await chimeContext.resume()
     const buffer = await loadCelebration()
     const context = chimeContext
     if (request !== celebrationRequest || !context || context.state !== 'running') return false

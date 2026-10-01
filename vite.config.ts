@@ -13,6 +13,7 @@ export default defineConfig({
         'icon-192.png',
         'icon-512.png',
         'celebration.wav',
+        'sprites/*.png',
       ],
       manifest: {
         name: 'Stride',

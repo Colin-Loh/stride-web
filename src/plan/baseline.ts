@@ -1,51 +1,67 @@
-import {
-    isPositiveFinite,
-    speedFromDistanceDuration,
-    speedFromPaceSecondsPerKm,
-} from './convert'
-import type { BaselineAnswers, PersonalBaseline, SectionTarget } from './types'
+import { isPositiveFinite, speedFromPaceSecondsPerKm } from './convert'
+import { DEFAULT_EASY_PACE_SECONDS } from './rules'
+import type { BaselineAnswers, PersonalBaseline } from './types'
+import { danielsSpeeds, vdotFromEasySpeed, vdotFromRace, VDOT_RANGE } from './vdot'
 
 export type BaselineField =
-    | 'capacity'
+    | 'race'
+    | 'weekly'
+    | 'days'
     | 'continuity'
     | 'pace'
     | 'walkPace'
-    | 'available'
+    | 'intervals'
 
-/** Which follow-up questions still need asking, so we can skip the rest. */
+/**
+ * Which follow-up questions still need asking, so we can skip the rest.
+ * Time available is optional, so it is never missing.
+ */
 export function missingBaselineFields(
     answers: BaselineAnswers,
 ): BaselineField[] {
     const fields: BaselineField[] = []
-    const hasCapacity =
-        (answers.capacityBasis === 'distance' &&
-            isPositiveFinite(answers.capacityDistanceKm)) ||
-        (answers.capacityBasis === 'time' &&
-            isPositiveFinite(answers.capacityMinutes))
-    if (!hasCapacity) fields.push('capacity')
+    if (answers.raceKnown === undefined || (answers.raceKnown && raceResult(answers) === null)) fields.push('race')
+    if (!isPositiveFinite(answers.weeklyKm)) fields.push('weekly')
+    if (validDays(answers.daysPerWeek) === null) fields.push('days')
     if (answers.continuity === undefined) fields.push('continuity')
-    if (answers.paceKnown === undefined) fields.push('pace')
-    if (answers.continuity === 'run-walk' && answers.walkPaceKnown === undefined) {
+    // A race already sets every pace, so the comfortable-pace question is only needed without one.
+    const paceInvalid = answers.paceKnown && paceToSpeed(answers.paceMinutes, answers.paceSeconds) === null
+    if (paceInvalid || (answers.paceKnown === undefined && raceResult(answers) === null)) fields.push('pace')
+    if (answers.continuity === 'run-walk' && (answers.walkPaceKnown === undefined || (answers.walkPaceKnown && paceToSpeed(answers.walkPaceMinutes, answers.walkPaceSeconds) === null))) {
         fields.push('walkPace')
     }
-    if (!isPositiveFinite(answers.availableMinutes)) fields.push('available')
+    if (answers.continuity === 'run-walk' && (!isPositiveFinite(answers.runMinutes ?? 2) || !isPositiveFinite(answers.walkMinutes ?? 1))) fields.push('intervals')
     return fields
 }
 
+/** A whole number of running days from 1 to 7, or null. */
+function validDays(days: number | undefined): number | null {
+    return Number.isInteger(days) && days! >= 1 && days! <= 7 ? days! : null
+}
+
+/** A race or time trial that gives a believable VDOT, or null. */
+export function raceResult(answers: BaselineAnswers): { distanceKm: number; seconds: number; vdot: number } | null {
+    if (!answers.raceKnown || !isPositiveFinite(answers.raceDistanceKm) || !isPositiveFinite(answers.raceSeconds)) return null
+    const vdot = vdotFromRace(answers.raceDistanceKm, answers.raceSeconds)
+    if (!(vdot >= VDOT_RANGE.min && vdot <= VDOT_RANGE.max)) return null
+    return { distanceKm: answers.raceDistanceKm, seconds: answers.raceSeconds, vdot }
+}
 
 function paceToSpeed(
     minutes: number | undefined,
     seconds: number | undefined,
 ): number | null {
+    if (!Number.isInteger(minutes ?? 0) || (minutes ?? 0) < 0) return null
     const sec = seconds ?? 0
+    if (minutes === undefined && seconds === undefined) return null
     if (!Number.isInteger(sec) || sec < 0 || sec > 59) return null
     const total = (minutes ?? 0) * 60 + sec
     return isPositiveFinite(total) ? speedFromPaceSecondsPerKm(total) : null
 }
 
 /**
- * Works out a comfortable running speed, or admits it does not know one.
- * A distance on its own never produces a speed.
+ * Works out a comfortable running speed: from a race, from the runner's own pace, or
+ * -- when they say they do not know it -- from a gentle beginner default.
  */
 export function derivePersonalBaseline(
     answers: BaselineAnswers,
@@ -54,52 +70,62 @@ export function derivePersonalBaseline(
 
     let speedKmh: number | null = null
     let speedSource: PersonalBaseline['speedSource'] = 'unknown'
+    const race = raceResult(answers)
+    if (answers.raceKnown && race === null) {
+        missing.push('A race distance and finish time that add up to a realistic run')
+    }
 
     if (answers.paceKnown) {
         speedKmh = paceToSpeed(answers.paceMinutes, answers.paceSeconds)
         if (speedKmh) {
             speedSource = 'reported-pace'
-        } else {
+        } else if (race === null) {
             missing.push('A comfortable pace with seconds between 00 and 59')
         }
     }
 
-    // A known distance plus the time it takes gives us a speed.
-    if (
-        speedKmh === null &&
-        isPositiveFinite(answers.capacityDistanceKm) &&
-        isPositiveFinite(answers.capacityTimeMinutes)
-    ) {
-        speedKmh = speedFromDistanceDuration(
-            answers.capacityDistanceKm,
-            answers.capacityTimeMinutes * 60,
-        )
-        speedSource = 'distance-and-time'
+    // No race and no known pace: start from a gentle jog almost any beginner can hold.
+    if (speedKmh === null && race === null && answers.paceKnown === false) {
+        speedKmh = speedFromPaceSecondsPerKm(DEFAULT_EASY_PACE_SECONDS)
+        speedSource = 'default'
+    }
+
+    // A race sets the easy range. A reported easy pace inside it is kept; outside it, it is
+    // moved to the nearest edge, and with no reported pace the middle of the range is used.
+    const reportedSpeedKmh = speedSource === 'reported-pace' ? speedKmh : null
+    let vdot: number | null = null
+    let vdotSource: PersonalBaseline['vdotSource'] = null
+    if (race) {
+        vdot = race.vdot
+        vdotSource = 'race'
+        const zones = danielsSpeeds(race.vdot)
+        const inRange = speedKmh !== null && speedKmh >= zones.easySlowKmh && speedKmh <= zones.easyFastKmh
+        if (!inRange) {
+            speedKmh = speedKmh === null
+                ? (zones.easySlowKmh + zones.easyFastKmh) / 2
+                : Math.min(zones.easyFastKmh, Math.max(zones.easySlowKmh, speedKmh))
+            speedSource = 'race'
+        }
+    } else if (speedKmh !== null) {
+        // Very slow paces sit outside what the equations were fitted to; leave VDOT unknown.
+        const estimate = vdotFromEasySpeed(speedKmh)
+        if (estimate >= VDOT_RANGE.min && estimate <= VDOT_RANGE.max) {
+            vdot = estimate
+            vdotSource = 'easy-pace'
+        }
     }
 
     if (speedKmh === null) {
-        missing.push('Your comfortable running pace, or a distance with its time')
+        missing.push('Your comfortable running pace or a recent race')
     }
 
-    let comfortableCapacity: SectionTarget | null = null
-    if (
-        answers.capacityBasis === 'distance' &&
-        isPositiveFinite(answers.capacityDistanceKm)
-    ) {
-        comfortableCapacity = {
-            basis: 'distance',
-            distanceKm: answers.capacityDistanceKm,
-        }
-    } else if (
-        answers.capacityBasis === 'time' &&
-        isPositiveFinite(answers.capacityMinutes)
-    ) {
-        comfortableCapacity = {
-            basis: 'time',
-            durationSeconds: Math.round(answers.capacityMinutes * 60),
-        }
-    } else {
-        missing.push('How far or how long you can currently run comfortably')
+    const weeklyKm = isPositiveFinite(answers.weeklyKm) ? answers.weeklyKm : null
+    if (weeklyKm === null) {
+        missing.push('How far you run in a typical week')
+    }
+    const daysPerWeek = validDays(answers.daysPerWeek)
+    if (daysPerWeek === null) {
+        missing.push('How many days a week you run, from 1 to 7')
     }
 
     const continuity = answers.continuity ?? 'continuous'
@@ -120,16 +146,20 @@ export function derivePersonalBaseline(
     const availableSeconds = isPositiveFinite(answers.availableMinutes)
         ? Math.round(answers.availableMinutes * 60)
         : null
-    if (availableSeconds === null) {
-        missing.push('How much total time you have for this workout')
-    }
 
     return {
         speedKmh,
         speedSource,
-        comfortableCapacity,
+        reportedSpeedKmh,
+        vdot,
+        vdotSource,
+        race: race ? { distanceKm: race.distanceKm, seconds: race.seconds } : null,
+        weeklyKm,
+        daysPerWeek,
         continuity,
         walkSpeedKmh,
+        runSeconds: Math.max(1, Math.round((answers.runMinutes ?? 2) * 60)),
+        walkSeconds: Math.max(1, Math.round((answers.walkMinutes ?? 1) * 60)),
         availableSeconds,
         missing,
     }

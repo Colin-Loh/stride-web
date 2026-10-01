@@ -1,33 +1,46 @@
 # Stride
 
-A static, mobile-first running web app: name, experience level, then Easy / Tempo / Long. Each session is warm-up, a steady section, and cool-down. The clock follows the **prescribed** km/h for each segment (not GPS).
+A mobile-first running planner with timed or distance-based sections, optional run/walk intervals, treadmill speed controls, and section sounds. Distance is estimated from entered speed, not GPS or treadmill measurements.
 
-Host this on **GitHub Pages**. Azure App Service **F1 is not a good fit** (no Always On, idle unload, 60 CPU minutes/day). If you later want Azure, use Static Web Apps Free instead of F1.
-
-## Limits (read this)
-
-- The phone **powered off** cannot run the workout.
-- With the screen **locked**, browsers often freeze JavaScript. Elapsed time is stored as a wall-clock timestamp, so when you open Stride again the bar jumps to the right place.
-- While a run is active, Stride requests **screen wake lock**. A chime plays at section changes, followed by celebration audio at completion. Mute section chimes from the run screen if you want.
-
-## Local development
+## Run locally
 
 ```bash
 npm install
 npm run dev
 ```
 
-Open the URL Vite prints. Add `?quick=1` to compress each workout to a few seconds (for checking completion and the celebration track).
+Open the printed local URL. Choose **Test run** for three fixed 30-second sections (90 seconds total). No running questionnaire is needed for this test. It works without a known speed; distance then remains unknown. The old `?quick=1` mode has been removed.
 
-## GitHub Pages
+## Planning and speeds
 
-1. Create a GitHub repo and push `main`.
-2. Repo **Settings → Pages → Build and deployment → Source: GitHub Actions**.
-3. Pushing to `main` runs [`.github/workflows/pages.yml`](.github/workflows/pages.yml): `npm ci`, `npm run build`, deploy `dist`.
-4. On your phone, open the Pages URL, then **Add to Home Screen** for the PWA.
+- Generated and edited treadmill speeds round **up** to 0.1 km/h: 8.21 becomes 8.3; 8.20 stays 8.2.
+- Internal time and distance calculations retain precision. Pace remains minutes:seconds per kilometre.
+- Paces come from Jack Daniels' VDOT formulas: from a recent race, your comfortable pace, or a 9:00/km beginner default. Session sizes follow Daniels' volume rules as a share of your weekly distance (long run at most 25–30% and 150 minutes, threshold at most 10%, fast reps at most 5%). The Easy run is your week split across your running days. Warm-up lengths and the defaults are editable product choices, not validated training advice.
+- Run/walk sessions alternate editable run and walk durations. The initial suggestion is two minutes running, one minute walking.
+- A time target keeps its duration when speed changes. A distance target finishes when estimated distance reaches its target.
+- Unknown-speed timed sections work by effort; distance and overall pace stay unknown. Distance targets require known speeds.
+- Speed adjustments carry forward as an offset to subsequent target speeds, limited to 0.5–25 km/h. Change the setting to match your treadmill.
 
-The Vite `base` is `./`, so the app works at `https://<user>.github.io/stride-web/`.
+## Recovery, sounds, and limits
 
-## Profile data
+- A run saves its own plan snapshot, pause state, and speed-change history. Refreshing restores progress using that history.
+- On returning from an inactive tab, elapsed time is replayed across every section and run/walk boundary using the planned speeds and saved adjustments.
+- The app cannot detect treadmill changes you did not enter. A powered-off device cannot execute the app. Locked/backgrounded browsers may suspend timers and sound; missed sounds are not replayed in a burst.
+- Screen wake lock is requested while running. Availability depends on the browser and device.
+- There is no looping cue. A chime marks section or run/walk transitions; celebration plays at completion. **Mute sounds** silences both automatic sounds; **Play celebration** explicitly replays the finish sound.
+- Completion shows actual active time and estimated distance, excluding pauses.
+- Old sessions without a speed history cannot be recovered accurately. They are ignored with a notice; valid profiles and running answers remain available.
+- Data stays in this browser's local storage. Corrupt records and storage failures produce notices rather than blank screens.
 
-Name, level, mute preference, and an in-progress run are stored in `localStorage` only. There is no server.
+## Checks and deployment
+
+```bash
+npm test
+npm run lint
+npm run build
+npm run preview
+```
+
+GitHub Pages: push to `main`, then choose **GitHub Actions** under repository **Settings → Pages**. The workflow runs tests, lint, and build before deployment. The relative Vite base supports a repository subpath.
+
+The production offline cache includes app code, install icons, animal sprites, and celebration audio. Visit once online before testing offline. Browser playback and mobile lock/unlock behaviour still require device testing.
