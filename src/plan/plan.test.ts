@@ -80,6 +80,26 @@ describe('derivePersonalBaseline', () => {
         expect(result.vdot).toBeGreaterThan(20)
     })
 
+    it('walks at 12:00/km when a run/walk runner does not know their walking pace', () => {
+        const answers = { raceKnown: false, paceKnown: false, weeklyKm: 15, daysPerWeek: 3, continuity: 'run-walk' as const, walkPaceKnown: false }
+        const result = derivePersonalBaseline(answers)
+        expect(paceSecondsPerKmFromSpeed(result.walkSpeedKmh!)).toBe(12 * 60)
+        expect(result.walkSpeedSource).toBe('default')
+        expect(result.missing).toEqual([])
+        // With a walking speed, the run/walk easy run keeps a real distance and says where the speed came from.
+        const plan = generatePersonalizedWorkout({ category: 'easy', baseline: result })
+        expect(plan.sections[1].runWalk?.walkSpeedKmh).toBe(5)
+        expect(plan.sections[1].target.basis).toBe('distance')
+        expect(plan.explanation.join(' ')).toContain('12:00/km')
+        expect(validateWorkout(plan).ok).toBe(true)
+    })
+
+    it('still asks a run/walk runner about walking pace until they answer', () => {
+        const result = derivePersonalBaseline({ raceKnown: false, paceKnown: false, weeklyKm: 15, daysPerWeek: 3, continuity: 'run-walk' })
+        expect(result.walkSpeedKmh).toBeNull()
+        expect(result.missing.join(' ')).toContain('walking pace')
+    })
+
     it('treats the time available as optional', () => {
         const result = derivePersonalBaseline({ raceKnown: false, paceKnown: false, weeklyKm: 15, daysPerWeek: 3, continuity: 'continuous' })
         expect(result.availableSeconds).toBeNull()

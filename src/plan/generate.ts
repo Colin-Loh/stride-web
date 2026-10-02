@@ -20,6 +20,7 @@ import {
     CRUISE_RPE,
     DANIELS_VOLUME,
     DEFAULT_EASY_PACE_SECONDS,
+    DEFAULT_WALK_PACE_SECONDS,
     EFFORT_LABELS,
     INTERVAL_CUES,
     INTERVAL_EFFORT,
@@ -480,9 +481,12 @@ export function generatePersonalizedWorkout(input: {
     const noClock = baseline.availableSeconds
         ? null
         : 'You did not set a time limit, so the session follows Daniels\' limits instead of a clock.'
+    const walkNote = baseline.continuity === 'run-walk' && baseline.walkSpeedSource === 'default'
+        ? `You did not know your walking pace, so walking uses ${formatPaceSeconds(DEFAULT_WALK_PACE_SECONDS)}/km (5 km/h), an ordinary walking speed.`
+        : null
     const withDaniels = (plan: PersonalizedWorkout): PersonalizedWorkout => ({
         ...plan,
-        explanation: [...(note ? [note] : []), ...plan.explanation, ...(noClock ? [noClock] : [])],
+        explanation: [...(note ? [note] : []), ...plan.explanation, ...(walkNote ? [walkNote] : []), ...(noClock ? [noClock] : [])],
         adjustments: paceMoved ? [paceMoved, ...plan.adjustments] : plan.adjustments,
     })
 

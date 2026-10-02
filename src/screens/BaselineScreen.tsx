@@ -4,7 +4,7 @@ import { PaceInput } from '../components/PaceInput'
 import { useState } from 'react'
 import { missingBaselineFields, raceResult } from '../plan/baseline'
 import { formatPaceSeconds, paceSecondsPerKmFromSpeed } from '../plan/convert'
-import { DEFAULT_EASY_PACE_SECONDS } from '../plan/rules'
+import { DEFAULT_EASY_PACE_SECONDS, DEFAULT_WALK_PACE_SECONDS } from '../plan/rules'
 import type { BaselineAnswers } from '../plan/types'
 import { danielsSpeeds, RACE_DISTANCES } from '../plan/vdot'
 
@@ -68,7 +68,7 @@ export function BaselineScreen({ initial, editAll = false, onBack, onDone }: Pro
                             className={`choice${answers.raceKnown === false ? ' selected' : ''}`}
                             onClick={() => patch({ raceKnown: false })}
                         >
-                            <strong>No recent race</strong>
+                            <strong>No recent run / race</strong>
                             <span className="muted">We will estimate your paces from your comfortable pace instead.</span>
                         </button>
                     </div>
@@ -135,97 +135,105 @@ export function BaselineScreen({ initial, editAll = false, onBack, onDone }: Pro
                 </>
             ) : null}
 
-            {ask('continuity') ? (
+            {/* One section for how you run: continuity, running pace, and for run/walk the walking side. */}
+            {ask('continuity') || (ask('pace') && answers.raceKnown !== true) || answers.continuity === 'run-walk' ? (
                 <>
-                    <h2>Do you run without stopping?</h2>
-                    <div className="stack">
-                        <button
-                            type="button"
-                            className={`choice${answers.continuity === 'continuous' ? ' selected' : ''}`}
-                            onClick={() => patch({ continuity: 'continuous' })}
-                        >
-                            <strong>Yes, I run continuously</strong>
-                        </button>
-                        <button
-                            type="button"
-                            className={`choice${answers.continuity === 'run-walk' ? ' selected' : ''}`}
-                            onClick={() => patch({ continuity: 'run-walk' })}
-                        >
-                            <strong>I mix running and walking</strong>
-                            <span className="muted">
-                                Your easy, long and tempo runs alternate short running and walking spells.
-                            </span>
-                        </button>
-                    </div>
-                </>
-            ) : null}
+                    <h2>Your running</h2>
+                    {ask('continuity') ? (
+                        <>
+                            <h3>Do you run without stopping?</h3>
+                            <div className="stack">
+                                <button
+                                    type="button"
+                                    className={`choice${answers.continuity === 'continuous' ? ' selected' : ''}`}
+                                    onClick={() => patch({ continuity: 'continuous' })}
+                                >
+                                    <strong>Yes, I run continuously</strong>
+                                </button>
+                                <button
+                                    type="button"
+                                    className={`choice${answers.continuity === 'run-walk' ? ' selected' : ''}`}
+                                    onClick={() => patch({ continuity: 'run-walk' })}
+                                >
+                                    <strong>I mix running and walking</strong>
+                                    <span className="muted">
+                                        Your easy, long and tempo runs alternate short running and walking spells.
+                                    </span>
+                                </button>
+                            </div>
+                        </>
+                    ) : null}
 
-            {ask('pace') && answers.raceKnown !== true ? (
-                <>
-                    <h2>Your comfortable pace?</h2>
-                    <div className="stack">
-                        <button
-                            type="button"
-                            className={`choice${answers.paceKnown === true ? ' selected' : ''}`}
-                            onClick={() => patch({ paceKnown: true })}
-                        >
-                            <strong>I know it</strong>
-                        </button>
-                        <button
-                            type="button"
-                            className={`choice${answers.paceKnown === false ? ' selected' : ''}`}
-                            onClick={() => patch({ paceKnown: false })}
-                        >
-                            <strong>I don&apos;t know</strong>
-                            <span className="muted">
-                                We will start you at {formatPaceSeconds(DEFAULT_EASY_PACE_SECONDS)}/km, a gentle
-                                jog most beginners can hold. You can change the speed during the run.
-                            </span>
-                        </button>
-                    </div>
-                    {answers.paceKnown ? (
-                        <PaceInput label="Pace (min/km)" required
-                            value={answers.paceMinutes === undefined && answers.paceSeconds === undefined ? null : (answers.paceMinutes ?? 0) * 60 + (answers.paceSeconds ?? 0)}
-                            onChange={seconds => patch({ paceMinutes: seconds === null ? undefined : Math.floor(seconds / 60), paceSeconds: seconds === null ? undefined : seconds % 60 })} />
+                    {ask('pace') && answers.raceKnown !== true ? (
+                        <>
+                            <h3>Comfortable running pace</h3>
+                            <div className="stack">
+                                <button
+                                    type="button"
+                                    className={`choice${answers.paceKnown === true ? ' selected' : ''}`}
+                                    onClick={() => patch({ paceKnown: true })}
+                                >
+                                    <strong>I know it</strong>
+                                </button>
+                                <button
+                                    type="button"
+                                    className={`choice${answers.paceKnown === false ? ' selected' : ''}`}
+                                    onClick={() => patch({ paceKnown: false })}
+                                >
+                                    <strong>I don&apos;t know</strong>
+                                    <span className="muted">
+                                        We will start you at {formatPaceSeconds(DEFAULT_EASY_PACE_SECONDS)}/km, a gentle
+                                        jog most beginners can hold. You can change the speed during the run.
+                                    </span>
+                                </button>
+                            </div>
+                            {answers.paceKnown ? (
+                                <PaceInput label="Running pace (min/km)" required
+                                    value={answers.paceMinutes === undefined && answers.paceSeconds === undefined ? null : (answers.paceMinutes ?? 0) * 60 + (answers.paceSeconds ?? 0)}
+                                    onChange={seconds => patch({ paceMinutes: seconds === null ? undefined : Math.floor(seconds / 60), paceSeconds: seconds === null ? undefined : seconds % 60 })} />
+                            ) : null}
+                        </>
+                    ) : null}
+
+                    {answers.continuity === 'run-walk' ? (
+                        <>
+                            <h3>Walking pace</h3>
+                            <div className="stack">
+                                <button
+                                    type="button"
+                                    className={`choice${answers.walkPaceKnown === true ? ' selected' : ''}`}
+                                    onClick={() => patch({ walkPaceKnown: true })}
+                                >
+                                    <strong>I know it</strong>
+                                </button>
+                                <button
+                                    type="button"
+                                    className={`choice${answers.walkPaceKnown === false ? ' selected' : ''}`}
+                                    onClick={() => patch({ walkPaceKnown: false })}
+                                >
+                                    <strong>I don&apos;t know</strong>
+                                    <span className="muted">
+                                        We will use {formatPaceSeconds(DEFAULT_WALK_PACE_SECONDS)}/km (5 km/h), an
+                                        ordinary walking speed. You can change it on the plan.
+                                    </span>
+                                </button>
+                            </div>
+                            {answers.walkPaceKnown ? (
+                                <PaceInput label="Walking pace (min/km)" required
+                                    value={answers.walkPaceMinutes === undefined && answers.walkPaceSeconds === undefined ? null : (answers.walkPaceMinutes ?? 0) * 60 + (answers.walkPaceSeconds ?? 0)}
+                                    onChange={seconds => patch({ walkPaceMinutes: seconds === null ? undefined : Math.floor(seconds / 60), walkPaceSeconds: seconds === null ? undefined : seconds % 60 })} />
+                            ) : null}
+
+                            <h3>Run / walk minutes</h3>
+                            <p className="muted">Start with two minutes running and one minute walking, or edit both.</p>
+                            <div className="pace-row">
+                                <Num label="Run minutes" min={0.1} step={0.1} value={answers.runMinutes ?? 2} onChange={runMinutes => patch({ runMinutes: runMinutes ?? 0 })} />
+                                <Num label="Walk minutes" min={0.1} step={0.1} value={answers.walkMinutes ?? 1} onChange={walkMinutes => patch({ walkMinutes: walkMinutes ?? 0 })} />
+                            </div>
+                        </>
                     ) : null}
                 </>
             ) : null}
-
-            {answers.continuity === 'run-walk' ? (
-                <>
-                    <h2>Your walking pace</h2>
-                    <div className="stack">
-                        <button
-                            type="button"
-                            className={`choice${answers.walkPaceKnown === true ? ' selected' : ''}`}
-                            onClick={() => patch({ walkPaceKnown: true })}
-                        >
-                            <strong>I know it</strong>
-                        </button>
-                        <button
-                            type="button"
-                            className={`choice${answers.walkPaceKnown === false ? ' selected' : ''}`}
-                            onClick={() => patch({ walkPaceKnown: false })}
-                        >
-                            <strong>I don&apos;t know</strong>
-                        </button>
-                    </div>
-                    {answers.walkPaceKnown ? (
-                        <PaceInput label="Walking pace (min/km)" required
-                            value={answers.walkPaceMinutes === undefined && answers.walkPaceSeconds === undefined ? null : (answers.walkPaceMinutes ?? 0) * 60 + (answers.walkPaceSeconds ?? 0)}
-                            onChange={seconds => patch({ walkPaceMinutes: seconds === null ? undefined : Math.floor(seconds / 60), walkPaceSeconds: seconds === null ? undefined : seconds % 60 })} />
-                    ) : null}
-                </>
-            ) : null}
-
-            {answers.continuity === 'run-walk' && <>
-                <h2>Run / walk intervals</h2>
-                <p className="muted">Start with two minutes running and one minute walking, or edit both durations.</p>
-                <div className="pace-row">
-                    <Num label="Run minutes" min={0.1} step={0.1} value={answers.runMinutes ?? 2} onChange={runMinutes => patch({ runMinutes: runMinutes ?? 0 })} />
-                    <Num label="Walk minutes" min={0.1} step={0.1} value={answers.walkMinutes ?? 1} onChange={walkMinutes => patch({ walkMinutes: walkMinutes ?? 0 })} />
-                </div>
-            </>}
 
             {/* Optional, and about today's session rather than the runner, so always offered. */}
             <h2>Time for this workout</h2>

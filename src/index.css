@@ -52,6 +52,13 @@ h1 {
   border-top: 1px solid var(--accent-dim);
 }
 
+/* A sub-question inside one h2 section, e.g. the paces under "Your running". */
+.card h3 {
+  color: var(--text-h);
+  font-size: 1.05rem;
+  margin: 22px 0 10px;
+}
+
 button,
 input {
   font: inherit;

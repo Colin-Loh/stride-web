@@ -86,6 +86,15 @@ export const PROPOSED_TEMPO_SHAPE = {
  */
 export const DEFAULT_EASY_PACE_SECONDS = 9 * 60
 
+/**
+ * PROPOSED DEFAULT -- REQUIRES PRODUCT REVIEW.
+ *
+ * Walking pace for a run/walk runner who does not know theirs: 12:00/km (5 km/h), an
+ * ordinary walking speed and clearly slower than the 9:00/km jog default. Daniels
+ * gives no walking pace, so this is our number, not his.
+ */
+export const DEFAULT_WALK_PACE_SECONDS = 12 * 60
+
 export const EFFORT_LABELS: Record<'warmup' | 'run' | 'cooldown', string> = {
     warmup: 'Easy, conversational — you should be able to talk in sentences',
     run: 'Steady and controlled at your target effort',

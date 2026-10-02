@@ -62,6 +62,7 @@ export function isPlan(v: unknown): v is PersonalizedWorkout {
     // 'distance-and-time' and comfortableCapacity only appear in plans saved before weekly distance replaced them.
     && ['unknown', 'reported-pace', 'distance-and-time', 'race', 'default'].includes(String(b.speedSource))
     && optionalPositive(b.vdot) && optionalPositive(b.weeklyKm) && optionalPositive(b.daysPerWeek) && (b.reportedSpeedKmh === undefined || speed(b.reportedSpeedKmh))
+    && (b.walkSpeedSource === undefined || b.walkSpeedSource === null || ['reported', 'default'].includes(String(b.walkSpeedSource)))
     && (b.vdotSource === undefined || b.vdotSource === null || ['race', 'easy-pace'].includes(String(b.vdotSource)))
     && (b.race === undefined || b.race === null || (record(b.race) && positive(b.race.distanceKm) && positive(b.race.seconds)))
     && ['continuous', 'run-walk'].includes(String(b.continuity))

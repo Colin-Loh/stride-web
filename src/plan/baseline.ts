@@ -1,5 +1,5 @@
 import { isPositiveFinite, speedFromPaceSecondsPerKm } from './convert'
-import { DEFAULT_EASY_PACE_SECONDS } from './rules'
+import { DEFAULT_EASY_PACE_SECONDS, DEFAULT_WALK_PACE_SECONDS } from './rules'
 import type { BaselineAnswers, PersonalBaseline } from './types'
 import { danielsSpeeds, vdotFromEasySpeed, vdotFromRace, VDOT_RANGE } from './vdot'
 
@@ -131,15 +131,18 @@ export function derivePersonalBaseline(
     const continuity = answers.continuity ?? 'continuous'
 
     let walkSpeedKmh: number | null = null
+    let walkSpeedSource: PersonalBaseline['walkSpeedSource'] = null
     if (continuity === 'run-walk') {
         if (answers.walkPaceKnown) {
-            walkSpeedKmh = paceToSpeed(
-                answers.walkPaceMinutes,
-                answers.walkPaceSeconds,
-            )
-        }
-        if (walkSpeedKmh === null) {
-            missing.push('Your comfortable walking pace')
+            walkSpeedKmh = paceToSpeed(answers.walkPaceMinutes, answers.walkPaceSeconds)
+            if (walkSpeedKmh === null) missing.push('A walking pace with seconds between 00 and 59')
+            else walkSpeedSource = 'reported'
+        } else if (answers.walkPaceKnown === false) {
+            // Not known: an ordinary walking speed, so walk spells still have a speed and distance.
+            walkSpeedKmh = speedFromPaceSecondsPerKm(DEFAULT_WALK_PACE_SECONDS)
+            walkSpeedSource = 'default'
+        } else {
+            missing.push('Your walking pace, or that you do not know it')
         }
     }
 
@@ -158,6 +161,7 @@ export function derivePersonalBaseline(
         daysPerWeek,
         continuity,
         walkSpeedKmh,
+        walkSpeedSource,
         runSeconds: Math.max(1, Math.round((answers.runMinutes ?? 2) * 60)),
         walkSeconds: Math.max(1, Math.round((answers.walkMinutes ?? 1) * 60)),
         availableSeconds,

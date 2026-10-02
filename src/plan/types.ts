@@ -81,6 +81,8 @@ export interface PersonalBaseline {
     daysPerWeek?: number | null
     continuity: 'continuous' | 'run-walk'
     walkSpeedKmh: number | null
+    /** 'default' means the runner did not know their walking pace, so DEFAULT_WALK_PACE_SECONDS stands in. */
+    walkSpeedSource?: 'reported' | 'default' | null
     runSeconds?: number
     walkSeconds?: number
     availableSeconds: number | null
