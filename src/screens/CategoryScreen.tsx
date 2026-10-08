@@ -4,6 +4,7 @@ interface Props {
     name: string
     selected?: WorkoutId
     onPick: (id: PickableWorkoutId) => void
+    onShowPlan: () => void
     onChangeName: () => void
     onEditAnswers: () => void
 }
@@ -20,6 +21,7 @@ export function CategoryScreen({
     name,
     selected,
     onPick,
+    onShowPlan,
     onChangeName,
     onEditAnswers,
 }: Props) {
@@ -32,6 +34,9 @@ export function CategoryScreen({
             <p className="lede">
                 Each one is built around your own running, using Jack Daniels' training paces.
             </p>
+            <button type="button" className="primary" onClick={onShowPlan}>
+                My training plan
+            </button>
             <div className="stack">
                 {WORKOUTS.map((workout) => (
                     <button

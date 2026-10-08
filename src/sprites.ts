@@ -1,4 +1,4 @@
-import type { Character } from './storage'
+import type { Character } from './domain/preferences'
 
 interface SpriteSheet {
     url: string

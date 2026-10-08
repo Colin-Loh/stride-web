@@ -1,119 +1,64 @@
-import { PlanSectionEditor } from '../components/PlanSectionEditor'
-import { RULES_DISCLAIMER } from '../plan/copy'
-import { roundSpeedUp } from '../plan/convert'
-import { useMemo, useState } from 'react'
-import {
-    formatPaceSeconds,
-    formatSpan,
-    isPositiveFinite,
-} from '../plan/convert'
-import {
-    calculateWorkoutTotals,
-} from '../plan/metrics'
-import { validateWorkout } from '../plan/validation'
-import type { PersonalizedWorkout, PlanSection } from '../plan/types'
+import { PaceCards } from '../components/PaceCards'
+import type { Session, TrainingPlan } from '../domain/types'
+import { formatSpan } from '../plan/convert'
+import { currentWeekIndex } from '../plan/dates'
+import { calculateWorkoutTotals } from '../plan/metrics'
 
 interface Props {
-    workout: PersonalizedWorkout
-    onChange: (workout: PersonalizedWorkout) => void
-    onStart: () => void
+    plan: TrainingPlan
+    onOpenSession: (sessionId: string) => void
     onBack: () => void
+    /** The day to treat as today; defaults to now. */
+    today?: Date
 }
 
-export function PlanScreen({ workout, onChange, onStart, onBack }: Props) {
-    const [invalidInputs, setInvalidInputs] = useState<Record<string, boolean>>({})
-    const totals = useMemo(
-        () => calculateWorkoutTotals(workout.sections),
-        [workout.sections],
-    )
-    const validation = useMemo(() => validateWorkout(workout), [workout])
+function sessionSummary(session: Session): string {
+    const totals = calculateWorkoutTotals(session.sections)
+    if (totals.distanceKm !== null) return `${totals.distanceKm.toFixed(1)} km`
+    return totals.durationSeconds === null ? 'by effort' : formatSpan(totals.durationSeconds)
+}
 
-    const replace = (next: PlanSection) =>
-        onChange({
-            ...workout,
-            sections: workout.sections.map((item) =>
-                item.id === next.id ? next : item,
-            ),
-        })
-
-
+/** The training plan: the runner's Daniels paces, then every week with its sessions. */
+export function PlanScreen({ plan, onOpenSession, onBack, today = new Date() }: Props) {
+    const current = currentWeekIndex(plan.startDate, plan.weeks.length, today)
     return (
         <section className="card">
-            <p className="eyebrow">{workout.categoryName} · tailored</p>
-            <h1>Your workout</h1>
-            <p className="muted">{RULES_DISCLAIMER}</p>
-            <p className="muted">Treadmill speeds round up to 0.1 km/h. Distance is estimated; time targets stay fixed.</p>
+            <p className="eyebrow">Training plan · {plan.weeks.length} weeks</p>
+            <h1>Your plan</h1>
 
-            <ul className="reasons">
-                {workout.explanation.map((line) => (
-                    <li key={line}>{line}</li>
+            <h2>Your paces</h2>
+            <PaceCards paces={plan.paces} />
+            <p className="muted">Treadmill speeds round up to 0.1 km/h.</p>
+
+            {plan.notes.length > 0 ? (
+                <div className="notice">
+                    {plan.notes.map((line) => (<p key={line}>{line}</p>))}
+                </div>
+            ) : null}
+
+            <h2>Week by week</h2>
+            <ol className="weeks">
+                {plan.weeks.map((week, index) => (
+                    <li key={week.id} className={`week${index === current ? ' current' : ''}`} aria-current={index === current ? 'date' : undefined}>
+                        <h3>
+                            Week {week.number} · {week.targetKm.toFixed(1)} km
+                            {index === current ? <span className="week-badge">This week</span> : null}
+                        </h3>
+                        <p className="muted">Starts {week.startDate}</p>
+                        <div className="stack">
+                            {week.sessions.map((session) => (
+                                <button key={session.id} type="button" className="choice workout" onClick={() => onOpenSession(session.id)}>
+                                    <strong>{session.name}</strong>
+                                    <span className="muted">{sessionSummary(session)}</span>
+                                </button>
+                            ))}
+                        </div>
+                    </li>
                 ))}
-            </ul>
-
-            {workout.adjustments.length > 0 ? (
-                <div className="notice">
-                    {workout.adjustments.map((line) => (
-                        <p key={line}>{line}</p>
-                    ))}
-                </div>
-            ) : null}
-
-            <div className="plan-steps">{workout.sections.map(item => <PlanSectionEditor key={item.id} section={item} onChange={replace}
-                fixed={workout.category === 'test'} onValidity={valid => setInvalidInputs(current => ({ ...current, [item.id]: !valid }))} />)}</div>
-
-            <h2>Totals</h2>
-            <ul className="reasons">
-                <li>
-                    Total time:{' '}
-                    {totals.durationSeconds === null
-                        ? 'incomplete — a section has no speed'
-                        : formatSpan(totals.durationSeconds)}
-                </li>
-                <li>
-                    Total distance:{' '}
-                    {totals.distanceComplete && totals.distanceKm !== null
-                        ? `${totals.distanceKm.toFixed(2)} km (estimated from target speeds)`
-                        : 'incomplete — a section has no speed'}
-                </li>
-                <li>
-                    Overall pace:{' '}
-                    {totals.paceSecondsPerKm === null
-                        ? 'unavailable'
-                        : `${formatPaceSeconds(totals.paceSecondsPerKm)} min/km`}
-                </li>
-                <li>
-                    Average speed:{' '}
-                    {isPositiveFinite(totals.averageSpeedKmh)
-                        ? `${roundSpeedUp(totals.averageSpeedKmh).toFixed(1)} km/h`
-                        : 'unavailable'}
-                </li>
-            </ul>
-
-            {!validation.ok ? (
-                <div className="notice">
-                    {validation.issues.map((issue) => (
-                        <p key={issue.message}>{issue.message}</p>
-                    ))}
-                </div>
-            ) : null}
+            </ol>
 
             <div className="actions">
-                <button
-                    type="button"
-                    className="primary"
-                    disabled={!validation.ok || Object.values(invalidInputs).some(Boolean)}
-                    onClick={onStart}
-                >
-                    Start this workout
-                </button>
-                {!validation.ok ? (
-                    <p className="muted">
-                        Correct the plan above before starting. Timed sections can run without a speed.
-                    </p>
-                ) : null}
-                <button type="button" className="link" onClick={onBack}>
-                    Pick a different session
-                </button>
+                <button type="button" className="link" onClick={onBack}>Pick a single session</button>
             </div>
         </section>
     )

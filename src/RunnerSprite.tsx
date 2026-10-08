@@ -1,6 +1,6 @@
 import type { CSSProperties } from 'react'
 import { CHARACTER_SPRITES } from './sprites'
-import type { Character } from './storage'
+import type { Character } from './domain/preferences'
 
 export type RunnerState = 'running' | 'idle'
 
