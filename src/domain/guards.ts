@@ -1,3 +1,4 @@
+import { MAX_SPEED, MIN_SPEED } from '../plan/convert'
 import { ZONES } from '../plan/daniels'
 import { isAnswers as isAnswerValues } from '../plan/questions'
 import type { PersonalBaseline, PersonalizedWorkout, PlanSection } from '../plan/types'
@@ -10,10 +11,8 @@ import { SCHEMA_VERSION, type Answers, type PaceSet, type RunSession, type Sessi
  * fail here and the repository reports them with the "outdated or invalid" notice.
  */
 
-const MIN_SPEED_KMH = 0.5
-const MAX_SPEED_KMH = 25
+/** Rate of perceived exertion runs from 1 to 10. */
 const MAX_RPE = 10
-const MAX_OFFSET = 25
 
 const record = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v)
 const finite = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v)
@@ -22,12 +21,12 @@ const positive = (v: unknown): v is number => finite(v) && v > 0
 const text = (v: unknown): v is string => typeof v === 'string'
 const strings = (v: unknown): v is string[] => Array.isArray(v) && v.every(text)
 const nullOr = (check: (v: unknown) => boolean) => (v: unknown) => v === null || check(v)
-const isSpeed = (v: unknown) => v === null || (finite(v) && v >= MIN_SPEED_KMH && v <= MAX_SPEED_KMH)
+const isSpeed = (v: unknown) => v === null || (finite(v) && v >= MIN_SPEED && v <= MAX_SPEED)
 const isoDateTime = (v: unknown): v is string => text(v) && /^\d{4}-\d{2}-\d{2}T/.test(v) && Number.isFinite(Date.parse(v))
 const isoDate = (v: unknown): v is string => text(v) && /^\d{4}-\d{2}-\d{2}$/.test(v) && Number.isFinite(Date.parse(`${v}T00:00:00Z`))
 
 /** The fields every stored record carries. */
-export function isStamped(v: unknown): v is Stamped {
+function isStamped(v: unknown): v is Stamped {
     return record(v) && text(v.id) && v.id.length > 0 && v.schemaVersion === SCHEMA_VERSION
         && isoDateTime(v.createdAt) && isoDateTime(v.updatedAt)
 }
@@ -108,7 +107,7 @@ export function isRunSession(v: unknown): v is RunSession {
     if (run.pauseStartedAt !== undefined && (!nonnegative(run.pauseStartedAt) || run.pauseStartedAt < run.startedAt)) return false
     if (run.paused && !run.completed && run.startedAt > 0 && run.pauseStartedAt === undefined) return false
     if (!Array.isArray(run.speedChanges) || !run.speedChanges.every((e, i, all) => record(e) && nonnegative(e.atMs)
-        && finite(e.offset) && Math.abs(e.offset) <= MAX_OFFSET && (i === 0 || e.atMs >= all[i - 1].atMs))) return false
+        && finite(e.offset) && Math.abs(e.offset) <= MAX_SPEED && (i === 0 || e.atMs >= all[i - 1].atMs))) return false
     return !run.completed || (record(run.result) && nonnegative(run.result.elapsedMs)
         && (run.result.distanceKm === null || nonnegative(run.result.distanceKm)))
 }

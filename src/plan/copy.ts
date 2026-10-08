@@ -71,4 +71,4 @@ export const REDUCED_QUALITY_NOTE =
     'Your training effort asks for more speed days than your running days leave room for. Each week keeps a long run and at least one E run, so some speed days were left out.'
 
 export const CONFLICT_NOTE =
-    'Daniels caps the long run at 25% of the week (or 150 minutes), so with this many runs a week some of your E runs are longer than your long run. The research gives no exception to that cap, so it has not been relaxed.'
+    'Daniels caps the long run at a share of the week and at a maximum time, so with this many runs a week some of your E runs are longer than your long run. The research gives no exception to that cap, so it has not been relaxed.'
