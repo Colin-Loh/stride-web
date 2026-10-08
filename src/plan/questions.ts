@@ -151,7 +151,7 @@ export const QUESTIONS = [
 
 export type QuestionId = (typeof QUESTIONS)[number]['id']
 
-export type Answers = Partial<Record<QuestionId, AnswerValue>>
+export type AnswerValues = Partial<Record<QuestionId, AnswerValue>>
 
 const QUESTION_IDS: ReadonlySet<string> = new Set(QUESTIONS.map((question) => question.id))
 
@@ -211,26 +211,26 @@ export function valueError(input: Input, value: unknown, today?: Date): string |
 }
 
 /** Whether an optional or conditional question applies given the answers so far. */
-export function isAsked(question: Question, answers: Answers): boolean {
+export function isAsked(question: Question, answers: AnswerValues): boolean {
     const gate = question.askWhen
     if (!gate) return true
     const current = answers[gate.id as QuestionId]
     return typeof current === 'string' && gate.in.includes(current)
 }
 
-export function visibleQuestions(answers: Answers): readonly Question[] {
+export function visibleQuestions(answers: AnswerValues): readonly Question[] {
     return QUESTIONS.filter((question) => isAsked(question, answers))
 }
 
 /** Error to show for a question's current answer. An empty optional answer is fine. */
-export function answerError(question: Question, answers: Answers, today?: Date): string | null {
+export function answerError(question: Question, answers: AnswerValues, today?: Date): string | null {
     const value = answers[question.id as QuestionId]
     if (value === undefined) return question.required ? 'This answer is required.' : null
     return valueError(question.input, value, today)
 }
 
 /** Asked questions that still lack a valid required answer. */
-export function missingQuestions(answers: Answers, today?: Date): Question[] {
+export function missingQuestions(answers: AnswerValues, today?: Date): Question[] {
     return visibleQuestions(answers).filter((question) => answerError(question, answers, today) !== null)
 }
 
@@ -238,7 +238,7 @@ export function missingQuestions(answers: Answers, today?: Date): Question[] {
  * Type guard for stored answers. Any unknown id fails, so answers from an older question list
  * (including questions since removed) are discarded with the usual storage notice.
  */
-export function isAnswers(value: unknown): value is Answers {
+export function isAnswers(value: unknown): value is AnswerValues {
     if (!isRecord(value)) return false
     return Object.entries(value).every(([id, answer]) => {
         const question = QUESTIONS.find((candidate) => candidate.id === id)

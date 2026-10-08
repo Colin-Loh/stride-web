@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { playCelebration, prepareRunAudio, stopCelebration, stopCue } from '../audio'
 import { derivePersonalBaseline } from '../plan/baseline'
-import { missingQuestions, type Answers } from '../plan/questions'
+import { missingQuestions, type AnswerValues } from '../plan/questions'
 import { generatePersonalizedWorkout } from '../plan/generate'
 import { runnablePlan } from '../plan/runnable'
 import type { PersonalizedWorkout } from '../plan/types'
@@ -38,7 +38,7 @@ export function useAppFlow() {
   const persistSession = useCallback((next: RunSession | null) => { setSession(next); saveSession(next) }, [])
   function persistProfile(next: Profile) { setProfile(next); saveProfile(next) }
   function persistPlan(next: PersonalizedWorkout | null) { setPlan(next); savePlan(next) }
-  function buildPlan(category: PickableWorkoutId, source: Answers) {
+  function buildPlan(category: PickableWorkoutId, source: AnswerValues) {
     persistPlan(generatePersonalizedWorkout({ category, baseline: derivePersonalBaseline(source) }))
     setView('plan')
   }
@@ -47,7 +47,7 @@ export function useAppFlow() {
       setPendingCategory(category); setEditingAnswers(false); setView('baseline')
     } else buildPlan(category, answers)
   }
-  function finishAnswers(next: Answers) {
+  function finishAnswers(next: AnswerValues) {
     setAnswers(next); saveBaseline(next); setEditingAnswers(false)
     if (editingAnswers && !pendingCategory) { setView('category'); return }
     buildPlan(pendingCategory ?? 'long', next)

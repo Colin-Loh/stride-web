@@ -4,7 +4,7 @@ import { roundSpeedUp } from './convert'
 import { repetitionSession, sessionCapKm, trainingSpeedsKmh, vdotFromRace } from './daniels'
 import { generatePersonalizedWorkout } from './generate'
 import { calculateSectionMetrics, calculateWorkoutTotals } from './metrics'
-import type { Answers } from './questions'
+import type { AnswerValues } from './questions'
 import { runnablePlan } from './runnable'
 import { planToSchema } from './schema'
 import { validateWorkout } from './validation'
@@ -14,13 +14,13 @@ const TODAY = new Date(2026, 9, 8)
 const VDOT = vdotFromRace(5, 1500)!
 const SPEEDS = trainingSpeedsKmh(VDOT)!
 
-const answers = (overrides: Answers = {}): Answers => ({
+const answers = (overrides: AnswerValues = {}): AnswerValues => ({
     fitness_method: 'recent_race', recent_race_distance: 5, recent_race_time: 1500,
     training_focus: '10k', weekly_volume: 40, running_days: 4, training_effort: 'advanced_quality', ...overrides,
 })
-const build = (category: WorkoutId, overrides: Answers = {}, distanceKm?: number) =>
+const build = (category: WorkoutId, overrides: AnswerValues = {}, distanceKm?: number) =>
     generatePersonalizedWorkout({ category, baseline: derivePersonalBaseline(answers(overrides)), today: TODAY, distanceKm })
-const main = (category: WorkoutId, overrides: Answers = {}, distanceKm?: number) =>
+const main = (category: WorkoutId, overrides: AnswerValues = {}, distanceKm?: number) =>
     build(category, overrides, distanceKm).sections.find((s) => s.id === 'main')!
 
 describe('derivePersonalBaseline', () => {

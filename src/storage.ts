@@ -1,5 +1,5 @@
 import { roundSpeedUp } from './plan/convert'
-import { isAnswers, type Answers } from './plan/questions'
+import { isAnswers, type AnswerValues } from './plan/questions'
 import type { PersonalizedWorkout, PlanSection } from './plan/types'
 import type { WorkoutId } from './workouts'
 import type { SpeedChange } from './run/engine'
@@ -109,9 +109,9 @@ export function loadMuted(): boolean {
   return read<boolean | number>('muted', false, (v): v is boolean | number => typeof v === 'boolean' || v === 0 || v === 1) ? true : false
 }
 export const saveMuted = (v: boolean) => write('muted', v)
-/** Answers saved in the old question format have unknown ids, fail the check and are discarded with the usual notice. */
-export const loadBaseline = () => read<Answers>('baseline', {}, isAnswers)
-export const saveBaseline = (v: Answers) => write('baseline', v)
+/** AnswerValues saved in the old question format have unknown ids, fail the check and are discarded with the usual notice. */
+export const loadBaseline = () => read<AnswerValues>('baseline', {}, isAnswers)
+export const saveBaseline = (v: AnswerValues) => write('baseline', v)
 export function elapsedMs(session: RunSession, now = Date.now()): number {
   if (session.completed && session.result) return session.result.elapsedMs
   if (!session.startedAt) return 0

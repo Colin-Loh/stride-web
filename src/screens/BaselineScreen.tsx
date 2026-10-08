@@ -1,16 +1,16 @@
 import { useState } from 'react'
 import { QuestionField } from '../components/QuestionField'
-import { answerError, missingQuestions, visibleQuestions, type AnswerValue, type Answers, type QuestionId } from '../plan/questions'
+import { answerError, missingQuestions, visibleQuestions, type AnswerValue, type AnswerValues, type QuestionId } from '../plan/questions'
 
 interface Props {
-    initial: Answers
+    initial: AnswerValues
     onBack: () => void
-    onDone: (answers: Answers) => void
+    onDone: (answers: AnswerValues) => void
 }
 
 /** Asks every question that applies to the answers so far, straight from the question list. */
 export function BaselineScreen({ initial, onBack, onDone }: Props) {
-    const [answers, setAnswers] = useState<Answers>(initial)
+    const [answers, setAnswers] = useState<AnswerValues>(initial)
     const today = new Date()
     const patch = (id: QuestionId, value: AnswerValue | undefined) =>
         setAnswers((current) => {

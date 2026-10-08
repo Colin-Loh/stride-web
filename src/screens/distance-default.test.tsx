@@ -3,10 +3,10 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import { BaselineScreen } from './BaselineScreen'
 import { derivePersonalBaseline } from '../plan/baseline'
 import { generatePersonalizedWorkout } from '../plan/generate'
-import type { Answers } from '../plan/questions'
+import type { AnswerValues } from '../plan/questions'
 
 const noop = () => {}
-const USER_REPORT: Answers = {
+const USER_REPORT: AnswerValues = {
     fitness_method: 'recent_race', recent_race_distance: 5, recent_race_time: 35 * 60,
     training_focus: 'half_marathon', weekly_volume: 10, running_days: 3, training_effort: 'base',
 }

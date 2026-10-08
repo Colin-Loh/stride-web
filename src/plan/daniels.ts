@@ -43,7 +43,7 @@
 const METRES_PER_KM = 1000
 const SECONDS_PER_MINUTE = 60
 const SECONDS_PER_HOUR = 3600
-const DAYS_PER_WEEK = 7
+export const DAYS_PER_WEEK = 7
 /** Calendar lengths in milliseconds, for dating plan weeks. */
 export const MS_PER_DAY = 24 * SECONDS_PER_HOUR * 1000
 export const MS_PER_WEEK = DAYS_PER_WEEK * MS_PER_DAY
