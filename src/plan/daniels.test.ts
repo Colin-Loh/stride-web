@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
-    isExtrapolatedVdot, LONG_RUN_MAX_SECONDS, longRunCapKm, oxygenCost, predictRaceSeconds, qualitySessionsPerWeek,
-    RACE_DISTANCES, seasonPhase, sessionCapKm, sustainableFraction, thresholdSessionSeconds, trainingSpeedsKmh,
+    intervalSession, isExtrapolatedVdot, LONG_RUN_MAX_SECONDS, longRunCapKm, oxygenCost, planWeekCount, predictRaceSeconds,
+    PROGRESSION, qualityKinds, qualitySessionsPerWeek, RACE_DISTANCES, repetitionSession, weekStructure, weeklyVolumes, seasonPhase, sessionCapKm, sustainableFraction, thresholdSessionSeconds, trainingSpeedsKmh,
     vdotFromRace, ZONES, type Zone,
 } from './daniels'
 
@@ -166,5 +166,105 @@ describe('plan structure', () => {
         expect(seasonPhase(0.5)?.name).toBe('Final Quality')
         expect(seasonPhase(25)).toBeNull()
         expect(seasonPhase(0)).toBeNull()
+    })
+})
+
+describe('weekly progression', () => {
+    const STEP = 3 * MILE
+
+    it('holds the start volume for four weeks, then adds one mile per run (research example: 15 km, 3 runs)', () => {
+        const volumes = weeklyVolumes(15, 3, 12)
+        expect(volumes).toHaveLength(12)
+        expect(volumes.slice(0, 4)).toEqual([15, 15, 15, 15])
+        for (const week of [4, 5, 6, 7]) expect(volumes[week]).toBeCloseTo(15 + STEP, 10)
+        for (const week of [8, 9, 10, 11]) expect(volumes[week]).toBeCloseTo(15 + 2 * STEP, 10)
+        expect(STEP).toBeCloseTo(4.828032, 6)
+    })
+
+    it('caps a single step at ten miles', () => {
+        const volumes = weeklyVolumes(50, 14, 5)
+        expect(volumes[4]).toBeCloseTo(50 + 10 * MILE, 10)
+        expect(PROGRESSION.maxIncreaseKm).toBeCloseTo(16.09344, 5)
+    })
+
+    it('never decreases and needs a positive start and week count', () => {
+        const volumes = weeklyVolumes(20, 5, 30)
+        volumes.slice(1).forEach((km, i) => expect(km).toBeGreaterThanOrEqual(volumes[i]))
+        expect(weeklyVolumes(0, 3, 12)).toEqual([])
+        expect(weeklyVolumes(15, 3, 0)).toEqual([])
+        expect(weeklyVolumes(15, 0, 6)).toEqual(Array(6).fill(15))
+    })
+
+    it('plans at least 12 weeks, or until the goal race, up to a limit', () => {
+        expect(planWeekCount(null)).toBe(12)
+        expect(planWeekCount(5)).toBe(12)
+        expect(planWeekCount(20.2)).toBe(21)
+        expect(planWeekCount(500)).toBe(52)
+    })
+})
+
+describe('week structure', () => {
+    it('keeps a long run and at least one E run, giving speed days what is left', () => {
+        expect(weekStructure(3, 'base')).toEqual({ long: 1, quality: 0, easy: 2 })
+        expect(weekStructure(3, 'advanced_quality')).toEqual({ long: 1, quality: 1, easy: 1 })
+        expect(weekStructure(5, 'advanced_quality')).toEqual({ long: 1, quality: 2, easy: 2 })
+        expect(weekStructure(2, 'base_quality')).toEqual({ long: 1, quality: 0, easy: 1 })
+        expect(weekStructure(1, 'base')).toEqual({ long: 1, quality: 0, easy: 0 })
+        expect(weekStructure(0, null)).toEqual({ long: 0, quality: 0, easy: 0 })
+    })
+
+    it('rotates speed sessions in the order R, I, T, one emphasis per level', () => {
+        expect(qualityKinds(0, 1)).toEqual(['repetition'])
+        expect(qualityKinds(4, 1)).toEqual(['interval'])
+        expect(qualityKinds(8, 1)).toEqual(['threshold'])
+        expect(qualityKinds(0, 2)).toEqual(['repetition', 'interval'])
+        expect(qualityKinds(0, 0)).toEqual([])
+    })
+})
+
+describe('interval and repetition sizing', () => {
+    const SPEED_I = 12
+    const SPEED_R = 14
+
+    it('fits as many 3-minute I bouts as the cap allows, with an equal jog', () => {
+        const session = intervalSession(40, SPEED_I)
+        expect(session).toEqual({ reps: 5, repSeconds: 180, recoverySeconds: 180 })
+        expect((session.reps * SPEED_I * session.repSeconds) / 3600).toBeLessThanOrEqual(sessionCapKm('I', 40))
+    })
+
+    it('shrinks to one shorter I bout, never below a minute, when a full bout exceeds the cap', () => {
+        const session = intervalSession(6, SPEED_I)
+        expect(session.reps).toBe(1)
+        expect(session.repSeconds).toBe(Math.floor((sessionCapKm('I', 6) / SPEED_I) * 3600))
+        expect((SPEED_I * session.repSeconds) / 3600).toBeLessThanOrEqual(sessionCapKm('I', 6))
+        expect(intervalSession(1, SPEED_I).repSeconds).toBe(60)
+    })
+
+    it('builds R reps of 400 m or two minutes at most, with recovery twice the work, inside the R cap', () => {
+        const session = repetitionSession(40, SPEED_R)
+        expect(session.repSeconds).toBeLessThanOrEqual(120)
+        expect(session.repSeconds).toBe(Math.floor((0.4 / SPEED_R) * 3600))
+        expect(session.recoverySeconds).toBe(2 * session.repSeconds)
+        expect(session.reps).toBe(Math.floor(sessionCapKm('R', 40) / ((SPEED_R * session.repSeconds) / 3600) + 1e-9))
+        expect((session.reps * SPEED_R * session.repSeconds) / 3600).toBeLessThanOrEqual(sessionCapKm('R', 40))
+    })
+
+    it('limits R work to the lesser of 5% of the week or five miles', () => {
+        const huge = repetitionSession(400, SPEED_R)
+        expect((huge.reps * SPEED_R * huge.repSeconds) / 3600).toBeLessThanOrEqual(5 * MILE)
+        expect((huge.reps * SPEED_R * huge.repSeconds) / 3600).toBeGreaterThan(5 * MILE - 0.4)
+    })
+
+    it('shortens one R rep to fit a tiny week and caps slow runners at two minutes', () => {
+        const tiny = repetitionSession(5, SPEED_R)
+        expect(tiny.reps).toBe(1)
+        expect((SPEED_R * tiny.repSeconds) / 3600).toBeLessThanOrEqual(sessionCapKm('R', 5))
+        expect(repetitionSession(40, 6).repSeconds).toBe(120)
+    })
+
+    it('falls back to placeholder reps when no pace or weekly distance is known', () => {
+        expect(intervalSession(null, null).reps).toBe(4)
+        expect(repetitionSession(40, null).reps).toBe(4)
+        expect(repetitionSession(null, SPEED_R).reps).toBe(4)
     })
 })
