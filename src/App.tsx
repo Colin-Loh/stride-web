@@ -20,7 +20,7 @@ export default function App({ repositories }: { repositories: Repositories }) {
       onContinue={(next, character) => { flow.persistName(next, character); flow.setView('category') }} />}
     {view === 'category' && <CategoryScreen name={name} selected={open?.workout.category}
       onChangeName={() => flow.setView('name')} onEditAnswers={flow.editAnswers} onPick={flow.pickCategory} onShowPlan={flow.showPlan} />}
-    {view === 'baseline' && <BaselineScreen initial={flow.answers?.values ?? {}} onBack={() => flow.setView('category')} onDone={flow.finishAnswers} />}
+    {view === 'baseline' && <BaselineScreen initial={flow.answers?.values ?? {}} submitAction={flow.submitAction} onBack={() => flow.setView('category')} onDone={flow.finishAnswers} />}
     {view === 'plan' && plan && <PlanScreen plan={plan} onOpenSession={flow.openSession} onBack={() => flow.setView('category')} />}
     {view === 'workout' && open && <WorkoutScreen workout={open.workout} onChange={flow.changeWorkout} onStart={flow.startWorkout}
       backLabel={open.sessionId ? 'Back to my plan' : 'Pick a different session'}

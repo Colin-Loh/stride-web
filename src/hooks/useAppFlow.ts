@@ -3,6 +3,7 @@ import { playCelebration, prepareRunAudio, stopCelebration, stopCue } from '../a
 import { DEFAULT_PREFERENCES, type Character, type Preferences } from '../domain/preferences'
 import { SCHEMA_VERSION, type Answers, type RunSession, type TrainingPlan } from '../domain/types'
 import { derivePersonalBaseline } from '../plan/baseline'
+import type { AnswersSubmitAction } from '../plan/copy'
 import { generatePersonalizedWorkout } from '../plan/generate'
 import { missingQuestions, type AnswerValues } from '../plan/questions'
 import { runnablePlan } from '../plan/runnable'
@@ -185,6 +186,7 @@ export function useAppFlow(repositories: Repositories) {
         finishAnswers, persistSession, changeWorkout, openSession, startWorkout, handleComplete, quitRun, toggleMute,
         persistName: (name: string, character: Character) => persistPreferences({ ...preferences, name, character }),
         dismissNotice: () => { clearStorageNotice(); setNotice('') },
+        submitAction: (pending?.kind ?? 'edit') as AnswersSubmitAction,
         editAnswers: () => { setPending(null); setView('baseline') },
     }
 }

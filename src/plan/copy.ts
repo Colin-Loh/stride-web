@@ -65,10 +65,19 @@ export const REPEAT_COPY: Record<'interval' | 'repetition', RepeatCopy> = {
 }
 
 export const RULES_DISCLAIMER =
-    'Paces and session sizes come from Jack Daniels\' VDOT formulas (see src/plan/daniels.ts). Warm-up lengths and other items marked TODO(verify) in that file are product defaults, not validated training advice.'
+    'Paces and session sizes follow Jack Daniels\' VDOT system. Some details, such as warm-up and cool-down lengths, are sensible defaults rather than Daniels\' exact prescriptions, so adjust them to how you feel.'
+
+/** Label for the answers screen's submit button, by what happens next. */
+export const ANSWERS_SUBMIT_LABELS = {
+    plan: 'Build my plan',
+    workout: 'Build my workout',
+    edit: 'Save my answers',
+} as const
+
+export type AnswersSubmitAction = keyof typeof ANSWERS_SUBMIT_LABELS
 
 export const REDUCED_QUALITY_NOTE =
     'Your training effort asks for more speed days than your running days leave room for. Each week keeps a long run and at least one E run, so some speed days were left out.'
 
 export const CONFLICT_NOTE =
-    'Daniels caps the long run at a share of the week and at a maximum time, so with this many runs a week some of your E runs are longer than your long run. The research gives no exception to that cap, so it has not been relaxed.'
+    'Daniels caps the long run at a share of the week and at a maximum time, so with this many runs a week some of your E runs are longer than your long run. Adding a running day spreads the distance out.'
