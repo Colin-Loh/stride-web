@@ -5,7 +5,7 @@ import { derivePersonalBaseline } from '../plan/baseline'
 import type { PersonalizedWorkout, PlanSection } from '../plan/types'
 
 const make = (sections?: PlanSection[]): PersonalizedWorkout => {
-  const plan = generatePersonalizedWorkout({ category: 'test', baseline: derivePersonalBaseline({ paceKnown: true, paceMinutes: 6 }) })
+  const plan = generatePersonalizedWorkout({ category: 'test', baseline: derivePersonalBaseline({ fitness_method: 'easy_pace', conversational_easy_pace: 360 }) })
   return sections ? { ...plan, sections } : plan
 }
 const section = (id: string, seconds: number, speed: number | null): PlanSection => ({ id, type: 'run', label: id,

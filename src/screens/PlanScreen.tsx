@@ -1,5 +1,5 @@
 import { PlanSectionEditor } from '../components/PlanSectionEditor'
-import { RULES_DISCLAIMER } from '../plan/rules'
+import { RULES_DISCLAIMER } from '../plan/copy'
 import { roundSpeedUp } from '../plan/convert'
 import { useMemo, useState } from 'react'
 import {
@@ -87,11 +87,6 @@ export function PlanScreen({ workout, onChange, onStart, onBack }: Props) {
                         ? `${roundSpeedUp(totals.averageSpeedKmh).toFixed(1)} km/h`
                         : 'unavailable'}
                 </li>
-                {workout.baseline.availableSeconds ? (
-                    <li className="muted">
-                        You said you have {formatSpan(workout.baseline.availableSeconds)}.
-                    </li>
-                ) : null}
             </ul>
 
             {!validation.ok ? (

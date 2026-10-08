@@ -14,7 +14,7 @@ const INTENSITY_LABELS: Record<WorkoutId, string> = {
     long: 'At your Daniels easy pace',
     tempo: 'At your Daniels threshold pace',
     cruise: 'At your Daniels threshold pace',
-    interval: 'At your Daniels repetition pace',
+    interval: 'At your Daniels interval pace',
 }
 
 export function CategoryScreen({

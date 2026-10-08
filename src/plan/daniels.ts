@@ -73,7 +73,7 @@ const PUBLISHED_TABLE_VDOT = { min: 30, max: 85 } as const
 // 3. Race distances offered for entering a result [9][10]
 // ---------------------------------------------------------------------------------------------
 
-export interface RaceDistance {
+interface RaceDistance {
     km: number
     label: string
 }
@@ -102,7 +102,7 @@ type ZonePace =
     /** Average speed of the equivalent race over this distance. */
     | { kind: 'race-equivalent'; distanceKm: number }
 
-export interface ZoneDefinition {
+interface ZoneDefinition {
     name: string
     pace: ZonePace
     /** Official percent of VO2max and of HRmax; null where the source publishes none. */
@@ -204,7 +204,7 @@ export const SESSION_STRUCTURE = {
     intervalFallbackReps: 4,
 } as const
 
-export interface TrainingEffort {
+interface TrainingEffort {
     id: 'base' | 'base_quality' | 'advanced_quality'
     label: string
     /** Speed days per week, in addition to the long run [11]. */
@@ -226,7 +226,7 @@ export const TRAINING_FOCUSES: readonly { id: string; label: string }[] = [
     { id: 'marathon', label: 'Marathon' },
 ]
 
-export interface SeasonPhase {
+interface SeasonPhase {
     name: string
     summary: string
 }

@@ -21,12 +21,12 @@ export function PlanSectionEditor({ section, onChange, onValidity, fixed = false
       onChange={v => onChange(setSectionPace(section, v))} onValidity={onValidity} />
     {section.runWalk && <>
       <div className="pace-row">
-        <NumberField label="Run minutes" step={0.1} min={0.1} value={Number((section.runWalk.runSeconds / 60).toFixed(2))}
+        <NumberField label="Work minutes" step={0.1} min={0.1} value={Number((section.runWalk.runSeconds / 60).toFixed(2))}
           onChange={v => onChange({ ...section, runWalk: { ...section.runWalk!, runSeconds: (v ?? 0) * 60 } })} />
-        <NumberField label="Walk minutes" step={0.1} min={0.1} value={Number((section.runWalk.walkSeconds / 60).toFixed(2))}
+        <NumberField label="Recovery minutes" step={0.1} min={0.1} value={Number((section.runWalk.walkSeconds / 60).toFixed(2))}
           onChange={v => onChange({ ...section, runWalk: { ...section.runWalk!, walkSeconds: (v ?? 0) * 60 } })} />
       </div>
-      <NumberField label="Walking speed (km/h)" step={0.1} min={0.5} max={25} value={section.runWalk.walkSpeedKmh ?? undefined}
+      <NumberField label="Recovery speed (km/h)" step={0.1} min={0.5} max={25} value={section.runWalk.walkSpeedKmh ?? undefined}
         onChange={v => onChange({ ...section, runWalk: { ...section.runWalk!, walkSpeedKmh: v === undefined ? null : roundSpeedUp(v) } })} />
     </>}
     <p className="muted">{metrics.durationSeconds === null ? 'Duration unknown' : formatSpan(metrics.durationSeconds)} · {metrics.distanceKm === null ? 'Distance unknown' : `${metrics.distanceKm.toFixed(2)} km estimated`}</p>

@@ -1,5 +1,6 @@
 import { roundSpeedUp } from './plan/convert'
-import type { BaselineAnswers, PersonalizedWorkout, PlanSection } from './plan/types'
+import { isAnswers, type Answers } from './plan/questions'
+import type { PersonalizedWorkout, PlanSection } from './plan/types'
 import type { WorkoutId } from './workouts'
 import type { SpeedChange } from './run/engine'
 
@@ -31,8 +32,6 @@ const nonnegative = (v: unknown): v is number => finite(v) && v >= 0
 const positive = (v: unknown): v is number => finite(v) && v > 0
 const speed = (v: unknown) => v === null || (finite(v) && v >= 0.5 && v <= 25)
 const category = (v: unknown) => ['test', 'easy', 'tempo', 'long', 'interval', 'cruise'].includes(String(v))
-/** Fields added after plans were first saved: absent and null are both fine. */
-const optionalPositive = (v: unknown) => v === undefined || v === null || positive(v)
 const strings = (v: unknown) => Array.isArray(v) && v.every(x => typeof x === 'string')
 function target(v: unknown): boolean {
   return record(v) && ((v.basis === 'time' && positive(v.durationSeconds) && v.distanceKm === undefined)
@@ -49,24 +48,21 @@ function section(v: unknown): v is PlanSection {
       && cue(v.runWalk.runLabel) && cue(v.runWalk.walkLabel) && cue(v.runWalk.runCue) && cue(v.runWalk.walkCue)
       && rpe(v.runWalk.runRpe) && rpe(v.runWalk.walkRpe)))
 }
+const nullOr = (check: (v: unknown) => boolean) => (v: unknown) => v === null || check(v)
+const nullableText = nullOr(v => typeof v === 'string')
+/** Baseline saved by this version. Plans from the old question format lack these fields and are discarded. */
+function isBaseline(b: Record<string, unknown>): boolean {
+  return nullOr(positive)(b.vdot) && nullOr(v => ['recent_race', 'estimated_race', 'easy_pace'].includes(String(v)))(b.fitnessMethod)
+    && nullOr(v => record(v) && positive(v.distanceKm) && positive(v.seconds))(b.race)
+    && nullOr(positive)(b.reportedEasySpeedKmh) && nullOr(nonnegative)(b.weeklyKm) && nullOr(positive)(b.daysPerWeek)
+    && nullableText(b.trainingEffort) && nullableText(b.trainingFocus) && nullableText(b.goalRaceDate)
+}
 export function isPlan(v: unknown): v is PersonalizedWorkout {
   if (!record(v) || !record(v.baseline)) return false
-  const b = v.baseline
-  // Plans saved before experience level was removed still carry a `level`; it is ignored.
   return category(v.category) && typeof v.categoryName === 'string'
     && Array.isArray(v.sections) && v.sections.length > 0 && v.sections.every(section)
     && new Set(v.sections.map(s => s.id)).size === v.sections.length
-    && strings(v.explanation) && strings(v.adjustments) && strings(b.missing)
-    && (b.availableSeconds === null || positive(b.availableSeconds))
-    && speed(b.speedKmh) && speed(b.walkSpeedKmh)
-    // 'distance-and-time' and comfortableCapacity only appear in plans saved before weekly distance replaced them.
-    && ['unknown', 'reported-pace', 'distance-and-time', 'race', 'default'].includes(String(b.speedSource))
-    && optionalPositive(b.vdot) && optionalPositive(b.weeklyKm) && optionalPositive(b.daysPerWeek) && (b.reportedSpeedKmh === undefined || speed(b.reportedSpeedKmh))
-    && (b.walkSpeedSource === undefined || b.walkSpeedSource === null || ['reported', 'default'].includes(String(b.walkSpeedSource)))
-    && (b.vdotSource === undefined || b.vdotSource === null || ['race', 'easy-pace'].includes(String(b.vdotSource)))
-    && (b.race === undefined || b.race === null || (record(b.race) && positive(b.race.distanceKm) && positive(b.race.seconds)))
-    && ['continuous', 'run-walk'].includes(String(b.continuity))
-    && (b.comfortableCapacity === undefined || b.comfortableCapacity === null || target(b.comfortableCapacity))
+    && strings(v.explanation) && strings(v.adjustments) && isBaseline(v.baseline)
 }
 export function isSession(v: unknown): v is RunSession {
   if (!record(v) || v.version !== 2 || !isPlan(v.plan) || v.workoutId !== v.plan.category) return false
@@ -113,17 +109,9 @@ export function loadMuted(): boolean {
   return read<boolean | number>('muted', false, (v): v is boolean | number => typeof v === 'boolean' || v === 0 || v === 1) ? true : false
 }
 export const saveMuted = (v: boolean) => write('muted', v)
-export const loadBaseline = () => read<BaselineAnswers>('baseline', {}, (v): v is BaselineAnswers => {
-  if (!record(v)) return false
-  for (const key of ['paceMinutes', 'paceSeconds', 'walkPaceMinutes', 'walkPaceSeconds', 'availableMinutes', 'runMinutes', 'walkMinutes', 'raceDistanceKm', 'raceSeconds', 'weeklyKm', 'daysPerWeek']) {
-    if (v[key] !== undefined && !nonnegative(v[key])) return false
-  }
-  return (v.continuity === undefined || ['continuous', 'run-walk'].includes(String(v.continuity)))
-    && (v.paceKnown === undefined || typeof v.paceKnown === 'boolean')
-    && (v.walkPaceKnown === undefined || typeof v.walkPaceKnown === 'boolean')
-    && (v.raceKnown === undefined || typeof v.raceKnown === 'boolean')
-})
-export const saveBaseline = (v: BaselineAnswers) => write('baseline', v)
+/** Answers saved in the old question format have unknown ids, fail the check and are discarded with the usual notice. */
+export const loadBaseline = () => read<Answers>('baseline', {}, isAnswers)
+export const saveBaseline = (v: Answers) => write('baseline', v)
 export function elapsedMs(session: RunSession, now = Date.now()): number {
   if (session.completed && session.result) return session.result.elapsedMs
   if (!session.startedAt) return 0

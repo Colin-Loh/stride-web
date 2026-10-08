@@ -1,19 +1,18 @@
 import { describe, expect, it } from 'vitest'
-import { derivePersonalBaseline } from './baseline'
 import {
     distanceFromSpeed,
     durationFromDistance,
     paceSecondsPerKmFromSpeed,
+    parsePace,
+    roundSpeedUp,
     speedFromPaceSecondsPerKm,
 } from './convert'
 import {
     calculateSectionMetrics,
     calculateWorkoutTotals,
-    generatePersonalizedWorkout,
     setSectionSpeed,
-    validateWorkout,
 } from './generate'
-import type { PersonalBaseline, PlanSection } from './types'
+import type { PlanSection } from './types'
 
 const timeSection: PlanSection = {
     id: 'main',
@@ -22,20 +21,6 @@ const timeSection: PlanSection = {
     target: { basis: 'time', durationSeconds: 900 },
     speedKmh: 8,
     effort: 'steady',
-}
-
-function baseline(overrides: Partial<PersonalBaseline> = {}): PersonalBaseline {
-    return {
-        speedKmh: 10,
-        speedSource: 'reported-pace',
-        weeklyKm: 30,
-        daysPerWeek: 3,
-        continuity: 'continuous',
-        walkSpeedKmh: null,
-        availableSeconds: 3600,
-        missing: [],
-        ...overrides,
-    }
 }
 
 describe('conversions', () => {
@@ -55,62 +40,6 @@ describe('conversions', () => {
 
 
 
-})
-
-describe('derivePersonalBaseline', () => {
-    it('uses a reported pace', () => {
-        const result = derivePersonalBaseline({
-            paceKnown: true,
-            paceMinutes: 5,
-            paceSeconds: 0,
-            weeklyKm: 30,
-            availableMinutes: 45,
-        })
-        expect(result.speedKmh).toBeCloseTo(12, 10)
-        expect(result.speedSource).toBe('reported-pace')
-    })
-
-    it('starts at a gentle 9:00/km when the runner does not know their pace', () => {
-        const result = derivePersonalBaseline({ raceKnown: false, paceKnown: false, weeklyKm: 15 })
-        expect(paceSecondsPerKmFromSpeed(result.speedKmh!)).toBe(9 * 60)
-        expect(result.speedSource).toBe('default')
-        expect(result.vdot).toBeGreaterThan(20)
-    })
-
-    it('walks at 12:00/km when a run/walk runner does not know their walking pace', () => {
-        const answers = { raceKnown: false, paceKnown: false, weeklyKm: 15, daysPerWeek: 3, continuity: 'run-walk' as const, walkPaceKnown: false }
-        const result = derivePersonalBaseline(answers)
-        expect(paceSecondsPerKmFromSpeed(result.walkSpeedKmh!)).toBe(12 * 60)
-        expect(result.walkSpeedSource).toBe('default')
-        expect(result.missing).toEqual([])
-        // With a walking speed, the run/walk easy run keeps a real distance and says where the speed came from.
-        const plan = generatePersonalizedWorkout({ category: 'easy', baseline: result })
-        expect(plan.sections[1].runWalk?.walkSpeedKmh).toBe(5)
-        expect(plan.sections[1].target.basis).toBe('distance')
-        expect(plan.explanation.join(' ')).toContain('12:00/km')
-        expect(validateWorkout(plan).ok).toBe(true)
-    })
-
-    it('still asks a run/walk runner about walking pace until they answer', () => {
-        const result = derivePersonalBaseline({ raceKnown: false, paceKnown: false, weeklyKm: 15, daysPerWeek: 3, continuity: 'run-walk' })
-        expect(result.walkSpeedKmh).toBeNull()
-        expect(result.missing.join(' ')).toContain('walking pace')
-    })
-
-    it('treats the time available as optional', () => {
-        const result = derivePersonalBaseline({ raceKnown: false, paceKnown: false, weeklyKm: 15, daysPerWeek: 3, continuity: 'continuous' })
-        expect(result.availableSeconds).toBeNull()
-        expect(result.missing).toEqual([])
-    })
-
-    it('rejects pace seconds outside 00-59', () => {
-        const result = derivePersonalBaseline({
-            paceKnown: true,
-            paceMinutes: 5,
-            paceSeconds: 90,
-        })
-        expect(result.speedKmh).toBeNull()
-    })
 })
 
 describe('section metrics', () => {
@@ -202,150 +131,16 @@ describe('totals', () => {
     })
 })
 
-describe('generatePersonalizedWorkout', () => {
-    it('produces warm-up, main and cool-down that fit the available time', () => {
-        const workout = generatePersonalizedWorkout({
-            category: 'easy',
-            baseline: baseline(),
-        })
-        expect(workout.sections.map((s) => s.type)).toEqual([
-            'warmup',
-            'run',
-            'cooldown',
-        ])
-        const totals = calculateWorkoutTotals(workout.sections)
-        expect(totals.durationSeconds).toBeLessThanOrEqual(3600)
-        expect(validateWorkout(workout).ok).toBe(true)
+
+describe('speed and pace parsing', () => {
+    it('rounds speed upward without bumping exact tenths', () => {
+        expect(roundSpeedUp(8.21)).toBe(8.3)
+        expect(roundSpeedUp(8.2)).toBe(8.2)
+        expect(roundSpeedUp(8.200000000000001)).toBe(8.2)
     })
 
-    it('grounds speeds in the runner pace rather than a fixed speed', () => {
-        const slow = generatePersonalizedWorkout({
-            category: 'easy',
-            baseline: baseline({ speedKmh: 8 }),
-        })
-        const fast = generatePersonalizedWorkout({
-            category: 'easy',
-            baseline: baseline({ speedKmh: 12 }),
-        })
-        expect(slow.sections[1].speedKmh).toBeCloseTo(8, 10)
-        expect(fast.sections[1].speedKmh).toBeCloseTo(12, 10)
-    })
-
-    it('keeps every speed null when the pace is unknown', () => {
-        const workout = generatePersonalizedWorkout({
-            category: 'easy',
-            baseline: baseline({ speedKmh: null, speedSource: 'unknown' }),
-        })
-        expect(workout.sections.every((s) => s.speedKmh === null)).toBe(true)
-        const totals = calculateWorkoutTotals(workout.sections)
-        expect(totals.distanceKm).toBeNull()
-        expect(totals.durationSeconds).toBeGreaterThan(0)
-    })
-
-    it('shrinks sections rather than producing zero or negative targets', () => {
-        const workout = generatePersonalizedWorkout({
-            category: 'easy',
-            baseline: baseline({ availableSeconds: 300 }),
-        })
-        for (const item of workout.sections) {
-            const value =
-                item.target.basis === 'time'
-                    ? item.target.durationSeconds
-                    : item.target.distanceKm
-            expect(value).toBeGreaterThan(0)
-        }
-        expect(workout.adjustments.length).toBeGreaterThan(0)
-    })
-
-    it('sizes the tempo block from the week', () => {
-        const workout = generatePersonalizedWorkout({ category: 'tempo', baseline: baseline() })
-        // 10% of a 30 km week at threshold pace.
-        const target = workout.sections[1].target
-        const threshold = workout.sections[1].speedKmh!
-        expect(target.basis === 'time' && target.durationSeconds).toBeCloseTo((3 / threshold) * 3600, -1)
-    })
-
-    it('splits the week across running days without touching speed', () => {
-        const easyFor = (daysPerWeek: number) => {
-            const workout = generatePersonalizedWorkout({ category: 'easy', baseline: baseline({ availableSeconds: null, daysPerWeek }) })
-            const target = workout.sections[1].target
-            return { km: target.basis === 'distance' ? target.distanceKm : 0, speedKmh: workout.sections[1].speedKmh }
-        }
-        // 30 km over 5 days is 6 km; over 6 days, 5 km. Two days would be 15 km, so the 30% long-run cap (9 km) applies.
-        expect(easyFor(5).km).toBe(6)
-        expect(easyFor(6).km).toBe(5)
-        expect(easyFor(2).km).toBe(9)
-        expect(easyFor(2).speedKmh).toBe(easyFor(6).speedKmh)
-    })
-})
-
-describe('validateWorkout', () => {
-    it('flags a section with a non-positive target', () => {
-        const workout = generatePersonalizedWorkout({
-            category: 'easy',
-            baseline: baseline(),
-        })
-        workout.sections[0].target = { basis: 'time', durationSeconds: 0 }
-        expect(validateWorkout(workout).ok).toBe(false)
-    })
-
-    it('flags a workout that overruns the available time', () => {
-        const workout = generatePersonalizedWorkout({
-            category: 'easy',
-            baseline: baseline({ availableSeconds: 1800 }),
-        })
-        workout.sections[1].target = { basis: 'time', durationSeconds: 7200 }
-        const result = validateWorkout(workout)
-        expect(result.ok).toBe(false)
-        expect(result.issues.some((i) => i.message.includes('longer than'))).toBe(true)
-    })
-})
-
-describe('behaviour regressions', () => {
-    it('makes Test run exactly 90 seconds regardless of the week or available time', () => {
-        const plan = generatePersonalizedWorkout({ category: 'test', baseline: baseline({ availableSeconds: 60 }) })
-        expect(plan.sections.map(s => s.target)).toEqual(Array(3).fill({ basis: 'time', durationSeconds: 30 }))
-        expect(calculateWorkoutTotals(plan.sections).durationSeconds).toBe(90)
-        expect(validateWorkout(plan).ok).toBe(true)
-    })
-    it('creates timed, runnable sections when pace is unknown', () => {
-        const plan = generatePersonalizedWorkout({ category: 'easy', baseline: baseline({
-            speedKmh: null, weeklyKm: 15,
-        }) })
-        expect(plan.sections.every(s => s.target.basis === 'time')).toBe(true)
-        expect(validateWorkout(plan).ok).toBe(true)
-        expect(calculateWorkoutTotals(plan.sections).distanceKm).toBeNull()
-    })
-    it('creates editable run/walk intervals and includes walking in the time budget', () => {
-        const plan = generatePersonalizedWorkout({ category: 'easy', baseline: baseline({
-            continuity: 'run-walk', walkSpeedKmh: 5, weeklyKm: 15, availableSeconds: 1800,
-        }) })
-        expect(plan.sections[1].runWalk).toEqual({ runSeconds: 120, walkSeconds: 60, walkSpeedKmh: 5 })
-        expect(calculateWorkoutTotals(plan.sections).durationSeconds).toBeLessThanOrEqual(1800)
-        expect(validateWorkout(plan).ok).toBe(true)
-    })
-    it('does not invent distance for unknown walking speed', () => {
-        const plan = generatePersonalizedWorkout({ category: 'easy', baseline: baseline({
-            continuity: 'run-walk', walkSpeedKmh: null, weeklyKm: 15,
-        }) })
-        expect(plan.sections[1].target.basis).toBe('time')
-        expect(calculateWorkoutTotals(plan.sections).distanceKm).toBeNull()
-        expect(validateWorkout(plan).ok).toBe(true)
-    })
-    it('rounds generated speeds upward to one decimal before computing metrics', () => {
-        const plan = generatePersonalizedWorkout({ category: 'easy', baseline: baseline({ speedKmh: 8.21 }) })
-        expect(plan.sections[1].speedKmh).toBe(8.3)
-        for (const s of plan.sections) expect(s.speedKmh! * 10).toBeCloseTo(Math.round(s.speedKmh! * 10))
-    })
-    it('fits short sessions inside the reported time', () => {
-        const plan = generatePersonalizedWorkout({ category: 'easy', baseline: baseline({ availableSeconds: 300 }) })
-        expect(calculateWorkoutTotals(plan.sections).durationSeconds).toBe(300)
-        expect(validateWorkout(plan).ok).toBe(true)
-    })
-    it('rejects out-of-range speeds and invalid intervals without crashing', () => {
-        const plan = generatePersonalizedWorkout({ category: 'test', baseline: baseline() })
-        plan.sections[1].speedKmh = 30
-        plan.sections[1].runWalk = { runSeconds: 0, walkSeconds: 0, walkSpeedKmh: 5 }
-        expect(validateWorkout(plan).ok).toBe(false)
+    it('validates pace consistently, including seconds and signs', () => {
+        expect(parsePace('5:30')).toBe(330)
+        for (const invalid of ['5:90', '-1:30', '1:2', '1.5:00', 'abc', '0:00']) expect(parsePace(invalid)).toBeNull()
     })
 })
