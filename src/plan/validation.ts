@@ -63,13 +63,14 @@ export function validateWorkout(workout: PersonalizedWorkout): {
     const totals = calculateWorkoutTotals(workout.sections)
 
     // Limits also apply to edited and restored plans, not only generated defaults.
-    if (['easy', 'long'].includes(workout.category) && totals.durationSeconds !== null
+    if (['filler', 'long'].includes(workout.category) && totals.durationSeconds !== null
         && totals.durationSeconds > LONG_RUN_MAX_SECONDS + 0.01) {
         issues.push({ message: 'The whole workout, including warm-up and cool-down, must fit within the longest long run Daniels allows.' })
     }
-    // Only interval running has a hard weekly cap; threshold volume is guidance, not a ceiling.
+    // Interval and repetition running have a hard session cap; threshold volume is guidance, not a ceiling.
     const weekly = workout.baseline.weeklyKm
-    if (weekly && workout.category === 'interval') {
+    const capZone = workout.category === 'interval' ? 'I' : workout.category === 'repetition' ? 'R' : null
+    if (weekly && capZone) {
         let workKm = 0
         let known = true
         for (const item of workout.sections.filter(s => s.type === 'run')) {
@@ -82,9 +83,9 @@ export function validateWorkout(workout: PersonalizedWorkout): {
                 : seconds
             workKm += distanceFromSpeed(item.speedKmh, workSeconds)
         }
-        const cap = sessionCapKm('I', weekly)
+        const cap = sessionCapKm(capZone, weekly)
         if (known && workKm > cap + 1e-8) {
-            issues.push({ message: `The hard repetitions exceed your session allowance of ${cap.toFixed(2)} km. Shorten the work block or choose an easier workout.` })
+            issues.push({ message: `The hard reps exceed your session allowance of ${cap.toFixed(2)} km. Shorten the work block or choose an easier workout.` })
         }
     }
 

@@ -31,7 +31,7 @@ const finite = (v: unknown): v is number => typeof v === 'number' && Number.isFi
 const nonnegative = (v: unknown): v is number => finite(v) && v >= 0
 const positive = (v: unknown): v is number => finite(v) && v > 0
 const speed = (v: unknown) => v === null || (finite(v) && v >= 0.5 && v <= 25)
-const category = (v: unknown) => ['test', 'easy', 'tempo', 'long', 'interval', 'cruise'].includes(String(v))
+const category = (v: unknown) => ['test', 'long', 'threshold', 'interval', 'repetition', 'filler'].includes(String(v))
 const strings = (v: unknown) => Array.isArray(v) && v.every(x => typeof x === 'string')
 function target(v: unknown): boolean {
   return record(v) && ((v.basis === 'time' && positive(v.durationSeconds) && v.distanceKm === undefined)

@@ -8,7 +8,7 @@ import type { PersonalizedWorkout } from '../plan/types'
 import { loadBaseline, loadMuted, loadPlan, loadProfile, loadSession, newSession,
   saveBaseline, saveMuted, savePlan, saveProfile, saveSession, storageNotice, clearStorageNotice,
   type Profile, type RunSession } from '../storage'
-import type { WorkoutId } from '../workouts'
+import type { PickableWorkoutId } from '../workouts'
 import type { RunProgress } from '../run/engine'
 import { releaseWakeLock } from '../wakeLock'
 
@@ -27,7 +27,7 @@ export function useAppFlow() {
   const [notice, setNotice] = useState(storageNotice)
   const [view, setView] = useState<View>(() => !initial.profile.name ? 'name'
     : initial.session ? initial.session.completed ? 'complete' : 'run' : 'category')
-  const [pendingCategory, setPendingCategory] = useState<WorkoutId | null>(null)
+  const [pendingCategory, setPendingCategory] = useState<PickableWorkoutId | null>(null)
   const [editingAnswers, setEditingAnswers] = useState(false)
   const completing = useRef(false)
   useEffect(() => {
@@ -38,11 +38,11 @@ export function useAppFlow() {
   const persistSession = useCallback((next: RunSession | null) => { setSession(next); saveSession(next) }, [])
   function persistProfile(next: Profile) { setProfile(next); saveProfile(next) }
   function persistPlan(next: PersonalizedWorkout | null) { setPlan(next); savePlan(next) }
-  function buildPlan(category: WorkoutId, source: Answers) {
+  function buildPlan(category: PickableWorkoutId, source: Answers) {
     persistPlan(generatePersonalizedWorkout({ category, baseline: derivePersonalBaseline(source) }))
     setView('plan')
   }
-  function pickCategory(category: WorkoutId) {
+  function pickCategory(category: PickableWorkoutId) {
     if (category !== 'test' && missingQuestions(answers).length) {
       setPendingCategory(category); setEditingAnswers(false); setView('baseline')
     } else buildPlan(category, answers)
@@ -50,7 +50,7 @@ export function useAppFlow() {
   function finishAnswers(next: Answers) {
     setAnswers(next); saveBaseline(next); setEditingAnswers(false)
     if (editingAnswers && !pendingCategory) { setView('category'); return }
-    buildPlan(pendingCategory ?? 'easy', next)
+    buildPlan(pendingCategory ?? 'long', next)
   }
   const handleComplete = useCallback((result: RunProgress) => {
     if (completing.current || !session || session.completed) return

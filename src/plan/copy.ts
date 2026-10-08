@@ -10,7 +10,7 @@ export const EFFORT_LABELS: Record<SectionType, string> = {
 
 /** Rate of perceived exertion (1-10), the fallback target when a session has no pace. */
 export const EASY_RPE = 3
-export const TEMPO_RPE = 7
+export const THRESHOLD_RPE = 7
 
 export interface RepeatCopy {
     title: string
@@ -25,25 +25,7 @@ const COOLDOWN_EFFORT = 'Gentle running or walking until your heart rate is back
 const COOLDOWN_CUE = 'Cool-down. Well done. Gentle running or walking now, let the heart rate come down.'
 
 /** Wording for the two repeated-rep sessions. */
-export const REPEAT_COPY: Record<'cruise' | 'interval', RepeatCopy> = {
-    cruise: {
-        title: 'Cruise reps',
-        repLabel: 'Rep',
-        recoveryLabel: 'Easy jog',
-        rpe: { warmup: 3, rep: 7, recovery: 3, cooldown: 2 },
-        effort: {
-            warmup: 'Easy and conversational, building towards threshold effort in the last minute.',
-            rep: 'Comfortably hard and controlled. A few words at a time, not gasping.',
-            recovery: 'Easy jog, not a full stop. Let your legs shake out while you keep moving.',
-            cooldown: COOLDOWN_EFFORT,
-        },
-        cue: {
-            warmup: 'Warm-up. Easy pace, building towards threshold effort by the end.',
-            rep: 'Go. Settle into a strong, controlled rhythm.',
-            recovery: 'Ease into an easy jog. Keep moving, do not stop.',
-            cooldown: COOLDOWN_CUE,
-        },
-    },
+export const REPEAT_COPY: Record<'interval' | 'repetition', RepeatCopy> = {
     interval: {
         title: 'Interval reps',
         repLabel: 'Rep',
@@ -59,6 +41,24 @@ export const REPEAT_COPY: Record<'cruise' | 'interval', RepeatCopy> = {
             warmup: 'Warm-up. Easy pace, building towards the first hard rep.',
             rep: 'Go. Strong and smooth, hard but not a sprint.',
             recovery: 'Ease down to an easy jog and let your breathing settle.',
+            cooldown: COOLDOWN_CUE,
+        },
+    },
+    repetition: {
+        title: 'Repetition reps',
+        repLabel: 'Rep',
+        recoveryLabel: 'Recovery',
+        rpe: { warmup: 3, rep: 9, recovery: 1, cooldown: 2 },
+        effort: {
+            warmup: 'Easy and conversational, finishing with a few relaxed strides.',
+            rep: 'Fast and relaxed, about mile-race effort. Stop while you are still in control.',
+            recovery: 'Walk or jog until you are fully recovered. Do not rush the next rep.',
+            cooldown: COOLDOWN_EFFORT,
+        },
+        cue: {
+            warmup: 'Warm-up. Easy pace, with a few relaxed strides at the end.',
+            rep: 'Go. Quick, light and relaxed.',
+            recovery: 'Walk or jog until you feel fully recovered.',
             cooldown: COOLDOWN_CUE,
         },
     },

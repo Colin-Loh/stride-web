@@ -20,7 +20,7 @@ describe('recent race distance', () => {
     it('enables Build my workout and builds a plan for the reported answers', () => {
         const html = renderToStaticMarkup(<BaselineScreen initial={USER_REPORT} onBack={noop} onDone={noop} />)
         expect(html).not.toMatch(/disabled=""[^>]*>Build my workout/)
-        const plan = generatePersonalizedWorkout({ category: 'easy', baseline: derivePersonalBaseline(USER_REPORT) })
+        const plan = generatePersonalizedWorkout({ category: 'long', baseline: derivePersonalBaseline(USER_REPORT) })
         expect(plan.sections.length).toBeGreaterThan(0)
     })
 })
