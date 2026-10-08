@@ -1,25 +1,32 @@
 import { useAppFlow } from './hooks/useAppFlow'
-import { toCharacter } from './storage'
+import type { Repositories } from './storage/repository'
 import { NameScreen } from './screens/NameScreen'
 import { CategoryScreen } from './screens/CategoryScreen'
 import { BaselineScreen } from './screens/BaselineScreen'
 import { PlanScreen } from './screens/PlanScreen'
+import { WorkoutScreen } from './screens/WorkoutScreen'
 import { RunScreen } from './screens/RunScreen'
 import { CompleteScreen } from './screens/CompleteScreen'
 
-export default function App() {
-  const flow = useAppFlow()
-  const { profile, view, session, plan } = flow
+/** The app depends on repository interfaces only; main.tsx chooses the implementation. */
+export default function App({ repositories }: { repositories: Repositories }) {
+  const flow = useAppFlow(repositories)
+  const { preferences, view, session, plan, open } = flow
+  if (!flow.ready) return <main className="shell" aria-busy="true" />
+  const name = preferences.name ?? ''
   return <main className="shell">
     {flow.notice && <div className="notice" role="status">{flow.notice}<button type="button" className="link" onClick={flow.dismissNotice}>Dismiss</button></div>}
-    {view === 'name' && <NameScreen initialName={profile.name ?? ''} initialCharacter={toCharacter(profile.character)}
-      onContinue={(name, character) => { flow.persistProfile({ name, character }); flow.setView('category') }} />}
-    {view === 'category' && <CategoryScreen name={profile.name ?? ''} selected={plan?.category}
-      onChangeName={() => flow.setView('name')} onEditAnswers={flow.editAnswers} onPick={flow.pickCategory} />}
-    {view === 'baseline' && <BaselineScreen initial={flow.answers} onBack={() => flow.setView('category')} onDone={flow.finishAnswers} />}
-    {view === 'plan' && plan && <PlanScreen workout={plan} onChange={flow.persistPlan} onBack={() => flow.setView('category')} onStart={flow.startPlan} />}
-    {view === 'run' && session && <RunScreen session={session} muted={flow.muted} character={toCharacter(profile.character)}
+    {view === 'name' && <NameScreen initialName={name} initialCharacter={preferences.character}
+      onContinue={(next, character) => { flow.persistName(next, character); flow.setView('category') }} />}
+    {view === 'category' && <CategoryScreen name={name} selected={open?.workout.category}
+      onChangeName={() => flow.setView('name')} onEditAnswers={flow.editAnswers} onPick={flow.pickCategory} onShowPlan={flow.showPlan} />}
+    {view === 'baseline' && <BaselineScreen initial={flow.answers?.values ?? {}} submitAction={flow.submitAction} onBack={() => flow.setView('category')} onDone={flow.finishAnswers} />}
+    {view === 'plan' && plan && <PlanScreen plan={plan} onOpenSession={flow.openSession} onBack={() => flow.setView('category')} />}
+    {view === 'workout' && open && <WorkoutScreen workout={open.workout} onChange={flow.changeWorkout} onStart={flow.startWorkout}
+      backLabel={open.sessionId ? 'Back to my plan' : 'Pick a different session'}
+      onBack={() => flow.setView(open.sessionId ? 'plan' : 'category')} />}
+    {view === 'run' && session && <RunScreen session={session} muted={preferences.muted} character={preferences.character}
       onSession={flow.persistSession} onComplete={flow.handleComplete} onQuit={flow.quitRun} onToggleMute={flow.toggleMute} />}
-    {view === 'complete' && session && <CompleteScreen name={profile.name ?? ''} session={session} onAgain={flow.quitRun} />}
+    {view === 'complete' && session && <CompleteScreen name={name} session={session} onAgain={flow.quitRun} />}
   </main>
 }

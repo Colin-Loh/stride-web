@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import {
-    answerError, isAnswers, missingQuestions, QUESTIONS, toIsoDate, valueError, visibleQuestions, type Answers,
+    answerError, isAnswers, missingQuestions, QUESTIONS, toIsoDate, valueError, visibleQuestions, type AnswerValues,
 } from './questions'
 
 const TODAY = new Date(2026, 9, 8)
-const ids = (answers: Answers) => visibleQuestions(answers).map((q) => q.id)
+const ids = (answers: AnswerValues) => visibleQuestions(answers).map((q) => q.id)
 
-const COMPLETE: Answers = {
+const COMPLETE: AnswerValues = {
     fitness_method: 'recent_race', recent_race_distance: 5, recent_race_time: 1500,
     training_focus: 'base', weekly_volume: 30, running_days: 3, training_effort: 'base',
 }

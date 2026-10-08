@@ -1,8 +1,7 @@
 import { formatDurationSeconds, formatPaceSeconds, paceSecondsPerKmFromSpeed } from './convert'
+import { weeksUntil } from './dates'
 import { isExtrapolatedVdot, RACE_DISTANCES, seasonPhase, ZONES, type TrainingSpeeds, type Zone } from './daniels'
 import type { PersonalBaseline } from './types'
-
-const MS_PER_WEEK = 7 * 24 * 60 * 60 * 1000
 
 const pace = (kmh: number) => `${formatPaceSeconds(paceSecondsPerKmFromSpeed(kmh))}/km`
 
@@ -29,7 +28,7 @@ export function fitnessNote(baseline: PersonalBaseline, speeds: TrainingSpeeds |
 /** Where the goal race falls in Daniels' ideal 24-week season, or null when there is no date or it is out of range. */
 export function goalNote(baseline: PersonalBaseline, today: Date): string | null {
     if (!baseline.goalRaceDate) return null
-    const weeks = Math.ceil((Date.parse(`${baseline.goalRaceDate}T00:00:00Z`) - Date.UTC(today.getFullYear(), today.getMonth(), today.getDate())) / MS_PER_WEEK)
+    const weeks = weeksUntil(baseline.goalRaceDate, today)
     const phase = seasonPhase(weeks)
     return phase
         ? `Your goal race is about ${weeks} week${weeks === 1 ? '' : 's'} away. In Daniels' ideal 24-week season that is the ${phase.name} phase: ${phase.summary}.`

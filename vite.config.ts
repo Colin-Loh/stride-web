@@ -18,7 +18,7 @@ export default defineConfig({
       manifest: {
         name: 'Stride',
         short_name: 'Stride',
-        description: 'Structured easy, tempo, and long runs in the browser.',
+        description: 'Structured threshold, interval, repetition, and long runs in the browser.',
         theme_color: '#0b1f18',
         background_color: '#0b1f18',
         display: 'standalone',

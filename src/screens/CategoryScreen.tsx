@@ -1,26 +1,27 @@
-import { WORKOUTS, type WorkoutId } from '../workouts'
+import { WORKOUTS, type PickableWorkoutId, type WorkoutId } from '../workouts'
 
 interface Props {
     name: string
     selected?: WorkoutId
-    onPick: (id: WorkoutId) => void
+    onPick: (id: PickableWorkoutId) => void
+    onShowPlan: () => void
     onChangeName: () => void
     onEditAnswers: () => void
 }
 
-const INTENSITY_LABELS: Record<WorkoutId, string> = {
+const INTENSITY_LABELS: Record<PickableWorkoutId, string> = {
     test: '90-second timer and sound check',
-    easy: 'At your Daniels easy pace',
     long: 'At your Daniels easy pace',
-    tempo: 'At your Daniels threshold pace',
-    cruise: 'At your Daniels threshold pace',
+    threshold: 'At your Daniels threshold pace',
     interval: 'At your Daniels interval pace',
+    repetition: 'At your Daniels repetition pace',
 }
 
 export function CategoryScreen({
     name,
     selected,
     onPick,
+    onShowPlan,
     onChangeName,
     onEditAnswers,
 }: Props) {
@@ -33,6 +34,9 @@ export function CategoryScreen({
             <p className="lede">
                 Each one is built around your own running, using Jack Daniels' training paces.
             </p>
+            <button type="button" className="primary" onClick={onShowPlan}>
+                My training plan
+            </button>
             <div className="stack">
                 {WORKOUTS.map((workout) => (
                     <button

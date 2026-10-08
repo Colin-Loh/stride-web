@@ -1,6 +1,7 @@
 import { formatDurationMs } from '../format'
 import { RunnerSprite } from '../RunnerSprite'
-import type { Character, RunSession } from '../storage'
+import type { Character } from '../domain/preferences'
+import type { RunSession } from '../domain/types'
 import type { RunProgress } from '../run/engine'
 import { intervalCount } from '../plan/intervals'
 import { useRunSession } from '../hooks/useRunSession'

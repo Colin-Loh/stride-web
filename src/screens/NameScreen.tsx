@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { RunnerSprite } from '../RunnerSprite'
-import type { Character } from '../storage'
+import type { Character } from '../domain/preferences'
 
 interface Props {
   initialName?: string
@@ -26,7 +26,7 @@ export function NameScreen({
       <p className="eyebrow">Stride</p>
       <h1>What should we call you?</h1>
       <p className="lede">
-        A few questions, then you pick Easy, Tempo, or Long. Timed sections follow the clock; distance sections follow your entered speed.
+        A few questions, then you see your training plan or pick a single session. Timed sections follow the clock; distance sections follow your entered speed.
       </p>
       <form
         className="stack"

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { playCelebration } from '../audio'
 import { formatDurationMs } from '../format'
-import type { RunSession } from '../storage'
+import type { RunSession } from '../domain/types'
 interface Props { name: string; session: RunSession; onAgain: () => void }
 export function CompleteScreen({ name, session, onAgain }: Props) {
   const [audioError, setAudioError] = useState(false)

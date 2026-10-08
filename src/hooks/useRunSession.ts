@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { elapsedMs, type RunSession } from '../storage'
+import type { RunSession } from '../domain/types'
+import { elapsedMs } from '../run/session'
 import { runProgress, type RunProgress } from '../run/engine'
 import { clampSpeed } from '../plan/convert'
 import { prepareRunAudio } from '../audio'

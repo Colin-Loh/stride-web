@@ -1,11 +1,13 @@
 import { formatSpan } from './convert'
 import { REPEAT_COPY } from './copy'
-import { SESSION_STRUCTURE } from './daniels'
+import { SESSION_STRUCTURE, ZONES, type Zone } from './daniels'
 import { section } from './builderHelpers'
 import type { PersonalBaseline, PersonalizedWorkout } from './types'
 
+const REP_ZONE: Record<RepeatInput['category'], Zone> = { interval: 'I', repetition: 'R' }
+
 interface RepeatInput {
-    category: 'cruise' | 'interval'
+    category: 'interval' | 'repetition'
     categoryName: string
     baseline: PersonalBaseline
     reps: number
@@ -17,7 +19,7 @@ interface RepeatInput {
     easySpeedKmh: number | null
 }
 
-/** Easy warm-up, repeated hard reps with a jog between, easy cool-down. */
+/** Easy warm-up, repeated hard reps with a recovery between, easy cool-down. */
 export function buildRepeatWorkout(input: RepeatInput): PersonalizedWorkout {
     const { category, baseline, reps, repSeconds, recoverySeconds, repSpeedKmh, easySpeedKmh } = input
     const copy = REPEAT_COPY[category]
@@ -52,10 +54,10 @@ export function buildRepeatWorkout(input: RepeatInput): PersonalizedWorkout {
     cooldown.audioCue = copy.cue.cooldown
 
     const explanation = [
-        `${reps} reps of ${formatSpan(repSeconds)} with a ${formatSpan(recoverySeconds)} easy jog between each.`,
+        `${reps} reps of ${formatSpan(repSeconds)} with ${formatSpan(recoverySeconds)} of recovery between each.`,
         repSpeedKmh === null
             ? `No race result, so no target pace: run the reps by effort (RPE ${copy.rpe.rep}).`
-            : `Rep pace is your Daniels ${category === 'cruise' ? 'threshold' : 'interval'} pace.`,
+            : `Rep pace is your Daniels ${ZONES[REP_ZONE[category]].name.toLowerCase()} pace.`,
     ]
     return { category, categoryName: input.categoryName, baseline, sections: [warmup, main, cooldown], explanation, adjustments: [] }
 }

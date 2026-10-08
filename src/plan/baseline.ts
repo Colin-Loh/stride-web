@@ -1,6 +1,6 @@
 import { speedFromPaceSecondsPerKm } from './convert'
 import { vdotFromRace } from './daniels'
-import type { Answers, DistanceTime } from './questions'
+import type { AnswerValues, DistanceTime } from './questions'
 import type { FitnessMethod, PersonalBaseline } from './types'
 
 const numberAnswer = (value: unknown): number | null => (typeof value === 'number' ? value : null)
@@ -18,7 +18,7 @@ const FITNESS_METHODS: readonly FitnessMethod[] = ['recent_race', 'estimated_rac
 type Fitness = Pick<PersonalBaseline, 'vdot' | 'fitnessMethod' | 'race' | 'reportedEasySpeedKmh'>
 
 /** Only the chosen fitness branch is read; answers left over from another branch are ignored. */
-function readFitness(answers: Answers): Fitness {
+function readFitness(answers: AnswerValues): Fitness {
     const none: Fitness = { vdot: null, fitnessMethod: null, race: null, reportedEasySpeedKmh: null }
     const method = FITNESS_METHODS.find((candidate) => candidate === answers.fitness_method)
     if (method === undefined) return none
@@ -42,7 +42,7 @@ function readFitness(answers: Answers): Fitness {
 }
 
 /** Turns onboarding answers into the facts the plan builder uses. */
-export function derivePersonalBaseline(answers: Answers): PersonalBaseline {
+export function derivePersonalBaseline(answers: AnswerValues): PersonalBaseline {
     return {
         ...readFitness(answers),
         weeklyKm: numberAnswer(answers.weekly_volume),

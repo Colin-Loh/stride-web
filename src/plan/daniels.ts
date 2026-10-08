@@ -16,6 +16,7 @@
  *   5. Training paces: E, T and I are the speed whose oxygen cost is a fixed fraction of VDOT.
  *      M and R are the paces of an equivalent marathon and an equivalent mile race.
  *   6. Session sizes are capped as a share of weekly distance (see VOLUME_LIMITS).
+ *   7. Weekly distance grows in steps held for several weeks (see PROGRESSION).
  *
  * SOURCES (numbers refer to /stride-agents/output/vdot-research.md)
  *   [1] https://vdoto2.com/calculator                      official zones, intensities, purposes
@@ -26,6 +27,9 @@
  *   [6] https://whynot.run/tools/vdot-calculator/          secondary pace anchors (cross-check only)
  *   [11] https://support.vdoto2.com/vdot-adaptive-trainer-instructional-guide/  training effort
  *   [13] https://www.coacheseducation.com/endur/jack-daniels-dec-00.php         24-week season
+ *   Progression and session constructions refer to /stride-agents/output/progression-research.md
+ *   (named "progression-research" below). Its mileage rule comes from
+ *   https://news.vdoto2.com/2015/07/how-to-increase-your-weekly-mileage/
  *
  * KNOWN GAPS (spec section "Confidence and gaps"): the official calculator's exact pace
  * interpolation and rounding, the easy-pace to VDOT mapping, heat and altitude corrections, and
@@ -39,6 +43,10 @@
 const METRES_PER_KM = 1000
 const SECONDS_PER_MINUTE = 60
 const SECONDS_PER_HOUR = 3600
+export const DAYS_PER_WEEK = 7
+/** Calendar lengths in milliseconds, for dating plan weeks. */
+export const MS_PER_DAY = 24 * SECONDS_PER_HOUR * 1000
+export const MS_PER_WEEK = DAYS_PER_WEEK * MS_PER_DAY
 const MILE_KM = 1.609344
 const HALF_MARATHON_KM = 21.0975
 const MARATHON_KM = 42.195
@@ -188,20 +196,29 @@ const THRESHOLD_LIMITS = { steadySeconds: 20 * SECONDS_PER_MINUTE, shareOfWeek: 
 /** Plan-structure choices drawn from the ranges the source gives. */
 export const SESSION_STRUCTURE = {
     /**
-     * Easy run length when the week is unknown: the 30-45 minutes of "conversational" running
-     * [1][5]; a long run with no known pace uses the top of that range.
+     * Length of an easy run when its distance is unknown: the 30-45 minutes of "conversational"
+     * running [1][5]; a long run with no known pace uses the top of that range.
      */
     easyFallbackSeconds: 30 * SECONDS_PER_MINUTE,
     longFallbackSeconds: 45 * SECONDS_PER_MINUTE,
     /** TODO(verify): the only warm-up length in the source is the "10 min E" before M running. */
     warmupSeconds: 10 * SECONDS_PER_MINUTE,
     cooldownSeconds: 10 * SECONDS_PER_MINUTE,
-    /** Cruise intervals: T reps of 5-15 minutes with 1-3 minutes of rest; the short ends are used. */
-    cruise: { repSeconds: 5 * SECONDS_PER_MINUTE, recoverySeconds: SECONDS_PER_MINUTE, minReps: 2 },
-    /** Interval reps: 3-5 minutes of work with a jog of equal length. */
-    interval: { repSeconds: 3 * SECONDS_PER_MINUTE, recoveryPerWorkSecond: 1 },
-    /** TODO(verify): rep count for an I session when no VDOT is known and the cap cannot be sized. */
+    /**
+     * Interval (I): bouts of 1-5 minutes, ideally 3-5, with a jog of equal or slightly shorter
+     * length [progression-research, section 3]. The short end of the ideal range is used, and the
+     * bout shrinks towards the 1-minute minimum only when the session cap cannot hold one.
+     */
+    interval: { repSeconds: 3 * SECONDS_PER_MINUTE, minRepSeconds: SECONDS_PER_MINUTE, recoveryPerWorkSecond: 1 },
+    /**
+     * Repetition (R): bouts of at most two minutes, typically 200-600 m, with full recovery of
+     * about twice the work time [progression-research, section 3]. 400 m is the middle of the
+     * typical range; a runner too slow to cover it in two minutes runs the two minutes instead.
+     */
+    repetition: { repMetres: 400, maxRepSeconds: 120, recoveryPerWorkSecond: 2 },
+    /** TODO(verify): rep counts for I and R sessions when no pace is known and the cap cannot be sized. */
     intervalFallbackReps: 4,
+    repetitionFallback: { reps: 4, repSeconds: 30 },
 } as const
 
 interface TrainingEffort {
@@ -358,4 +375,137 @@ export function seasonPhase(weeksToGoal: number): SeasonPhase | null {
     if (!(weeksToGoal > 0 && weeksToGoal <= IDEAL_SEASON.weeks)) return null
     const index = Math.floor((IDEAL_SEASON.weeks - weeksToGoal) / IDEAL_SEASON.phaseWeeks)
     return IDEAL_SEASON.phases[index] ?? null
+}
+
+/** The work/recovery repeats of an interval or repetition session. */
+export interface RepeatSession {
+    reps: number
+    repSeconds: number
+    recoverySeconds: number
+}
+
+/**
+ * Size a session of repeats so its work stays inside the zone's cap. `speedKmh` is the (rounded)
+ * speed the reps will actually be run at, so the cap holds for the planned numbers. With no pace
+ * or no weekly distance the cap cannot be applied and a placeholder is returned.
+ */
+function sizeRepeats(zone: 'I' | 'R', weeklyKm: number | null, speedKmh: number | null, repSeconds: number, recoveryPerWorkSecond: number): RepeatSession {
+    if (speedKmh === null || weeklyKm === null) {
+        const reps = zone === 'I' ? SESSION_STRUCTURE.intervalFallbackReps : SESSION_STRUCTURE.repetitionFallback.reps
+        return { reps, repSeconds, recoverySeconds: repSeconds * recoveryPerWorkSecond }
+    }
+    const repKm = (speedKmh * repSeconds) / SECONDS_PER_HOUR
+    const capKm = sessionCapKm(zone, weeklyKm)
+    const whole = Math.floor(capKm / repKm + 1e-9)
+    if (whole >= 1) return { reps: whole, repSeconds, recoverySeconds: repSeconds * recoveryPerWorkSecond }
+    // Not even one full rep fits: run one shorter rep that does.
+    const minSeconds = zone === 'I' ? SESSION_STRUCTURE.interval.minRepSeconds : 1
+    const shorter = Math.max(minSeconds, Math.floor((capKm / speedKmh) * SECONDS_PER_HOUR))
+    return { reps: 1, repSeconds: shorter, recoverySeconds: shorter * recoveryPerWorkSecond }
+}
+
+/** Interval (I) session: 3-minute bouts at I pace, as many as the I cap allows. */
+export function intervalSession(weeklyKm: number | null, speedKmh: number | null): RepeatSession {
+    const { repSeconds, recoveryPerWorkSecond } = SESSION_STRUCTURE.interval
+    return sizeRepeats('I', weeklyKm, speedKmh, repSeconds, recoveryPerWorkSecond)
+}
+
+/** Repetition (R) session: short reps at R pace with full recovery, as many as the R cap allows. */
+export function repetitionSession(weeklyKm: number | null, speedKmh: number | null): RepeatSession {
+    const { repMetres, maxRepSeconds, recoveryPerWorkSecond } = SESSION_STRUCTURE.repetition
+    const seconds = speedKmh === null
+        ? SESSION_STRUCTURE.repetitionFallback.repSeconds
+        : Math.max(1, Math.min(maxRepSeconds, Math.floor((repMetres / METRES_PER_KM / speedKmh) * SECONDS_PER_HOUR)))
+    return sizeRepeats('R', weeklyKm, speedKmh, seconds, recoveryPerWorkSecond)
+}
+
+// ---------------------------------------------------------------------------------------------
+// 7. Weekly progression [progression-research, section 1 and "Implementation constants"]
+// ---------------------------------------------------------------------------------------------
+
+/**
+ * Daniels' mileage rule: "increase weekly mileage by as many miles as the number of runs you do
+ * each week", "never increase more than 10 miles", "stay with one amount of running for at least
+ * 4 weeks", and do NOT apply a 10% rule. Distances are the miles of the rule converted to km;
+ * rounding is for display only.
+ *
+ * The step is applied in full at every level: the research calls it an upper allowance, so a
+ * smaller step is always allowed but is not modelled.
+ */
+export const PROGRESSION = {
+    /** Completed weeks at one level before the next step (verified, official article). */
+    weeksPerLevel: 4,
+    /** Weekly km added per run per week, per step: one mile per run (verified). */
+    increasePerRunKm: MILE_KM,
+    /** Largest single step in weekly km: 10 miles (verified). */
+    maxIncreaseKm: 10 * MILE_KM,
+    // TODO(verify): no down (recovery) week is scheduled. The research found no verified period
+    // or reduction; a four-week plateau is not "three build weeks and one down week".
+    downWeekEvery: null,
+    // TODO(verify): no smaller step for novice or returning runners and no peak-volume ceiling is
+    // applied. The research establishes neither a numeric beginner cap nor a maximum weekly total.
+} as const
+
+/**
+ * Target km for each of `weeks` consecutive weeks, starting from `startKm` and running
+ * `runsPerWeek` times a week. Weeks 1-4 hold the start volume, then each level adds
+ * min(runsPerWeek x 1 mile, 10 miles). Values are not rounded. Returns [] for a non-positive
+ * start volume or week count.
+ *
+ * Example: 15 km, 3 runs -> weeks 1-4 at 15, weeks 5-8 at 19.83, weeks 9-12 at 24.66.
+ */
+export function weeklyVolumes(startKm: number, runsPerWeek: number, weeks: number): number[] {
+    if (!isPositiveFinite(startKm) || !(weeks >= 1)) return []
+    const runs = isPositiveFinite(runsPerWeek) ? runsPerWeek : 0
+    const stepKm = Math.min(runs * PROGRESSION.increasePerRunKm, PROGRESSION.maxIncreaseKm)
+    return Array.from({ length: Math.floor(weeks) }, (_, week) => startKm + Math.floor(week / PROGRESSION.weeksPerLevel) * stepKm)
+}
+
+/**
+ * Plan length in weeks: at least `minWeeks`, or until the goal race when one is set.
+ * TODO(verify): `maxWeeks` is a product limit, not from the research, which gives no peak or
+ * plan-length ceiling; it only keeps the week list and the climbing volume bounded.
+ */
+const PLAN_LENGTH = { minWeeks: 12, maxWeeks: 52 } as const
+
+export function planWeekCount(weeksToGoal: number | null): number {
+    const wanted = weeksToGoal !== null && Number.isFinite(weeksToGoal) ? Math.ceil(weeksToGoal) : 0
+    return Math.min(PLAN_LENGTH.maxWeeks, Math.max(PLAN_LENGTH.minWeeks, wanted))
+}
+
+/**
+ * How many runs of a week are the long run, speed sessions and plain E running.
+ * TODO(verify): at least one E run besides the long run is kept, so a speed day never replaces
+ * the last easy day. The research says the three-day limit is a product decision, not a Daniels
+ * rule, and that two speed days plus a long run should not be compressed into three days.
+ */
+const WEEK_STRUCTURE = { longRuns: 1, minEasyRuns: 1 } as const
+
+export interface WeekStructure {
+    long: number
+    quality: number
+    easy: number
+}
+
+export function weekStructure(runsPerWeek: number, effortId: string | null): WeekStructure {
+    const runs = Math.max(0, Math.floor(runsPerWeek))
+    const long = Math.min(runs, WEEK_STRUCTURE.longRuns)
+    const wanted = effortId === null ? 0 : qualitySessionsPerWeek(effortId)
+    const quality = Math.max(0, Math.min(wanted, runs - long - WEEK_STRUCTURE.minEasyRuns))
+    return { long, quality, easy: runs - long - quality }
+}
+
+export type QualityKind = 'repetition' | 'interval' | 'threshold'
+
+/**
+ * Speed sessions rotate in the generic phase order R, I, T [progression-research, section 5],
+ * one emphasis per mileage level, and a second speed day takes the next kind in the order.
+ * TODO(verify): the research says phase lengths are not universal and short plans should not be
+ * split into six-week blocks, so this rotation is a product default.
+ */
+const QUALITY_ROTATION: readonly QualityKind[] = ['repetition', 'interval', 'threshold']
+
+export function qualityKinds(weekIndex: number, count: number): QualityKind[] {
+    const level = Math.floor(weekIndex / PROGRESSION.weeksPerLevel)
+    return Array.from({ length: count }, (_, slot) => QUALITY_ROTATION[(level + slot) % QUALITY_ROTATION.length])
 }
