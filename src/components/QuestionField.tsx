@@ -15,9 +15,11 @@ interface Props {
 
 const DEFAULT_DISTANCE_KM = 5
 
-function DistanceSelect({ label, value, onChange }: { label: string; value: number; onChange: (km: number) => void }) {
+/** `null` shows a placeholder, so the select never displays a distance that is not stored as the answer. */
+function DistanceSelect({ label, value, onChange }: { label: string; value: number | null; onChange: (km: number) => void }) {
     return <label className="field">{label}
-        <select value={value} onChange={(e) => onChange(Number(e.target.value))}>
+        <select value={value ?? ''} onChange={(e) => { if (e.target.value !== '') onChange(Number(e.target.value)) }}>
+            {value === null && <option value="" disabled>Choose a distance</option>}
             {RACE_DISTANCES.map((race) => <option key={race.label} value={race.km}>{race.label}</option>)}
         </select>
     </label>
@@ -52,7 +54,7 @@ export function QuestionField({ question, value, error, onChange }: Props) {
             control = <Choices options={input.options} selected={typeof value === 'string' ? [value] : []} onToggle={onChange} />
             break
         case 'distance':
-            control = <DistanceSelect label="Distance" value={typeof value === 'number' ? value : DEFAULT_DISTANCE_KM} onChange={onChange} />
+            control = <DistanceSelect label="Distance" value={typeof value === 'number' ? value : null} onChange={onChange} />
             break
         case 'duration':
             control = <DurationInput label={unitLabel} required={question.required} value={typeof value === 'number' ? value : null}
