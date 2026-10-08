@@ -64,8 +64,9 @@ describe('long run', () => {
     })
 
     it('takes 25% of a week from 64 km up', () => {
-        const target = build('long', { weeklyKm: 80 }).sections[1].target
-        expect(target).toEqual({ basis: 'distance', distanceKm: 20 })
+        const plan = build('long', { weeklyKm: 80 })
+        expect(calculateWorkoutTotals(plan.sections).durationSeconds).toBeLessThanOrEqual(150 * 60)
+        expect(calculateSectionMetrics(plan.sections[1]).distanceKm).toBeLessThanOrEqual(20)
     })
 
     it('never runs past 150 minutes', () => {
@@ -125,7 +126,7 @@ describe('no time limit', () => {
 describe('cruise intervals', () => {
     const repsOf = (plan: ReturnType<typeof build>) => {
         const mix = plan.sections[1].runWalk!
-        return mainSeconds(plan) / (mix.runSeconds + mix.walkSeconds)
+        return Math.round(mainSeconds(plan) / (mix.runSeconds + mix.walkSeconds))
     }
 
     it('caps reps at 10% of the week', () => {

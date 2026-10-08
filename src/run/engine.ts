@@ -7,6 +7,7 @@ export interface RunProgress {
   index: number; phase: RunWalkPhase; phaseKey: string; speed: number | null
   /** Zero-based run/walk cycle inside the current section, for "Rep 3 of 8". */
   cycle: number
+  sectionEndsMs: number[]
   elapsedMs: number; distanceKm: number | null; segmentProgress: number
   overall: number; done: boolean
 }
@@ -15,6 +16,7 @@ export interface RunProgress {
 export function runProgress(plan: PersonalizedWorkout, changes: SpeedChange[], elapsedMs: number): RunProgress {
   let time = 0, distance = 0, knownDistance = true, event = 0, offset = 0
   const limit = Math.max(0, elapsedMs) / 1000
+  const sectionEndsMs: number[] = []
   let result: RunProgress | undefined
   for (let index = 0; index < plan.sections.length; index++) {
     const section = plan.sections[index]
@@ -28,11 +30,11 @@ export function runProgress(plan: PersonalizedWorkout, changes: SpeedChange[], e
       const target = section.target
       const fraction = target.basis === 'time' ? sectionTime / target.durationSeconds : sectionDistance / target.distanceKm
       result = {
-        index, phase: phase.kind, phaseKey: `${section.id}:${phase.cycle}:${phase.kind}`, speed, cycle: phase.cycle,
+        sectionEndsMs, index, phase: phase.kind, phaseKey: `${section.id}:${phase.cycle}:${phase.kind}`, speed, cycle: phase.cycle,
         elapsedMs: time * 1000, distanceKm: knownDistance ? distance : null,
         segmentProgress: Math.min(1, fraction), overall: (index + Math.min(1, fraction)) / plan.sections.length, done: false
       }
-      if (fraction >= 1 - 1e-9) break
+      if (fraction >= 1 - 1e-9) { sectionEndsMs.push(time * 1000); break }
       if (time >= limit - 1e-9) return result
       const sectionLeft = target.basis === 'time' ? target.durationSeconds - sectionTime
         : speed === null ? Infinity : (target.distanceKm - sectionDistance) / speed * 3600

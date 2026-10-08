@@ -190,11 +190,5 @@ export const CRUISE_CUES = {
     cooldown: 'Cool-down. Well done. Gentle running or walking now, let the heart rate come down.',
 } as const
 
-export const FORM_CUES = [
-    'Run tall: hips forward, chest open, eyes down the track rather than at your feet.',
-    'Quick feet: think light, fast ground contact rather than long, reaching strides.',
-    'Relaxed shoulders: unclench your jaw and hands, and let your arms drive from the elbow.',
-]
-
 export const RULES_DISCLAIMER =
     'Paces and session sizes come from Jack Daniels\' VDOT formulas and volume rules. Warm-up lengths, the beginner default pace and the interval rep cap are product defaults that need review — they are not validated training advice.'

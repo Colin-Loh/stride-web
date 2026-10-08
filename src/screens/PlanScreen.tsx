@@ -9,9 +9,8 @@ import {
 } from '../plan/convert'
 import {
     calculateWorkoutTotals,
-    validateWorkout,
-} from '../plan/generate'
-import { runnablePlan } from '../plan/runnable'
+} from '../plan/metrics'
+import { validateWorkout } from '../plan/validation'
 import type { PersonalizedWorkout, PlanSection } from '../plan/types'
 
 interface Props {
@@ -28,7 +27,6 @@ export function PlanScreen({ workout, onChange, onStart, onBack }: Props) {
         [workout.sections],
     )
     const validation = useMemo(() => validateWorkout(workout), [workout])
-    const runnable = useMemo(() => runnablePlan(workout), [workout])
 
     const replace = (next: PlanSection) =>
         onChange({
@@ -108,12 +106,12 @@ export function PlanScreen({ workout, onChange, onStart, onBack }: Props) {
                 <button
                     type="button"
                     className="primary"
-                    disabled={!runnable || !validation.ok || Object.values(invalidInputs).some(Boolean)}
+                    disabled={!validation.ok || Object.values(invalidInputs).some(Boolean)}
                     onClick={onStart}
                 >
                     Start this workout
                 </button>
-                {!runnable ? (
+                {!validation.ok ? (
                     <p className="muted">
                         Correct the plan above before starting. Timed sections can run without a speed.
                     </p>

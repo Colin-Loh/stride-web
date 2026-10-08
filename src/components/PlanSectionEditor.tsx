@@ -1,6 +1,7 @@
 import { NumberField } from './NumberField'
 import { PaceInput } from './PaceInput'
-import { calculateSectionMetrics, setSectionPace, setSectionSpeed, setSectionTargetValue } from '../plan/generate'
+import { calculateSectionMetrics } from '../plan/metrics'
+import { setSectionPace, setSectionSpeed, setSectionTargetValue } from '../plan/edit'
 import { formatSpan, roundSpeedUp } from '../plan/convert'
 import type { PlanSection } from '../plan/types'
 

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { elapsedMs, type RunSession } from '../storage'
 import { runProgress, type RunProgress } from '../run/engine'
 import { clampSpeed } from '../plan/convert'
@@ -15,7 +15,7 @@ export function useRunSession(session: RunSession, onSession: (s: RunSession) =>
   }, [running])
   const elapsed = elapsedMs(session, now)
   const progress = runProgress(session.plan, session.speedChanges, elapsed)
-  const finish = runProgress(session.plan, session.speedChanges, Infinity)
+  const finish = useMemo(() => runProgress(session.plan, session.speedChanges, Infinity), [session.plan, session.speedChanges])
   // Reported once on the completing tick; the object identity changes every render.
   const latest = useRef(progress)
   useEffect(() => { latest.current = progress })
@@ -37,5 +37,5 @@ export function useRunSession(session: RunSession, onSession: (s: RunSession) =>
     const offset = Math.round((previous + clampSpeed(current.speed + delta) - current.speed) * 10) / 10
     onSession({ ...session, speedChanges: [...session.speedChanges, { atMs, offset }] })
   }
-  return { running, progress, remaining: Math.max(0, finish.elapsedMs - progress.elapsedMs), start, pause, resume, adjustSpeed }
+  return { running, progress, sectionRemaining: Math.max(0, (finish.sectionEndsMs[progress.index] ?? finish.elapsedMs) - progress.elapsedMs), remaining: Math.max(0, finish.elapsedMs - progress.elapsedMs), start, pause, resume, adjustSpeed }
 }

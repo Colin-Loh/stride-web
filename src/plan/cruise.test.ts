@@ -19,7 +19,7 @@ const spec = PROPOSED_CRUISE_SHAPE
 const repsOf = (plan: ReturnType<typeof build>) => {
     const target = plan.sections[1].target
     const mix = plan.sections[1].runWalk!
-    return target.basis === 'time' ? target.durationSeconds / (mix.runSeconds + mix.walkSeconds) : 0
+    return target.basis === 'time' ? Math.round(target.durationSeconds / (mix.runSeconds + mix.walkSeconds)) : 0
 }
 
 describe('cruise intervals', () => {

@@ -284,13 +284,7 @@ input {
   line-height: 1.1;
 }
 
-.stat-value em {
-  font-style: normal;
-  font-size: 0.62em;
-  font-weight: 600;
-  margin-left: 1px;
-  color: var(--muted);
-}
+
 
 .stat-line {
   height: 4px;

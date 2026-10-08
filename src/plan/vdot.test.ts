@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { derivePersonalBaseline, missingBaselineFields } from './baseline'
-import { formatDuration, paceSecondsPerKmFromSpeed, parseDuration } from './convert'
+import { formatDurationSeconds, paceSecondsPerKmFromSpeed, parseDuration } from './convert'
 import { danielsSpeeds, predictRaceSeconds, vdotFromEasySpeed, vdotFromRace } from './vdot'
 import type { BaselineAnswers } from './types'
 
@@ -100,7 +100,7 @@ describe('race time input', () => {
         expect(parseDuration('27:30')).toBe(27 * 60 + 30)
         expect(parseDuration('1:58:00')).toBe(118 * 60)
         for (const invalid of ['1:60', '1:5', 'abc', '0:00', '1:2:3']) expect(parseDuration(invalid)).toBeNull()
-        expect(formatDuration(118 * 60)).toBe('1:58:00')
-        expect(formatDuration(27 * 60 + 30)).toBe('27:30')
+        expect(formatDurationSeconds(118 * 60)).toBe('1:58:00')
+        expect(formatDurationSeconds(27 * 60 + 30)).toBe('27:30')
     })
 })

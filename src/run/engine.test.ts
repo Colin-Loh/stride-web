@@ -65,3 +65,24 @@ describe('run replay', () => {
     expect(runProgress(plan, [], 86_400_000)).toMatchObject({ done: true, elapsedMs: 30_000, distanceKm: 0.05 })
   })
 })
+
+describe('section finish forecasts', () => {
+  it('updates a distance section countdown after a speed change without rewriting history', () => {
+    const plan = make([{ ...section('a', 0, 6), target: { basis: 'distance', distanceKm: 1 } }, section('b', 30, 6)])
+    const changes = [{ atMs: 300_000, offset: 6 }]
+    const forecast = runProgress(plan, changes, Infinity)
+    const current = runProgress(plan, changes, 300_000)
+    expect(forecast.sectionEndsMs[0] - current.elapsedMs).toBeCloseTo(150_000)
+    expect(forecast.elapsedMs).toBeCloseTo(480_000)
+    expect(current.distanceKm).toBeCloseTo(0.5)
+  })
+  it('forecasts run/walk distance sections through future phase boundaries', () => {
+    const plan = make([{ ...section('a', 0, 12), target: { basis: 'distance', distanceKm: 0.6 },
+      runWalk: { runSeconds: 120, walkSeconds: 60, walkSpeedKmh: 6 } }])
+    const forecast = runProgress(plan, [], Infinity)
+    expect(forecast.sectionEndsMs[0] - 120_000).toBeCloseTo(90_000)
+  })
+  it('keeps timed section end times fixed after speed changes', () => {
+    expect(runProgress(make(), [{ atMs: 10_000, offset: 5 }], Infinity).sectionEndsMs).toEqual([30_000, 60_000, 90_000])
+  })
+})

@@ -52,3 +52,8 @@ export function intervalMetrics(section: PlanSection) {
     + Math.min(rest, runDistance) / run * 3600 + Math.max(0, rest - runDistance) / walk * 3600
   return { seconds, distance }
 }
+
+/** Includes a partial final cycle, without inventing an extra cycle at an exact boundary. */
+export function intervalCount(seconds: number, runSeconds: number, walkSeconds: number): number {
+  return Math.max(0, Math.ceil(seconds / (runSeconds + walkSeconds) - 1e-9))
+}

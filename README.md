@@ -15,7 +15,7 @@ Open the printed local URL. Choose **Test run** for three fixed 30-second sectio
 
 - Generated and edited treadmill speeds round **up** to 0.1 km/h: 8.21 becomes 8.3; 8.20 stays 8.2.
 - Internal time and distance calculations retain precision. Pace remains minutes:seconds per kilometre.
-- Paces come from Jack Daniels' VDOT formulas: from a recent race, your comfortable pace, or a 9:00/km beginner default. Session sizes follow Daniels' volume rules as a share of your weekly distance (long run at most 25–30% and 150 minutes, threshold at most 10%, fast reps at most 5%). The Easy run is your week split across your running days. Warm-up lengths and the defaults are editable product choices, not validated training advice.
+- Paces come from Jack Daniels' VDOT formulas: from a recent race, your comfortable pace, or a 9:00/km beginner default. Session sizes follow Daniels' volume rules as a share of your weekly distance (long-run main distance at most 25–30%, the entire easy/long workout at most 150 minutes, threshold work at most 10%, fast reps at most 5%). The Easy run is your week split across your running days. Warm-up lengths and the defaults are editable product choices, not validated training advice.
 - Run/walk sessions alternate editable run and walk durations. The initial suggestion is two minutes running, one minute walking.
 - A time target keeps its duration when speed changes. A distance target finishes when estimated distance reaches its target.
 - Unknown-speed timed sections work by effort; distance and overall pace stay unknown. Distance targets require known speeds.
@@ -44,3 +44,12 @@ npm run preview
 GitHub Pages: push to `main`, then choose **GitHub Actions** under repository **Settings → Pages**. The workflow runs tests, lint, and build before deployment. The relative Vite base supports a repository subpath.
 
 The production offline cache includes app code, install icons, animal sprites, and celebration audio. Visit once online before testing offline. Browser playback and mobile lock/unlock behaviour still require device testing.
+
+## Planning limits and code organization
+
+- Minimum hard-workout sizes never bypass weekly distance limits. If the proposed minimum exceeds the allowance, Start is disabled with an explanation. Shorten the work block or choose an easier workout.
+- The 150-minute ceiling includes warm-up and cool-down, including run/walk time. Edited plans are checked too.
+- Section countdowns use the same speed-change history and run/walk phases as the overall finish forecast. Forecasts refresh when speeds or the plan change.
+- Partial final intervals count as a repetition and retain their exact duration in exported steps.
+- Planning is separated into metrics, validation, editing, explanations, interval/cruise builders, and shared builder helpers. The tested step exporter remains isolated in `src/plan/schema.ts`.
+- Duration formatters explicitly name their units: `formatDurationMs` for timers and `formatDurationSeconds` for entered times.

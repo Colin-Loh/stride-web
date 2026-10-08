@@ -4,7 +4,6 @@ import {
     distanceFromSpeed,
     durationFromDistance,
     paceSecondsPerKmFromSpeed,
-    speedFromDistanceDuration,
     speedFromPaceSecondsPerKm,
 } from './convert'
 import {
@@ -53,9 +52,7 @@ describe('conversions', () => {
         expect(speedFromPaceSecondsPerKm(300)).toBeCloseTo(12, 10)
     })
 
-    it('derives speed from a distance and its time', () => {
-        expect(speedFromDistanceDuration(5, 1800)).toBeCloseTo(10, 10)
-    })
+
 
 
 })
