@@ -1,6 +1,6 @@
 # Stride
 
-A mobile-first running planner with timed or distance-based sections, optional run/walk intervals, treadmill speed controls, and section sounds. Distance is estimated from entered speed, not GPS or treadmill measurements.
+A mobile-first running planner with timed or distance-based sections, repeated rep/recovery intervals, treadmill speed controls, and section sounds. Distance is estimated from entered speed, not GPS or treadmill measurements.
 
 ## Run locally
 
