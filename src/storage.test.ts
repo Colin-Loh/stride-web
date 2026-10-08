@@ -55,6 +55,13 @@ it('discards answers saved in the old question format with the usual notice', ()
     daysPerWeek: 3, continuity: 'run-walk', paceKnown: true, paceMinutes: 6, paceSeconds: 0 }))
   expect(loadBaseline()).toEqual({}); expect(storageNotice()).toContain('outdated')
 })
+it('discards answers that include questions since removed, with the usual notice', () => {
+  values.set('stride.baseline', JSON.stringify({ fitness_method: 'recent_race', recent_race_distance: 5, recent_race_time: 1500,
+    recent_race_date: '2026-09-01', training_focus: 'base', weekly_volume: 30, running_days: 3, training_effort: 'base',
+    preferred_days: ['sat'], other_races: [], recent_break_injury_history: 'none', experience_history: 'two years',
+    age_sex: '40 M', max_hr: 185, weather_altitude: '20 °C' }))
+  expect(loadBaseline()).toEqual({}); expect(storageNotice()).toContain('outdated')
+})
 it('discards a plan and session saved with the old baseline shape instead of crashing', () => {
   const old = { ...session(), plan: { ...session().plan, baseline: { speedKmh: 8, speedSource: 'race', continuity: 'continuous',
     walkSpeedKmh: null, availableSeconds: null, missing: [] } } }

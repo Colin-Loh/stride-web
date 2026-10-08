@@ -38,13 +38,13 @@ describe('screen regressions', () => {
     expect(html).toContain('disabled=""')
   })
   it.each([
-    ['recent_race', ['recent_race_distance', 'recent_race_time', 'recent_race_date']],
+    ['recent_race', ['recent_race_distance', 'recent_race_time']],
     ['estimated_race', ['estimated_distance_time']],
     ['easy_pace', ['conversational_easy_pace']],
   ] as const)('shows only the %s follow-up questions', (method, followUps) => {
     const html = renderToStaticMarkup(<BaselineScreen initial={{ fitness_method: method }} onBack={noop} onDone={noop} />)
     const asked = [...html.matchAll(/data-question="([a-z_]+)"/g)].map(m => m[1])
-    const branches = ['recent_race_distance', 'recent_race_time', 'recent_race_date', 'estimated_distance_time', 'conversational_easy_pace']
+    const branches = ['recent_race_distance', 'recent_race_time', 'estimated_distance_time', 'conversational_easy_pace']
     expect(asked.filter(id => branches.includes(id))).toEqual(followUps)
   })
   it('shows the goal race date only for a race focus', () => {

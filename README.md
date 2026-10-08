@@ -16,7 +16,16 @@ Open the printed local URL. Choose **Test run** for three fixed 30-second sectio
 - Generated and edited treadmill speeds round **up** to 0.1 km/h: 8.21 becomes 8.3; 8.20 stays 8.2.
 - Internal time and distance calculations retain precision. Pace remains minutes:seconds per kilometre.
 - Paces and session sizes come from Jack Daniels' VDOT model, which lives entirely in `src/plan/daniels.ts` (equations, E/M/T/I/R zones, volume limits, plan-structure constants, each with its source). Edit that one file to change the formula.
-- Onboarding asks only the questions in `src/plan/questions.ts`, defined as data and rendered generically. Fitness comes from a recent race, an estimated race, or a conversational easy pace. An easy pace sets easy running only (no published mapping to VDOT), so speed sessions then run by effort. Weekly distance, running days, training effort and focus size the sessions; the remaining optional answers are stored but not yet used (see `TODO(verify)` in the code).
+- Onboarding asks only the core VDOT and plan inputs, defined as data in `src/plan/questions.ts` and rendered generically:
+  1. Fitness method: a recent race, an estimated race, or a conversational easy pace.
+  2. The inputs for that method only: race distance and finish time, an estimated distance and time, or the easy pace.
+  3. Training focus (Base or a race distance).
+  4. Current weekly distance (km).
+  5. Running days per week (1-7).
+  6. Training effort (Base, Base Quality, Advanced Quality).
+  7. Goal race date, asked only for a race focus and optional.
+
+  An easy pace sets easy running only (no published mapping to VDOT), so speed sessions then run by effort.
 - Sessions: Easy and Long runs at E pace (long run capped at 25% of the week and 150 minutes), Tempo at T pace (20 minutes or 10% of the week if shorter), Cruise intervals of 5-minute T reps with a 1-minute jog, Interval runs of 3-minute I reps with an equal jog, capped at the lesser of 8% of the week or 10 km. Warm-up and cool-down are easy running.
 - A time target keeps its duration when speed changes. A distance target finishes when estimated distance reaches its target.
 - Unknown-speed timed sections work by effort; distance and overall pace stay unknown. Distance targets require known speeds.
@@ -30,7 +39,7 @@ Open the printed local URL. Choose **Test run** for three fixed 30-second sectio
 - Screen wake lock is requested while running. Availability depends on the browser and device.
 - There is no looping cue. A chime marks section or run/walk transitions; celebration plays at completion. **Mute sounds** silences both automatic sounds; **Play celebration** explicitly replays the finish sound.
 - Completion shows actual active time and estimated distance, excluding pauses.
-- Old sessions without a speed history cannot be recovered accurately. They are ignored with a notice; valid profiles remain available. Running answers saved in the old question format are discarded with a notice and asked again.
+- Old sessions without a speed history cannot be recovered accurately. They are ignored with a notice; valid profiles remain available. Running answers saved in an older question format, including answers to questions since removed, are discarded with a notice and asked again.
 - Data stays in this browser's local storage. Corrupt records and storage failures produce notices rather than blank screens.
 
 ## Checks and deployment

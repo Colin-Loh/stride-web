@@ -2,9 +2,10 @@ import { RACE_DISTANCES, TRAINING_EFFORTS, TRAINING_FOCUSES } from './daniels'
 
 /**
  * Every onboarding question, defined once as data. The screen renders this list generically and
- * the plan builder reads the answers by id. The list is the "Required onboarding questions" table
- * of the research spec. "Required" is the spec's recommended local contract, not a claim that V.O2
- * marks these fields required.
+ * the plan builder reads the answers by id. The list keeps only the questions from the research
+ * spec's "Required onboarding questions" table that feed the VDOT formula or plan generation.
+ * "Required" is the spec's recommended local contract, not a claim that V.O2 marks these fields
+ * required.
  */
 
 export interface Option {
@@ -17,17 +18,10 @@ export interface DistanceTime {
     seconds: number
 }
 
-export interface RaceEntry {
-    distanceKm: number
-    /** ISO calendar date, YYYY-MM-DD. */
-    date: string
-}
-
-export type AnswerValue = string | number | string[] | DistanceTime | RaceEntry[]
+export type AnswerValue = string | number | DistanceTime
 
 export type Input =
     | { type: 'choice'; options: readonly Option[] }
-    | { type: 'multichoice'; options: readonly Option[] }
     /** One of the preset race distances; the value is kilometres. */
     | { type: 'distance' }
     /** Elapsed time as h:mm:ss or mm:ss; the value is seconds. */
@@ -37,9 +31,7 @@ export type Input =
     /** ISO calendar date. `future` requires a date after today. */
     | { type: 'date'; future?: boolean }
     | { type: 'number'; min: number; max?: number; integer?: boolean; step: number }
-    | { type: 'text'; maxLength: number }
     | { type: 'distanceTime' }
-    | { type: 'raceList' }
 
 /** Shown only while another answer is one of these values. */
 export interface Condition {
@@ -58,16 +50,6 @@ export interface Question {
     askWhen?: Condition
     hint?: string
 }
-
-const WEEKDAYS: readonly Option[] = [
-    { value: 'mon', label: 'Mon' },
-    { value: 'tue', label: 'Tue' },
-    { value: 'wed', label: 'Wed' },
-    { value: 'thu', label: 'Thu' },
-    { value: 'fri', label: 'Fri' },
-    { value: 'sat', label: 'Sat' },
-    { value: 'sun', label: 'Sun' },
-]
 
 const toOptions = (items: readonly { id: string; label: string }[]): Option[] =>
     items.map((item) => ({ value: item.id, label: item.label }))
@@ -105,16 +87,6 @@ export const QUESTIONS = [
         units: 'h:mm:ss',
         required: true,
         askWhen: { id: 'fitness_method', in: ['recent_race'] },
-    },
-    {
-        id: 'recent_race_date',
-        label: 'When was this result?',
-        input: { type: 'date' },
-        units: 'YYYY-MM-DD',
-        required: false,
-        askWhen: { id: 'fitness_method', in: ['recent_race'] },
-        // TODO(verify): no official recency cutoff exists, so the date is stored and shown, never enforced.
-        hint: 'Use a recent, representative result.',
     },
     {
         id: 'estimated_distance_time',
@@ -166,13 +138,6 @@ export const QUESTIONS = [
         hint: 'Every option includes a long run. When unsure, choose Base.',
     },
     {
-        id: 'preferred_days',
-        label: 'Which weekday for your long run and quality sessions?',
-        input: { type: 'multichoice', options: WEEKDAYS },
-        units: null,
-        required: false,
-    },
-    {
         id: 'goal_race_date',
         label: 'When is your goal race?',
         input: { type: 'date', future: true },
@@ -181,54 +146,6 @@ export const QUESTIONS = [
         askWhen: { id: 'training_focus', in: RACE_FOCUSES },
         // TODO(verify): plan-length constraints for a goal date are unpublished.
         hint: 'Leave blank if there is no date yet.',
-    },
-    {
-        id: 'other_races',
-        label: 'Are other races scheduled?',
-        input: { type: 'raceList' },
-        units: 'km, date',
-        required: false,
-    },
-    {
-        id: 'recent_break_injury_history',
-        label: 'Have you recently taken time off or been injured?',
-        input: { type: 'text', maxLength: 500 },
-        units: null,
-        required: false,
-        hint: 'Say how many weeks off, in your own words. This is not a medical assessment.',
-    },
-    {
-        id: 'experience_history',
-        label: 'What has your recent running looked like?',
-        input: { type: 'text', maxLength: 500 },
-        units: null,
-        required: false,
-    },
-    {
-        id: 'age_sex',
-        label: 'Age and sex/gender for optional age-graded level?',
-        input: { type: 'text', maxLength: 60 },
-        units: null,
-        required: false,
-        // Age and sex never change VDOT; they would only feed age-graded levels, which are not built.
-        hint: 'Optional. It does not change your paces.',
-    },
-    {
-        id: 'max_hr',
-        label: 'Do you know a tested maximum heart rate?',
-        // TODO(verify): the spec leaves physiological bounds to the product; only positivity is enforced.
-        input: { type: 'number', min: 1, integer: true, step: 1 },
-        units: 'bpm',
-        required: false,
-    },
-    {
-        id: 'weather_altitude',
-        label: 'Expected training/race temperature and altitude?',
-        input: { type: 'text', maxLength: 120 },
-        units: null,
-        required: false,
-        // TODO(verify): no heat or altitude correction is published, so this is stored and never applied.
-        hint: 'Include units, for example 28 °C and 1500 m.',
     },
 ] as const satisfies readonly Question[]
 
@@ -272,10 +189,6 @@ export function valueError(input: Input, value: unknown, today?: Date): string |
     switch (input.type) {
         case 'choice':
             return input.options.some((option) => option.value === value) ? null : 'Choose one of the options.'
-        case 'multichoice':
-            return Array.isArray(value) && value.every((item) => input.options.some((option) => option.value === item))
-                ? null
-                : 'Choose from the options.'
         case 'distance':
             return isPresetDistance(value) ? null : 'Choose a distance from the list.'
         case 'duration':
@@ -290,16 +203,10 @@ export function valueError(input: Input, value: unknown, today?: Date): string |
                 return input.max === undefined ? `Enter a number of at least ${input.min}.` : `Enter a number from ${input.min} to ${input.max}.`
             }
             return input.integer && !Number.isInteger(value) ? 'Enter a whole number.' : null
-        case 'text':
-            return typeof value === 'string' && value.length <= input.maxLength ? null : `Keep this under ${input.maxLength} characters.`
         case 'distanceTime':
             return isRecord(value) && isPresetDistance(value.distanceKm) && isPositiveNumber(value.seconds)
                 ? null
                 : 'Choose a distance and enter a time as m:ss or h:mm:ss.'
-        case 'raceList':
-            return Array.isArray(value) && value.every((race) => isRecord(race) && isPresetDistance(race.distanceKm) && isIsoDate(race.date))
-                ? null
-                : 'Each race needs a distance and a date.'
     }
 }
 
@@ -327,7 +234,10 @@ export function missingQuestions(answers: Answers, today?: Date): Question[] {
     return visibleQuestions(answers).filter((question) => answerError(question, answers, today) !== null)
 }
 
-/** Type guard for stored answers. Anything from the old question format has unknown ids and fails. */
+/**
+ * Type guard for stored answers. Any unknown id fails, so answers from an older question list
+ * (including questions since removed) are discarded with the usual storage notice.
+ */
 export function isAnswers(value: unknown): value is Answers {
     if (!isRecord(value)) return false
     return Object.entries(value).every(([id, answer]) => {

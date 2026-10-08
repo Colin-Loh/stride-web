@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { RACE_DISTANCES } from '../plan/daniels'
-import type { AnswerValue, DistanceTime, Option, Question, RaceEntry } from '../plan/questions'
+import type { AnswerValue, DistanceTime, Option, Question } from '../plan/questions'
 import { DurationInput } from './DurationInput'
 import { NumberField } from './NumberField'
 import { PaceInput } from './PaceInput'
@@ -42,26 +42,6 @@ function DistanceTimeField({ value, onChange }: { value: DistanceTime | undefine
     </>
 }
 
-function RaceListField({ value, onChange }: { value: RaceEntry[] | undefined; onChange: (value: RaceEntry[] | undefined) => void }) {
-    const [rows, setRows] = useState<{ distanceKm: number; date: string }[]>(value ?? [])
-    const update = (next: typeof rows) => {
-        setRows(next)
-        const complete = next.filter((row) => row.date !== '')
-        onChange(complete.length > 0 ? complete : undefined)
-    }
-    return <>
-        {rows.map((row, index) => <div className="pace-row" key={index}>
-            <DistanceSelect label="Distance" value={row.distanceKm}
-                onChange={(km) => update(rows.map((r, i) => (i === index ? { ...r, distanceKm: km } : r)))} />
-            <label className="field">Date
-                <input type="date" value={row.date} onChange={(e) => update(rows.map((r, i) => (i === index ? { ...r, date: e.target.value } : r)))} />
-            </label>
-            <button type="button" className="link" onClick={() => update(rows.filter((_, i) => i !== index))}>Remove</button>
-        </div>)}
-        <button type="button" className="link" onClick={() => update([...rows, { distanceKm: DEFAULT_DISTANCE_KM, date: '' }])}>Add a race</button>
-    </>
-}
-
 /** Renders any question from its definition. The input type decides the control; nothing is per-question. */
 export function QuestionField({ question, value, error, onChange }: Props) {
     const { input, units } = question
@@ -71,15 +51,6 @@ export function QuestionField({ question, value, error, onChange }: Props) {
         case 'choice':
             control = <Choices options={input.options} selected={typeof value === 'string' ? [value] : []} onToggle={onChange} />
             break
-        case 'multichoice': {
-            const selected = Array.isArray(value) && value.every((item) => typeof item === 'string') ? value as string[] : []
-            control = <Choices options={input.options} selected={selected}
-                onToggle={(item) => {
-                    const next = selected.includes(item) ? selected.filter((s) => s !== item) : [...selected, item]
-                    onChange(next.length > 0 ? next : undefined)
-                }} />
-            break
-        }
         case 'distance':
             control = <DistanceSelect label="Distance" value={typeof value === 'number' ? value : DEFAULT_DISTANCE_KM} onChange={onChange} />
             break
@@ -100,17 +71,8 @@ export function QuestionField({ question, value, error, onChange }: Props) {
             control = <NumberField label={unitLabel} min={input.min} max={input.max} step={input.step}
                 value={typeof value === 'number' ? value : undefined} onChange={onChange} />
             break
-        case 'text':
-            control = <label className="field">Your answer
-                <input type="text" maxLength={input.maxLength} value={typeof value === 'string' ? value : ''}
-                    onChange={(e) => onChange(e.target.value === '' ? undefined : e.target.value)} />
-            </label>
-            break
         case 'distanceTime':
             control = <DistanceTimeField value={isDistanceTime(value) ? value : undefined} onChange={onChange} />
-            break
-        case 'raceList':
-            control = <RaceListField value={Array.isArray(value) ? value as RaceEntry[] : undefined} onChange={onChange} />
             break
     }
     // Duration and pace inputs explain their own format errors.
@@ -124,5 +86,5 @@ export function QuestionField({ question, value, error, onChange }: Props) {
 }
 
 function isDistanceTime(value: AnswerValue | undefined): value is DistanceTime {
-    return typeof value === 'object' && value !== null && !Array.isArray(value)
+    return typeof value === 'object'
 }
