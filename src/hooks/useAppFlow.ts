@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { playCelebration, prepareRunAudio, stopCelebration, stopCue } from '../audio'
-import { derivePersonalBaseline, missingBaselineFields } from '../plan/baseline'
+import { derivePersonalBaseline } from '../plan/baseline'
+import { missingQuestions, type Answers } from '../plan/questions'
 import { generatePersonalizedWorkout } from '../plan/generate'
 import { runnablePlan } from '../plan/runnable'
-import type { BaselineAnswers, PersonalizedWorkout } from '../plan/types'
+import type { PersonalizedWorkout } from '../plan/types'
 import { loadBaseline, loadMuted, loadPlan, loadProfile, loadSession, newSession,
   saveBaseline, saveMuted, savePlan, saveProfile, saveSession, storageNotice, clearStorageNotice,
   type Profile, type RunSession } from '../storage'
@@ -37,16 +38,16 @@ export function useAppFlow() {
   const persistSession = useCallback((next: RunSession | null) => { setSession(next); saveSession(next) }, [])
   function persistProfile(next: Profile) { setProfile(next); saveProfile(next) }
   function persistPlan(next: PersonalizedWorkout | null) { setPlan(next); savePlan(next) }
-  function buildPlan(category: WorkoutId, source: BaselineAnswers) {
+  function buildPlan(category: WorkoutId, source: Answers) {
     persistPlan(generatePersonalizedWorkout({ category, baseline: derivePersonalBaseline(source) }))
     setView('plan')
   }
   function pickCategory(category: WorkoutId) {
-    if (category !== 'test' && missingBaselineFields(answers).length) {
+    if (category !== 'test' && missingQuestions(answers).length) {
       setPendingCategory(category); setEditingAnswers(false); setView('baseline')
     } else buildPlan(category, answers)
   }
-  function finishAnswers(next: BaselineAnswers) {
+  function finishAnswers(next: Answers) {
     setAnswers(next); saveBaseline(next); setEditingAnswers(false)
     if (editingAnswers && !pendingCategory) { setView('category'); return }
     buildPlan(pendingCategory ?? 'easy', next)

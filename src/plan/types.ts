@@ -45,49 +45,24 @@ export interface SectionMetrics {
     durationEstimated: boolean
 }
 
-export interface BaselineAnswers {
-    /** A recent all-out race or time trial: the best source of a VDOT. */
-    raceKnown?: boolean
-    raceDistanceKm?: number
-    raceSeconds?: number
-    /** Required: Daniels sizes every session as a share of the week. */
-    weeklyKm?: number
-    /** Required, 1-7: how many runs the week is split into. */
-    daysPerWeek?: number
-    continuity?: 'continuous' | 'run-walk'
-    paceKnown?: boolean
-    paceMinutes?: number
-    paceSeconds?: number
-    walkPaceKnown?: boolean
-    walkPaceMinutes?: number
-    walkPaceSeconds?: number
-    runMinutes?: number
-    walkMinutes?: number
-    availableMinutes?: number
-}
+/** How the runner's current fitness was established, best source first. */
+export type FitnessMethod = 'recent_race' | 'estimated_race' | 'easy_pace'
 
+/** What the plan builder needs from the onboarding answers. Nulls mean "not answered". */
 export interface PersonalBaseline {
-    /** Comfortable running speed. Null when we genuinely do not know. */
-    speedKmh: number | null
-    /** 'default' means the runner did not know their pace, so DEFAULT_EASY_PACE_SECONDS stands in. */
-    speedSource: 'reported-pace' | 'race' | 'default' | 'unknown'
-    /** The runner's own comfortable speed, kept even when a race moved speedKmh into Daniels' easy range. */
-    reportedSpeedKmh?: number | null
-    /** Daniels VDOT. Optional only so plans saved before it existed still load. */
-    vdot?: number | null
-    vdotSource?: 'race' | 'easy-pace' | null
-    race?: { distanceKm: number; seconds: number } | null
-    weeklyKm?: number | null
-    daysPerWeek?: number | null
-    continuity: 'continuous' | 'run-walk'
-    walkSpeedKmh: number | null
-    /** 'default' means the runner did not know their walking pace, so DEFAULT_WALK_PACE_SECONDS stands in. */
-    walkSpeedSource?: 'reported' | 'default' | null
-    runSeconds?: number
-    walkSeconds?: number
-    availableSeconds: number | null
-    /** Questions still worth asking, surfaced in the UI. */
-    missing: string[]
+    /** Daniels VDOT. Null for an easy-pace answer, which has no published mapping to VDOT. */
+    vdot: number | null
+    fitnessMethod: FitnessMethod | null
+    /** The race behind the VDOT, for explaining it. */
+    race: { distanceKm: number; seconds: number } | null
+    /** Reported conversational pace, used for easy running when there is no VDOT. */
+    reportedEasySpeedKmh: number | null
+    weeklyKm: number | null
+    daysPerWeek: number | null
+    trainingEffort: string | null
+    trainingFocus: string | null
+    /** ISO date of the goal race, or null. */
+    goalRaceDate: string | null
 }
 
 export interface PersonalizedWorkout {

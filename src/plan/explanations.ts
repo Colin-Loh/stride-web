@@ -1,20 +1,47 @@
-import { isPositiveFinite, formatPaceSeconds, paceSecondsPerKmFromSpeed, formatDurationSeconds } from './convert'
-import { DEFAULT_EASY_PACE_SECONDS } from './rules'
-import { raceLabel, type DanielsSpeeds } from './vdot'
+import { formatDurationSeconds, formatPaceSeconds, paceSecondsPerKmFromSpeed } from './convert'
+import { isExtrapolatedVdot, RACE_DISTANCES, seasonPhase, ZONES, type TrainingSpeeds, type Zone } from './daniels'
 import type { PersonalBaseline } from './types'
 
-/** Where the paces came from, shown at the top of every plan that has them. */
-export function danielsNote(baseline: PersonalBaseline, zones: DanielsSpeeds | null): string | null {
-    if (!zones || !isPositiveFinite(baseline.vdot)) return null
-    const pace = (kmh: number) => formatPaceSeconds(paceSecondsPerKmFromSpeed(kmh))
-    const paces = `easy ${pace(zones.easyFastKmh)}–${pace(zones.easySlowKmh)}/km, threshold ${pace(zones.thresholdKmh)}/km, repetition ${pace(zones.repetitionKmh)}/km`
-    const vdot = baseline.vdot.toFixed(1)
-    if (baseline.vdotSource === 'race' && baseline.race) {
-        return `Your ${raceLabel(baseline.race.distanceKm).toLowerCase()} in ${formatDurationSeconds(baseline.race.seconds)} gives a VDOT of ${vdot}. Jack Daniels' training paces for that: ${paces}.`
+const MS_PER_WEEK = 7 * 24 * 60 * 60 * 1000
+
+const pace = (kmh: number) => `${formatPaceSeconds(paceSecondsPerKmFromSpeed(kmh))}/km`
+
+const raceLabel = (distanceKm: number) =>
+    RACE_DISTANCES.find((race) => Math.abs(race.km - distanceKm) < 1e-9)?.label ?? `${distanceKm} km`
+
+/** Where the paces came from, shown at the top of every plan. Null when nothing is known yet. */
+export function fitnessNote(baseline: PersonalBaseline, speeds: TrainingSpeeds | null): string | null {
+    if (baseline.fitnessMethod === 'easy_pace') {
+        return 'No VDOT can be worked out from an easy pace alone, so easy running uses the pace you reported and speed sessions have no target pace. Add a race or time trial for training paces.'
     }
-    if (baseline.speedSource === 'default') {
-        return `You did not know your pace, so we started you at ${formatPaceSeconds(DEFAULT_EASY_PACE_SECONDS)}/km, a gentle jog most beginners can hold. Daniels' formulas turn that into a VDOT of ${vdot}: ${paces}. Change the speed during the run if it feels too easy or too hard.`
-    }
-    return `From your comfortable pace we estimate a VDOT of ${vdot}: ${paces}. Add a recent race result for paces that fit you better.`
+    if (!speeds || baseline.vdot === null || baseline.race === null) return null
+    const paces = (Object.keys(ZONES) as Zone[]).map((zone) => `${ZONES[zone].name.toLowerCase()} ${pace(speeds[zone])}`).join(', ')
+    const result = `Your ${raceLabel(baseline.race.distanceKm).toLowerCase()} in ${formatDurationSeconds(baseline.race.seconds)} gives a VDOT of ${baseline.vdot.toFixed(1)}. Daniels paces: ${paces}.`
+    const provisional = baseline.fitnessMethod === 'estimated_race'
+        ? ' This comes from your own estimate, so treat it as provisional until you run a race or time trial.'
+        : ''
+    const extrapolated = isExtrapolatedVdot(baseline.vdot)
+        ? ' This VDOT is outside the range of the published tables, so the paces are extrapolated.'
+        : ''
+    return result + provisional + extrapolated
 }
 
+/** Where the goal race falls in Daniels' ideal 24-week season, or null when there is no date or it is out of range. */
+export function goalNote(baseline: PersonalBaseline, today: Date): string | null {
+    if (!baseline.goalRaceDate) return null
+    const weeks = Math.ceil((Date.parse(`${baseline.goalRaceDate}T00:00:00Z`) - Date.UTC(today.getFullYear(), today.getMonth(), today.getDate())) / MS_PER_WEEK)
+    const phase = seasonPhase(weeks)
+    return phase
+        ? `Your goal race is about ${weeks} week${weeks === 1 ? '' : 's'} away. In Daniels' ideal 24-week season that is the ${phase.name} phase: ${phase.summary}.`
+        : null
+}
+
+/** What a zone is for and how hard it feels, from its definition in daniels.ts. */
+export function zoneNote(zone: Zone): string {
+    const { name, purpose, vo2MaxPercent, hrMaxPercent } = ZONES[zone]
+    const ranges = [
+        vo2MaxPercent && `${vo2MaxPercent[0]}–${vo2MaxPercent[1]}% of VO₂max`,
+        hrMaxPercent && `${hrMaxPercent[0]}–${hrMaxPercent[1]}% of max heart rate`,
+    ].filter(Boolean).join(', ')
+    return `${name} (${zone}): ${purpose}${ranges ? ` Roughly ${ranges}.` : ''}`
+}

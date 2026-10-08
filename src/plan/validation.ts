@@ -1,6 +1,6 @@
-import { isPositiveFinite, MIN_SPEED, MAX_SPEED } from './convert'
+import { distanceFromSpeed, isPositiveFinite, MIN_SPEED, MAX_SPEED } from './convert'
 import { calculateSectionMetrics, calculateWorkoutTotals } from './metrics'
-import { DANIELS_VOLUME } from './rules'
+import { LONG_RUN_MAX_SECONDS, sessionCapKm } from './daniels'
 import type { PersonalizedWorkout } from './types'
 
 export interface WorkoutIssue {
@@ -61,20 +61,15 @@ export function validateWorkout(workout: PersonalizedWorkout): {
     }
 
     const totals = calculateWorkoutTotals(workout.sections)
-    const available = workout.baseline.availableSeconds
-    if (workout.category !== 'test' && available && totals.durationSeconds && totals.durationSeconds > available + 0.01) {
-        issues.push({
-            message: `This workout is ${Math.round((totals.durationSeconds - available) / 60)} min longer than the time you said you have. Shorten a section or allow more time.`,
-        })
-    }
 
     // Limits also apply to edited and restored plans, not only generated defaults.
     if (['easy', 'long'].includes(workout.category) && totals.durationSeconds !== null
-        && totals.durationSeconds > DANIELS_VOLUME.longMaxSeconds + 0.01) {
-        issues.push({ message: 'The whole workout, including warm-up and cool-down, must fit within 150 minutes.' })
+        && totals.durationSeconds > LONG_RUN_MAX_SECONDS + 0.01) {
+        issues.push({ message: 'The whole workout, including warm-up and cool-down, must fit within the longest long run Daniels allows.' })
     }
+    // Only interval running has a hard weekly cap; threshold volume is guidance, not a ceiling.
     const weekly = workout.baseline.weeklyKm
-    if (weekly && ['tempo', 'cruise', 'interval'].includes(workout.category)) {
+    if (weekly && workout.category === 'interval') {
         let workKm = 0
         let known = true
         for (const item of workout.sections.filter(s => s.type === 'run')) {
@@ -85,13 +80,11 @@ export function validateWorkout(workout: PersonalizedWorkout): {
             const workSeconds = mix
                 ? Math.floor(seconds / cycle) * mix.runSeconds + Math.min(seconds % cycle, mix.runSeconds)
                 : seconds
-            workKm += item.speedKmh * workSeconds / 3600
+            workKm += distanceFromSpeed(item.speedKmh, workSeconds)
         }
-        const fast = workout.category === 'interval'
-        const cap = fast ? Math.min(weekly * DANIELS_VOLUME.repetitionShareOfWeek, DANIELS_VOLUME.repetitionMaxKm)
-            : weekly * DANIELS_VOLUME.thresholdShareOfWeek
+        const cap = sessionCapKm('I', weekly)
         if (known && workKm > cap + 1e-8) {
-            issues.push({ message: `The working repetitions exceed your weekly allowance of ${cap.toFixed(2)} km. Shorten the work block or choose an easier workout; minimum session sizes do not override this limit.` })
+            issues.push({ message: `The hard repetitions exceed your session allowance of ${cap.toFixed(2)} km. Shorten the work block or choose an easier workout.` })
         }
     }
 

@@ -4,6 +4,7 @@ import { RunScreen } from './RunScreen'
 import { BaselineScreen } from './BaselineScreen'
 import { generatePersonalizedWorkout } from '../plan/generate'
 import { derivePersonalBaseline } from '../plan/baseline'
+import { QUESTIONS } from '../plan/questions'
 import { newSession } from '../storage'
 
 const noop = () => {}
@@ -30,12 +31,30 @@ describe('screen regressions', () => {
       character="cat" onSession={noop} onComplete={noop} onQuit={noop} onToggleMute={noop} />)
     expect(html).toContain('Run 2 of 2')
   })
-  it('retains the race, weekly, running and availability questions after extraction', () => {
-    const html = renderToStaticMarkup(<BaselineScreen initial={{ raceKnown: true, continuity: 'run-walk' }}
-      editAll onBack={noop} onDone={noop} />)
-    for (const label of ['Finish time', 'Kilometres per week', 'Running days (1 to 7)', 'Walking pace', 'Run minutes', 'Total minutes available']) {
-      expect(html).toContain(label)
-    }
+  it('asks only the always-visible questions before a fitness method is chosen', () => {
+    const html = renderToStaticMarkup(<BaselineScreen initial={{}} onBack={noop} onDone={noop} />)
+    const asked = [...html.matchAll(/data-question="([a-z_]+)"/g)].map(m => m[1])
+    expect(asked).toEqual(QUESTIONS.filter(q => !('askWhen' in q)).map(q => q.id))
     expect(html).toContain('disabled=""')
+  })
+  it.each([
+    ['recent_race', ['recent_race_distance', 'recent_race_time']],
+    ['estimated_race', ['estimated_distance_time']],
+    ['easy_pace', ['conversational_easy_pace']],
+  ] as const)('shows only the %s follow-up questions', (method, followUps) => {
+    const html = renderToStaticMarkup(<BaselineScreen initial={{ fitness_method: method }} onBack={noop} onDone={noop} />)
+    const asked = [...html.matchAll(/data-question="([a-z_]+)"/g)].map(m => m[1])
+    const branches = ['recent_race_distance', 'recent_race_time', 'estimated_distance_time', 'conversational_easy_pace']
+    expect(asked.filter(id => branches.includes(id))).toEqual(followUps)
+  })
+  it('shows the goal race date only for a race focus', () => {
+    const ask = (focus: string) => renderToStaticMarkup(<BaselineScreen initial={{ training_focus: focus }} onBack={noop} onDone={noop} />)
+    expect(ask('base')).not.toContain('goal_race_date')
+    expect(ask('10k')).toContain('goal_race_date')
+  })
+  it('enables the build button once every required answer is valid', () => {
+    const complete = { fitness_method: 'easy_pace', conversational_easy_pace: 420, training_focus: 'base', weekly_volume: 30,
+      running_days: 3, training_effort: 'base' } as const
+    expect(renderToStaticMarkup(<BaselineScreen initial={complete} onBack={noop} onDone={noop} />)).not.toContain('disabled=""')
   })
 })

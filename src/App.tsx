@@ -16,7 +16,7 @@ export default function App() {
       onContinue={(name, character) => { flow.persistProfile({ name, character }); flow.setView('category') }} />}
     {view === 'category' && <CategoryScreen name={profile.name ?? ''} selected={plan?.category}
       onChangeName={() => flow.setView('name')} onEditAnswers={flow.editAnswers} onPick={flow.pickCategory} />}
-    {view === 'baseline' && <BaselineScreen initial={flow.answers} editAll={flow.editingAnswers} onBack={() => flow.setView('category')} onDone={flow.finishAnswers} />}
+    {view === 'baseline' && <BaselineScreen initial={flow.answers} onBack={() => flow.setView('category')} onDone={flow.finishAnswers} />}
     {view === 'plan' && plan && <PlanScreen workout={plan} onChange={flow.persistPlan} onBack={() => flow.setView('category')} onStart={flow.startPlan} />}
     {view === 'run' && session && <RunScreen session={session} muted={flow.muted} character={toCharacter(profile.character)}
       onSession={flow.persistSession} onComplete={flow.handleComplete} onQuit={flow.quitRun} onToggleMute={flow.toggleMute} />}

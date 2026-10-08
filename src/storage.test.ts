@@ -1,6 +1,6 @@
 import { beforeEach, afterEach, expect, it, vi } from 'vitest'
 import { clearStorageNotice, elapsedMs, loadBaseline, loadMuted, loadPlan, loadProfile, loadSession,
-  newSession, saveMuted, saveSession, storageNotice } from './storage'
+  newSession, saveBaseline, saveMuted, saveSession, storageNotice } from './storage'
 import { generatePersonalizedWorkout } from './plan/generate'
 import { derivePersonalBaseline } from './plan/baseline'
 let values: Map<string, string>
@@ -45,4 +45,31 @@ it('excludes current and previous pauses; completion freezes actual time', () =>
   const run = { ...session(), startedAt: 1000, pausedMs: 2000, paused: true, pauseStartedAt: 8000 }
   expect(elapsedMs(run, 20_000)).toBe(5000)
   expect(elapsedMs({ ...run, completed: true, result: { elapsedMs: 4500, distanceKm: null } }, 999_999)).toBe(4500)
+})
+it('round-trips answers in the new question format', () => {
+  const answers = { fitness_method: 'recent_race', recent_race_distance: 5, recent_race_time: 1500, weekly_volume: 30 } as const
+  saveBaseline(answers); expect(loadBaseline()).toEqual(answers); expect(storageNotice()).toBe('')
+})
+it('discards answers saved in the old question format with the usual notice', () => {
+  values.set('stride.baseline', JSON.stringify({ raceKnown: true, raceDistanceKm: 5, raceSeconds: 1500, weeklyKm: 30,
+    daysPerWeek: 3, continuity: 'run-walk', paceKnown: true, paceMinutes: 6, paceSeconds: 0 }))
+  expect(loadBaseline()).toEqual({}); expect(storageNotice()).toContain('outdated')
+})
+it('discards answers that include questions since removed, with the usual notice', () => {
+  values.set('stride.baseline', JSON.stringify({ fitness_method: 'recent_race', recent_race_distance: 5, recent_race_time: 1500,
+    recent_race_date: '2026-09-01', training_focus: 'base', weekly_volume: 30, running_days: 3, training_effort: 'base',
+    preferred_days: ['sat'], other_races: [], recent_break_injury_history: 'none', experience_history: 'two years',
+    age_sex: '40 M', max_hr: 185, weather_altitude: '20 °C' }))
+  expect(loadBaseline()).toEqual({}); expect(storageNotice()).toContain('outdated')
+})
+it('discards a plan and session saved with the old baseline shape instead of crashing', () => {
+  const old = { ...session(), plan: { ...session().plan, baseline: { speedKmh: 8, speedSource: 'race', continuity: 'continuous',
+    walkSpeedKmh: null, availableSeconds: null, missing: [] } } }
+  values.set('stride.plan', JSON.stringify(old.plan)); values.set('stride.session', JSON.stringify(old))
+  expect(loadPlan()).toBeNull(); expect(loadSession()).toBeNull(); expect(storageNotice()).toContain('outdated')
+})
+it('round-trips a plan built from the new answers', () => {
+  const plan = generatePersonalizedWorkout({ category: 'interval', today: new Date(2026, 9, 8), baseline: derivePersonalBaseline({
+    fitness_method: 'recent_race', recent_race_distance: 5, recent_race_time: 1500, weekly_volume: 40, running_days: 4, training_effort: 'base' }) })
+  values.set('stride.plan', JSON.stringify(plan)); expect(loadPlan()).toEqual(plan)
 })
