@@ -12,8 +12,21 @@ export interface RunProgress {
   overall: number; done: boolean
 }
 
-/** Replay active time, splitting exactly at speed changes, intervals, and section boundaries. */
-export function runProgress(plan: PersonalizedWorkout, changes: SpeedChange[], elapsedMs: number): RunProgress {
+/** One stretch of active time at a constant set speed inside one section and run/walk phase. */
+export interface RunSegment {
+  index: number; phase: RunWalkPhase
+  startMs: number; durationMs: number
+  /** The section's planned speed for this phase, before any speed change by the runner. */
+  plannedKmh: number | null
+  /** The speed the runner had set, or null when the section has no speed. */
+  speedKmh: number | null
+}
+
+/**
+ * Replay active time, splitting exactly at speed changes, intervals, and section boundaries. Pass
+ * `segments` to receive every stretch the replay walked through, in order.
+ */
+export function runProgress(plan: PersonalizedWorkout, changes: SpeedChange[], elapsedMs: number, segments?: RunSegment[]): RunProgress {
   let time = 0, distance = 0, knownDistance = true, event = 0, offset = 0
   const limit = Math.max(0, elapsedMs) / 1000
   const sectionEndsMs: number[] = []
@@ -42,6 +55,7 @@ export function runProgress(plan: PersonalizedWorkout, changes: SpeedChange[], e
       const step = Math.min(limit - time, sectionLeft, phase.left, nextEvent)
       if (!Number.isFinite(step) || step <= 0) return result
       const added = speed === null ? 0 : speed * step / 3600
+      segments?.push({ index, phase: phase.kind, startMs: time * 1000, durationMs: step * 1000, plannedKmh: phase.speed, speedKmh: speed })
       if (speed === null) knownDistance = false
       distance += added; sectionDistance += added; time += step; sectionTime += step
     }

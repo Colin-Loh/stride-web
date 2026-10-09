@@ -1,14 +1,16 @@
 /**
- * Every kind of workout the app builds. 'marathon' is a marathon-pace (M) run that only appears
- * inside training plan weeks; it has no card on the session picker.
+ * Every kind of workout the app builds. 'marathon' is a marathon-pace (M) run and 'easyRun' an E run
+ * sized from the rest of the week; both only appear inside training plan weeks and have no card
+ * on the session picker.
  */
-export type WorkoutId = 'long' | 'threshold' | 'interval' | 'repetition' | 'marathon'
+export type WorkoutId = 'long' | 'easyRun' | 'threshold' | 'interval' | 'repetition' | 'marathon'
 
 /** The workouts offered as cards on the session picker. */
-export type PickableWorkoutId = Exclude<WorkoutId, 'marathon'>
+export type PickableWorkoutId = Exclude<WorkoutId, 'marathon' | 'easyRun'>
 
 export const WORKOUT_NAMES: Record<WorkoutId, string> = {
   long: 'Easy run',
+  easyRun: 'Easy run',
   threshold: 'Threshold run',
   interval: 'Interval run',
   repetition: 'Repetition run',

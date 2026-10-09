@@ -83,13 +83,18 @@ export function buildWorkout(input: WorkoutInput): PersonalizedWorkout {
         }, 'T')
     }
 
-    const cap = weeklyKm !== null && easy !== null ? longRunCapKm(weeklyKm, easy) : null
-    main = cap !== null && easy !== null
-        ? section('main', 'run', 'Easy run', { basis: 'distance', distanceKm: tenthOfKm(cap) }, easy)
-        : section('main', 'run', 'Easy run', { basis: 'time', durationSeconds: structure.longFallbackSeconds }, easy)
+    // A long run takes its cap; a plan's other E days take their share of the week.
+    const isEasyDay = category === 'easyRun'
+    const easyKm = isEasyDay ? distanceKm : weeklyKm !== null && easy !== null ? longRunCapKm(weeklyKm, easy) : null
+    const fallbackSeconds = isEasyDay ? structure.easyFallbackSeconds : structure.longFallbackSeconds
+    main = easyKm !== null && easy !== null
+        ? section('main', 'run', 'Easy run', { basis: 'distance', distanceKm: tenthOfKm(easyKm) }, easy)
+        : section('main', 'run', 'Easy run', { basis: 'time', durationSeconds: fallbackSeconds }, easy)
     main.effort = ZONES.E.purpose
     main.targetRpe = EASY_RPE
-    explanation.push(main.target.basis === 'distance'
+    explanation.push(isEasyDay && main.target.basis === 'distance'
+        ? `An easy run of ${main.target.distanceKm} km: this day's share of your ${weeklyKm} km week after the hard days and the longest easy run.`
+        : main.target.basis === 'distance'
         ? `The VDOT model sizes this Easy run by a share of your ${weeklyKm} km week and a maximum duration at easy pace: ${main.target.distanceKm} km.`
         : 'We need your weekly distance and an easy pace to size this run, so it is timed instead.')
     if (easy === null) {

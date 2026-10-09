@@ -175,15 +175,34 @@ describe('old and invalid data is discarded with the notice, without crashing', 
 })
 
 describe('preferences', () => {
-    it('round-trips the name, character and mute setting, and reads the numeric mute of older saves', async () => {
+    it('round-trips the name, character, weight and mute setting, and reads the numeric mute of older saves', async () => {
         const repository = new LocalStoragePreferencesRepository()
-        expect(await repository.load()).toEqual({ name: null, character: 'shiba', muted: false })
-        await repository.save({ name: 'Alex', character: 'cat', muted: true })
-        expect(await repository.load()).toEqual({ name: 'Alex', character: 'cat', muted: true })
+        expect(await repository.load()).toEqual({ name: null, character: 'shiba', muted: false, weightKg: null })
+        await repository.save({ name: 'Alex', character: 'shooshy', muted: true, weightKg: 62.5 })
+        expect(await repository.load()).toEqual({ name: 'Alex', character: 'shooshy', muted: true, weightKg: 62.5 })
         values.set('stride.muted', '1')
         expect((await repository.load()).muted).toBe(true)
-        await repository.save({ name: null, character: 'cat', muted: false })
-        expect(await repository.load()).toEqual({ name: null, character: 'cat', muted: false })
+        await repository.save({ name: null, character: 'shooshy', muted: false, weightKg: null })
+        expect(await repository.load()).toEqual({ name: null, character: 'shooshy', muted: false, weightKg: null })
+        expect(values.get('stride.profile')).toBe('{"character":"shooshy"}')
         expect(storageNotice()).toBe('')
+    })
+
+    it.each(['cat', 'girl', 'shooshy'])('loads the stored character %s as Shooshy', async (stored) => {
+        values.set('stride.profile', JSON.stringify({ name: 'Alex', character: stored }))
+        expect((await new LocalStoragePreferencesRepository().load()).character).toBe('shooshy')
+        expect(storageNotice()).toBe('')
+    })
+
+    it('treats an unknown character as Shiba and a profile saved before weights as having none', async () => {
+        values.set('stride.profile', JSON.stringify({ name: 'Alex', character: 'dragon' }))
+        expect(await new LocalStoragePreferencesRepository().load()).toMatchObject({ character: 'shiba', weightKg: null })
+    })
+
+    it.each([0, 5, 1000, -60, 'heavy', null])('drops an invalid stored weight %s with the notice', async (weight) => {
+        clearStorageNotice()
+        values.set('stride.profile', JSON.stringify({ name: 'Alex', character: 'shiba', weightKg: weight }))
+        expect((await new LocalStoragePreferencesRepository().load()).weightKg).toBeNull()
+        expect(storageNotice()).toContain('outdated or invalid')
     })
 })

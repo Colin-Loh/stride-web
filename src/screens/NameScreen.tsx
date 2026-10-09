@@ -1,25 +1,28 @@
 import { useState } from 'react'
 import { RunnerSprite } from '../RunnerSprite'
-import type { Character } from '../domain/preferences'
+import { CHARACTER_NAMES, parseWeightKg, WEIGHT_KG_LIMITS, type Character } from '../domain/preferences'
 
 interface Props {
   initialName?: string
   initialCharacter?: Character
-  onContinue: (name: string, character: Character) => void
+  initialWeightKg?: number | null
+  onContinue: (name: string, character: Character, weightKg: number | null) => void
 }
 
-const CHARACTERS: { id: Character; label: string }[] = [
-  { id: 'shiba', label: 'Shiba' },
-  { id: 'cat', label: 'Cat' },
-]
+const WEIGHT_ERROR = `Enter a weight from ${WEIGHT_KG_LIMITS.min} to ${WEIGHT_KG_LIMITS.max} kg, or leave it empty.`
+
+const CHARACTERS = Object.keys(CHARACTER_NAMES) as Character[]
 
 export function NameScreen({
   initialName = '',
   initialCharacter = 'shiba',
+  initialWeightKg = null,
   onContinue,
 }: Props) {
   const [name, setName] = useState(initialName)
   const [character, setCharacter] = useState<Character>(initialCharacter)
+  const [weightText, setWeightText] = useState(initialWeightKg === null ? '' : String(initialWeightKg))
+  const weight = parseWeightKg(weightText)
 
   return (
     <section className="card">
@@ -33,7 +36,7 @@ export function NameScreen({
         onSubmit={(event) => {
           event.preventDefault()
           const trimmed = name.trim()
-          if (trimmed) onContinue(trimmed, character)
+          if (trimmed && weight.ok) onContinue(trimmed, character, weight.kg)
         }}
       >
         <label className="field">
@@ -46,29 +49,45 @@ export function NameScreen({
             placeholder="Alex"
           />
         </label>
+        <label className="field">
+          Body weight in kg (optional)
+          <input
+            inputMode="decimal"
+            autoComplete="off"
+            value={weightText}
+            onChange={(event) => setWeightText(event.target.value)}
+            placeholder="60"
+            aria-invalid={!weight.ok}
+            aria-describedby="weight-help"
+          />
+          <span id="weight-help" className="muted">
+            Used only on this device for an approximate calorie estimate after a run.
+          </span>
+          {!weight.ok && <span className="field-error" role="alert">{WEIGHT_ERROR}</span>}
+        </label>
         <fieldset className="field characters">
           <legend>Your runner</legend>
           <div className="character-options">
-            {CHARACTERS.map((option) => (
+            {CHARACTERS.map((id) => (
               <button
-                key={option.id}
+                key={id}
                 type="button"
-                className={`character${character === option.id ? ' selected' : ''}`}
-                aria-pressed={character === option.id}
-                onClick={() => setCharacter(option.id)}
+                className={`character${character === id ? ' selected' : ''}`}
+                aria-pressed={character === id}
+                onClick={() => setCharacter(id)}
               >
                 <RunnerSprite
-                  character={option.id}
-                  state={character === option.id ? 'running' : 'idle'}
+                  character={id}
+                  state={character === id ? 'running' : 'idle'}
                   scale={0.25}
                   className="small"
                 />
-                {option.label}
+                {CHARACTER_NAMES[id]}
               </button>
             ))}
           </div>
         </fieldset>
-        <button type="submit" className="primary" disabled={!name.trim()}>
+        <button type="submit" className="primary" disabled={!name.trim() || !weight.ok}>
           Continue
         </button>
       </form>

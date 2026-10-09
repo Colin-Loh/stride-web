@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
     intervalSession, isExtrapolatedVdot, LONG_RUN_MAX_SECONDS, longRunCapKm, oxygenCost, planWeekCount, predictRaceSeconds,
-    PROGRESSION, qualityKinds, qualitySessionsPerWeek, RACE_DISTANCES, repetitionSession, weekStructure, weeklyVolumes, seasonPhase, sessionCapKm, sustainableFraction, thresholdSessionSeconds, trainingSpeedsKmh,
+    HARD_DAYS_PER_WEEK_CAP, hardDayPositions, PROGRESSION, qualityKinds, TAPER_FINAL_WEEK_HARD_CAP, taperFractions, taperWeeks, qualitySessionsPerWeek, RACE_DISTANCES, repetitionSession, weekStructure, weeklyVolumes, seasonPhase, sessionCapKm, sustainableFraction, thresholdSessionSeconds, trainingSpeedsKmh,
     vdotFromRace, ZONES, type Zone,
 } from './vdot'
 
@@ -195,22 +195,47 @@ describe('weekly progression', () => {
         expect(weeklyVolumes(15, 0, 6)).toEqual(Array(6).fill(15))
     })
 
-    it('plans at least 12 weeks, or until the goal race, up to a limit', () => {
+    it('plans 12 weeks without a goal race, or exactly until race week, up to a limit', () => {
         expect(planWeekCount(null)).toBe(12)
-        expect(planWeekCount(5)).toBe(12)
+        expect(planWeekCount(5)).toBe(5)
+        expect(planWeekCount(0.3)).toBe(1)
         expect(planWeekCount(20.2)).toBe(21)
         expect(planWeekCount(500)).toBe(52)
     })
 })
 
 describe('week structure', () => {
-    it('keeps a long run and at least one E run, giving speed days what is left', () => {
-        expect(weekStructure(3, 'base')).toEqual({ long: 1, quality: 0, easy: 2 })
-        expect(weekStructure(3, 'advanced_quality')).toEqual({ long: 1, quality: 1, easy: 1 })
-        expect(weekStructure(5, 'advanced_quality')).toEqual({ long: 1, quality: 2, easy: 2 })
-        expect(weekStructure(2, 'base_quality')).toEqual({ long: 1, quality: 0, easy: 1 })
-        expect(weekStructure(1, 'base')).toEqual({ long: 1, quality: 0, easy: 0 })
-        expect(weekStructure(0, null)).toEqual({ long: 0, quality: 0, easy: 0 })
+    it('keeps hard days (speed plus steady) at the cap or fewer, spread so none touch', () => {
+        expect(weekStructure(3, 'base')).toEqual({ long: 1, quality: 0, steady: 1, easy: 1 })
+        expect(weekStructure(3, 'advanced_quality')).toEqual({ long: 1, quality: 1, steady: 0, easy: 1 })
+        expect(weekStructure(4, 'advanced_quality')).toEqual({ long: 1, quality: 2, steady: 0, easy: 1 })
+        expect(weekStructure(5, 'advanced_quality')).toEqual({ long: 1, quality: 2, steady: 0, easy: 2 })
+        expect(weekStructure(5, 'base_quality')).toEqual({ long: 1, quality: 1, steady: 1, easy: 2 })
+        expect(weekStructure(5, 'base')).toEqual({ long: 1, quality: 0, steady: 2, easy: 2 })
+        expect(weekStructure(6, 'base')).toEqual({ long: 1, quality: 0, steady: 2, easy: 3 })
+        expect(weekStructure(2, 'base_quality')).toEqual({ long: 1, quality: 0, steady: 1, easy: 0 })
+        expect(weekStructure(1, 'base')).toEqual({ long: 1, quality: 0, steady: 0, easy: 0 })
+        expect(weekStructure(0, null)).toEqual({ long: 0, quality: 0, steady: 0, easy: 0 })
+        expect(HARD_DAYS_PER_WEEK_CAP).toBe(2)
+        for (let runs = 0; runs <= 14; runs++) {
+            for (const effort of [null, 'base', 'base_quality', 'advanced_quality']) {
+                const week = weekStructure(runs, effort)
+                expect(week.long + week.quality + week.steady + week.easy).toBe(runs)
+                expect(week.quality + week.steady).toBeLessThanOrEqual(HARD_DAYS_PER_WEEK_CAP)
+                expect(week.quality + week.steady).toBeLessThanOrEqual(Math.ceil((runs - week.long) / 2))
+            }
+        }
+    })
+
+    it('takes a lower cap, as in the last taper week', () => {
+        expect(weekStructure(5, 'advanced_quality', TAPER_FINAL_WEEK_HARD_CAP)).toEqual({ long: 1, quality: 1, steady: 0, easy: 3 })
+        expect(weekStructure(5, 'base', 0)).toEqual({ long: 1, quality: 0, steady: 0, easy: 4 })
+    })
+
+    it('puts hard days on every other day', () => {
+        expect(hardDayPositions(4, 2)).toEqual([0, 2])
+        expect(hardDayPositions(2, 2)).toEqual([0])
+        expect(hardDayPositions(5, 0)).toEqual([])
     })
 
     it('rotates speed sessions in the order R, I, T, one emphasis per level', () => {
@@ -266,5 +291,49 @@ describe('interval and repetition sizing', () => {
         expect(intervalSession(null, null).reps).toBe(4)
         expect(repetitionSession(40, null).reps).toBe(4)
         expect(repetitionSession(null, SPEED_R).reps).toBe(4)
+    })
+})
+
+describe('taperWeeks', () => {
+    const flat = Array(12).fill(30)
+    const rising = weeklyVolumes(20, 4, 12)
+
+    it('applies 0.75 then 0.50 to the last two weeks before a half marathon', () => {
+        // 73 days out: week 10 starts 63 days in (10 days out), week 11 starts 3 days out.
+        const weeks = taperWeeks(flat, 73, 'half_marathon')
+        expect(weeks.map((week) => week.taper)).toEqual([...Array(9).fill(false), true, true, false])
+        expect(weeks[9].targetKm).toBeCloseTo(22.5, 9)
+        expect(weeks[10].targetKm).toBeCloseTo(15, 9)
+        expect(weeks.map((week) => week.final)).toEqual([...Array(10).fill(false), true, false])
+        expect(weeks[11].targetKm).toBe(30)
+    })
+
+    it('uses the last full week before the taper as the baseline, not the stepped-up volumes', () => {
+        const weeks = taperWeeks(rising, 84, 'marathon')
+        expect(weeks[10].targetKm).toBeCloseTo(rising[9] * 0.75, 9)
+        expect(weeks[11].targetKm).toBeCloseTo(rising[9] * 0.5, 9)
+        expect(weeks.slice(0, 10).map((week) => week.targetKm)).toEqual(rising.slice(0, 10))
+    })
+
+    it('tapers one week for 5K and 10K, none for Base or no focus, and the shortest taper for other focuses', () => {
+        expect(taperWeeks(flat, 80, '10k').filter((week) => week.taper)).toHaveLength(1)
+        expect(taperWeeks(flat, 80, '10k').find((week) => week.taper)!.targetKm).toBeCloseTo(18, 9)
+        expect(taperWeeks(flat, 80, 'base').some((week) => week.taper)).toBe(false)
+        expect(taperWeeks(flat, 80, null).some((week) => week.taper)).toBe(false)
+        expect(taperFractions('ultra')).toEqual([0.6])
+    })
+
+    it('starts inside the taper when the race is less than two weeks away, and ignores a past race', () => {
+        const near = taperWeeks(flat, 10, 'half_marathon')
+        expect(near.slice(0, 2).map((week) => week.targetKm)).toEqual([22.5, 15])
+        expect(near[2].taper).toBe(false)
+        expect(taperWeeks(flat, -3, 'half_marathon').some((week) => week.taper)).toBe(false)
+        expect(taperWeeks([], 10, 'marathon')).toEqual([])
+    })
+
+    it('does not change its input', () => {
+        const input = [...flat]
+        taperWeeks(input, 73, 'half_marathon')
+        expect(input).toEqual(flat)
     })
 })

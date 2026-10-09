@@ -18,3 +18,8 @@ export function currentWeekIndex(startDate: string, weekCount: number, today: Da
     const weeks = Math.floor((utcMs(toIsoDate(today)) - utcMs(startDate)) / MS_PER_WEEK)
     return Math.min(Math.max(0, weeks), Math.max(0, weekCount - 1))
 }
+
+/** Whole days from one ISO date to another; negative when the second is earlier. */
+export function daysBetween(fromIsoDate: string, toIsoDate: string): number {
+    return Math.round((utcMs(toIsoDate) - utcMs(fromIsoDate)) / MS_PER_DAY)
+}

@@ -53,6 +53,8 @@ export interface Week extends Stamped {
     /** ISO date (YYYY-MM-DD) the week starts. */
     startDate: string
     targetKm: number
+    /** True in the weeks before the goal race that run reduced volume. Absent otherwise. */
+    taper?: boolean
     sessions: Session[]
 }
 

@@ -17,6 +17,9 @@
  *      M and R are the paces of an equivalent marathon and an equivalent mile race.
  *   6. Session sizes are capped as a share of weekly distance (see VOLUME_LIMITS).
  *   7. Weekly distance grows in steps held for several weeks (see PROGRESSION).
+ *   8. A goal race tapers the last weeks (see TAPER_FRACTIONS); a week has at most
+ *      HARD_DAYS_PER_WEEK_CAP hard days, never adjacent (see weekStructure). Both draw on
+ *      /stride-agents/output/taper-research.md (named "taper-research" below).
  *
  * SOURCES (numbers refer to /stride-agents/output/vdot-research.md)
  *   [1] https://vdoto2.com/calculator                      official zones, intensities, purposes
@@ -464,16 +467,95 @@ export function weeklyVolumes(startKm: number, runsPerWeek: number, weeks: numbe
 }
 
 /**
- * Plan length in weeks: at least `minWeeks`, or until the goal race when one is set.
+ * Plan length in weeks: `minWeeks` without a goal race. With one, the plan ends in race week, so
+ * it never continues past the race at full volume (it can be shorter than `minWeeks`).
  * TODO(verify): `maxWeeks` is a product limit, not from the research, which gives no peak or
  * plan-length ceiling; it only keeps the week list and the climbing volume bounded.
  */
 const PLAN_LENGTH = { minWeeks: 12, maxWeeks: 52 } as const
 
 export function planWeekCount(weeksToGoal: number | null): number {
-    const wanted = weeksToGoal !== null && Number.isFinite(weeksToGoal) ? Math.ceil(weeksToGoal) : 0
-    return Math.min(PLAN_LENGTH.maxWeeks, Math.max(PLAN_LENGTH.minWeeks, wanted))
+    if (weeksToGoal === null || !Number.isFinite(weeksToGoal)) return PLAN_LENGTH.minWeeks
+    return Math.min(PLAN_LENGTH.maxWeeks, Math.max(1, Math.ceil(weeksToGoal)))
 }
+
+// ---------------------------------------------------------------------------------------------
+// 8. Race taper [taper-research, "Taper evidence" and "Implementation constants"]
+// ---------------------------------------------------------------------------------------------
+
+/**
+ * Training volume of each taper week as a fraction of the last stable week before the taper,
+ * earliest week first. Every value is local Stride policy: the research verifies only that Daniels
+ * switches to a "prerace week" within a week of the race and that a meta-analysis found two weeks
+ * of 41-60% less volume effective, not these numbers.
+ * TODO(verify): DANIELS_HM_TAPER_PERCENT is not established; 0.75 then 0.50 (half marathon and
+ * marathon) and 0.60 (5K, 10K) are unverified defaults.
+ * A focus without a race, such as Base, has no taper.
+ */
+export const TAPER_FRACTIONS: Readonly<Record<string, readonly number[]>> = {
+    base: [],
+    '5k': [0.6],
+    '10k': [0.6],
+    half_marathon: [0.75, 0.5],
+    marathon: [0.75, 0.5],
+}
+
+/** Used for an unrecognised focus that still has a goal race date: the shortest taper. */
+const DEFAULT_TAPER_FRACTIONS: readonly number[] = [0.6]
+
+/**
+ * Most hard days in the last taper week, the one holding the race. The research makes the race
+ * the week's major quality session and ends with easy days, so at most one other hard day stays.
+ * TODO(verify): local policy; Daniels asks for two easy days before racing and a last Q 3-4 days out.
+ */
+export const TAPER_FINAL_WEEK_HARD_CAP = 1
+
+export function taperFractions(focusId: string | null): readonly number[] {
+    return focusId === null ? [] : TAPER_FRACTIONS[focusId] ?? DEFAULT_TAPER_FRACTIONS
+}
+
+export interface TaperWeek {
+    targetKm: number
+    /** True in the taper weeks before the race. */
+    taper: boolean
+    /** True in the last taper week, which contains or ends at the race. */
+    final: boolean
+}
+
+/**
+ * Volumes with the taper applied. `daysToRace` counts from the first week's start to the race
+ * (negative once it has passed). A week with `d` days to the race is `ceil(d / 7)` weeks from the
+ * end of the taper (at least 1), and runs the matching fraction of the last week before the
+ * taper, so the stepped-up volumes of a long plan never leak into it. Weeks after the race and
+ * every week before the taper keep their volume. Pure; the input is not changed.
+ */
+export function taperWeeks(volumes: readonly number[], daysToRace: number, focusId: string | null): TaperWeek[] {
+    const fractions = taperFractions(focusId)
+    const weeksFromEnd = (week: number) => {
+        const days = daysToRace - week * DAYS_PER_WEEK
+        return days < 0 ? Infinity : Math.max(1, Math.ceil(days / DAYS_PER_WEEK))
+    }
+    const first = volumes.findIndex((_, week) => weeksFromEnd(week) <= fractions.length)
+    const stableKm = first < 0 ? 0 : volumes[Math.max(0, first - 1)]
+    return volumes.map((km, week) => {
+        const fromEnd = weeksFromEnd(week)
+        const tapering = first >= 0 && fromEnd <= fractions.length
+        return { targetKm: tapering ? stableKm * fractions[fractions.length - fromEnd] : km, taper: tapering, final: tapering && fromEnd === 1 }
+    })
+}
+
+// ---------------------------------------------------------------------------------------------
+// 9. Week structure and hard-day cap [taper-research, "Quality days per week"]
+// ---------------------------------------------------------------------------------------------
+
+/**
+ * Most hard days (speed sessions plus steady M or T runs) in one plan week. Daniels counts the long
+ * run as a quality session and calls "two other Q days" adequate in most weeks [taper-research,
+ * "Quality days per week"], so the long run plus two hard days is the ceiling here. The research
+ * does not call it an absolute limit: this is a local scheduling policy, hence the TODO(verify).
+ * TODO(verify): the published plans space Q days with E days between, but give no numeric minimum.
+ */
+export const HARD_DAYS_PER_WEEK_CAP = 2
 
 /**
  * How many runs of a week are the long run, speed sessions and plain E running.
@@ -485,16 +567,36 @@ const WEEK_STRUCTURE = { longRuns: 1, minEasyRuns: 1 } as const
 
 export interface WeekStructure {
     long: number
+    /** Speed sessions (R, I or T). */
     quality: number
+    /** Steady M or T runs. Speed plus steady never exceeds the hard-day cap. */
+    steady: number
+    /** E runs. */
     easy: number
 }
 
-export function weekStructure(runsPerWeek: number, effortId: string | null): WeekStructure {
+/**
+ * Splits a week's runs. Hard days (speed plus steady) are at most `maxHard` and at most half the
+ * non-long runs, rounded up, so that no two can be adjacent. Speed sessions come first; steady
+ * runs take the remaining hard days; every other run is easy.
+ */
+export function weekStructure(runsPerWeek: number, effortId: string | null, maxHard = HARD_DAYS_PER_WEEK_CAP): WeekStructure {
     const runs = Math.max(0, Math.floor(runsPerWeek))
     const long = Math.min(runs, WEEK_STRUCTURE.longRuns)
+    const others = runs - long
+    const hard = Math.max(0, Math.min(maxHard, Math.ceil(others / 2)))
     const wanted = effortId === null ? 0 : qualitySessionsPerWeek(effortId)
-    const quality = Math.max(0, Math.min(wanted, runs - long - WEEK_STRUCTURE.minEasyRuns))
-    return { long, quality, easy: runs - long - quality }
+    const quality = Math.max(0, Math.min(wanted, hard, others - WEEK_STRUCTURE.minEasyRuns))
+    const steady = hard - quality
+    return { long, quality, steady, easy: others - quality - steady }
+}
+
+/**
+ * Positions of the hard days among a week's non-long runs: every other day from the first, so two
+ * never touch. Needs `hard <= ceil(runs / 2)`, which `weekStructure` guarantees.
+ */
+export function hardDayPositions(runs: number, hard: number): number[] {
+    return Array.from({ length: Math.min(hard, Math.ceil(runs / 2)) }, (_, hardDay) => hardDay * 2)
 }
 
 export type QualityKind = 'repetition' | 'interval' | 'threshold'
@@ -515,8 +617,8 @@ export function qualityKinds(weekIndex: number, count: number): QualityKind[] {
 export type SteadyKind = 'marathon' | 'threshold'
 
 /**
- * The plan's non-long, non-speed days are steady runs: E warm-up, a capped M or T block, then E
- * for the rest of that day's share of the week. M running suits half-marathon and marathon
+ * The plan's steady days (at most the hard-day cap with the speed sessions) are runs of E warm-up,
+ * a capped M or T block, then E for the rest of that day's share of the week. M running suits half-marathon and marathon
  * training [1][5]; threshold suits Base, 5K and 10K. Any other focus falls back to threshold.
  * TODO(verify): Daniels' Base effort is E plus a long run only; making these days M or T is a
  * product choice, not his prescription.
