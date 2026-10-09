@@ -4,7 +4,7 @@ import { EASY_RPE, THRESHOLD_RPE } from './copy'
 import {
     intervalSession, longRunCapKm, qualitySessionsPerWeek, repetitionSession, SESSION_STRUCTURE, sessionCapKm,
     thresholdSessionSeconds, trainingSpeedsKmh, ZONES, type Zone,
-} from './daniels'
+} from './vdot'
 import { goalNote, fitnessNote, zoneNote } from './explanations'
 import { section } from './builderHelpers'
 import { roundedOrNull, roundedSpeeds, tenthOfKm } from './rounding'
@@ -48,7 +48,7 @@ export function buildWorkout(input: WorkoutInput): PersonalizedWorkout {
             category, categoryName, baseline, ...repeats, repSpeedKmh: speeds[zone], easySpeedKmh: easy,
         })
         if (speeds[zone] !== null && weeklyKm !== null) {
-            workout.explanation.push(`Daniels caps ${ZONES[zone].name.toLowerCase()} running per session at the lesser of a share of your ${weeklyKm} km week and a fixed distance (${sessionCapKm(zone, weeklyKm).toFixed(2)} km), which allows ${repeats.reps} rep${repeats.reps === 1 ? '' : 's'}.`)
+            workout.explanation.push(`The VDOT model caps ${ZONES[zone].name.toLowerCase()} running per session at the lesser of a share of your ${weeklyKm} km week and a fixed distance (${sessionCapKm(zone, weeklyKm).toFixed(2)} km), which allows ${repeats.reps} rep${repeats.reps === 1 ? '' : 's'}.`)
         }
         return finish(workout, zone)
     }
@@ -63,7 +63,7 @@ export function buildWorkout(input: WorkoutInput): PersonalizedWorkout {
         main = section('main', 'run', 'Threshold run', { basis: 'time', durationSeconds: seconds }, speeds.T)
         main.effort = ZONES.T.purpose
         main.targetRpe = THRESHOLD_RPE
-        explanation.push(`A steady ${formatSpan(seconds)} at threshold pace between an easy warm-up and cool-down: Daniels' standard threshold session, sized to your week.`)
+        explanation.push(`A steady ${formatSpan(seconds)} at threshold pace between an easy warm-up and cool-down: the standard VDOT threshold session, sized to your week.`)
         if (speeds.T === null) adjustments.push(`No race result, so no threshold pace: run this by effort (RPE ${THRESHOLD_RPE}).`)
         return finish({
             category, categoryName, baseline, explanation, adjustments,
@@ -87,8 +87,8 @@ export function buildWorkout(input: WorkoutInput): PersonalizedWorkout {
     main.targetRpe = EASY_RPE
     explanation.push(main.target.basis === 'distance'
         ? isLong
-            ? `Daniels caps a long run by a share of your ${weeklyKm} km week and by a maximum time at easy pace: ${main.target.distanceKm} km.`
-            : `Easy running that fills your week: ${main.target.distanceKm} km at your Daniels easy pace.`
+            ? `The VDOT model caps a long run by a share of your ${weeklyKm} km week and by a maximum time at easy pace: ${main.target.distanceKm} km.`
+            : `Easy running that fills your week: ${main.target.distanceKm} km at your VDOT easy pace.`
         : 'We need your weekly distance and an easy pace to size this run, so it is timed instead.')
     if (easy === null) {
         adjustments.push('We have no pace for you yet, so sections are timed and show effort instead of speed.')
@@ -109,7 +109,7 @@ export function generatePersonalizedWorkout(input: WorkoutInput & { today?: Date
     }
 }
 
-/** Daniels' Base effort has no speed days, so a speed session is extra. */
+/** VDOT Base effort has no speed days, so a speed session is extra. */
 function qualityAdvice(category: WorkoutId, baseline: PersonalBaseline): string[] {
     return QUALITY.includes(category) && baseline.trainingEffort !== null && qualitySessionsPerWeek(baseline.trainingEffort) === 0
         ? ['Your training effort is Base, which has no speed days. Treat this session as optional extra work.']

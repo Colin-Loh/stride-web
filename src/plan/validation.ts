@@ -1,6 +1,6 @@
 import { distanceFromSpeed, isPositiveFinite, MIN_SPEED, MAX_SPEED } from './convert'
 import { calculateSectionMetrics, calculateWorkoutTotals } from './metrics'
-import { LONG_RUN_MAX_SECONDS, sessionCapKm } from './daniels'
+import { LONG_RUN_MAX_SECONDS, sessionCapKm } from './vdot'
 import type { PersonalizedWorkout } from './types'
 
 export interface WorkoutIssue {
@@ -65,7 +65,7 @@ export function validateWorkout(workout: PersonalizedWorkout): {
     // Limits also apply to edited and restored plans, not only generated defaults.
     if (['filler', 'long'].includes(workout.category) && totals.durationSeconds !== null
         && totals.durationSeconds > LONG_RUN_MAX_SECONDS + 0.01) {
-        issues.push({ message: 'The whole workout, including warm-up and cool-down, must fit within the longest long run Daniels allows.' })
+        issues.push({ message: 'The whole workout, including warm-up and cool-down, must fit within the VDOT model’s long-run time limit.' })
     }
     // Interval and repetition running have a hard session cap; threshold volume is guidance, not a ceiling.
     const weekly = workout.baseline.weeklyKm

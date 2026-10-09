@@ -3,7 +3,7 @@ import {
     intervalSession, isExtrapolatedVdot, LONG_RUN_MAX_SECONDS, longRunCapKm, oxygenCost, planWeekCount, predictRaceSeconds,
     PROGRESSION, qualityKinds, qualitySessionsPerWeek, RACE_DISTANCES, repetitionSession, weekStructure, weeklyVolumes, seasonPhase, sessionCapKm, sustainableFraction, thresholdSessionSeconds, trainingSpeedsKmh,
     vdotFromRace, ZONES, type Zone,
-} from './daniels'
+} from './vdot'
 
 const secondsPerKm = (speedKmh: number) => 3600 / speedKmh
 const mmss = (minutes: number, seconds: number) => minutes * 60 + seconds

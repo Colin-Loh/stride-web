@@ -1,4 +1,4 @@
-import { MS_PER_DAY, MS_PER_WEEK } from './daniels'
+import { MS_PER_DAY, MS_PER_WEEK } from './vdot'
 import { toIsoDate } from './questions'
 
 const utcMs = (isoDate: string) => Date.parse(`${isoDate}T00:00:00Z`)

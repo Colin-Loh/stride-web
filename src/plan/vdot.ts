@@ -1,9 +1,9 @@
 /**
- * Jack Daniels' VDOT model -- the ONE place where the app's training maths lives.
+ * VDOT training model -- the ONE place where the app's training maths lives.
  *
  * Edit the constants in the sections below to change the model. Nothing else in the codebase
  * may hold a pace, intensity, volume or plan-structure number. This file is pure: no React,
- * no storage, no side effects. Units at the boundary are km, seconds and km/h; the Daniels-Gilbert
+ * no storage, no side effects. Units at the boundary are km, seconds and km/h; the VDOT
  * equations themselves work in metres per minute and minutes, so those stay internal.
  *
  * THE MODEL
@@ -23,7 +23,7 @@
  *   [2] https://run.grow-lytics.com/vdot-calculator        equation constants and units
  *   [3] https://github.com/0jonjo/calcpace                 independent reproduction of [2]
  *   [4] https://support.vdoto2.com/v-o2-faq/               VDOT is current fitness, not a goal
- *   [5] https://vdoto2.com/learn-more/training-definitions Daniels' E/M/T/I/R volume limits
+ *   [5] https://vdoto2.com/learn-more/training-definitions VDOT E/M/T/I/R volume limits
  *   [6] https://whynot.run/tools/vdot-calculator/          secondary pace anchors (cross-check only)
  *   [11] https://support.vdoto2.com/vdot-adaptive-trainer-instructional-guide/  training effort
  *   [13] https://www.coacheseducation.com/endur/jack-daniels-dec-00.php         24-week season
@@ -122,7 +122,7 @@ interface ZoneDefinition {
 
 /**
  * Pace fractions are calibrated against the anchor rows in the spec [6] (VDOT 30/40/50/60, see
- * daniels.test.ts) and sit inside the official intensity ranges: E 70% (range 59-74), T 88%
+ * vdot.test.ts) and sit inside the official intensity ranges: E 70% (range 59-74), T 88%
  * (top of 83-88), I 97% (bottom of 97-100). M and R are race equivalents, because the official
  * R intensity is unpublished and M tables are best obtained from the marathon equivalent [1][2].
  * TODO(verify): the official calculator's exact pace interpolation and rounding.
@@ -170,7 +170,7 @@ export const ZONES: Record<Zone, ZoneDefinition> = {
 // 5. Volume limits [5]
 // ---------------------------------------------------------------------------------------------
 
-/** Daniels caps M, I and R running per session at the lesser of a share of the week or a distance. */
+/** The VDOT model caps M, I and R running per session at the lesser of a share of the week or a distance. */
 const SESSION_VOLUME_LIMITS: Record<'M' | 'I' | 'R', { shareOfWeek: number; maxKm: number }> = {
     M: { shareOfWeek: 0.2, maxKm: 18 * MILE_KM },
     I: { shareOfWeek: 0.08, maxKm: 10 },
@@ -248,7 +248,7 @@ interface SeasonPhase {
     summary: string
 }
 
-/** Daniels' idealised 24-week season: four phases of about six weeks [13]. */
+/** The VDOT model's idealised 24-week season: four phases of about six weeks [13]. */
 const IDEAL_SEASON = {
     weeks: 24,
     phaseWeeks: 6,
@@ -339,7 +339,7 @@ export function trainingSpeedsKmh(vdot: number): TrainingSpeeds | null {
     return speeds as TrainingSpeeds
 }
 
-/** Most M, I or R running Daniels allows in one session: the lesser of a share of the week or a distance. */
+/** Most M, I or R running allowed in one session: the lesser of a share of the week or a distance. */
 export function sessionCapKm(zone: 'M' | 'I' | 'R', weeklyKm: number): number {
     const limit = SESSION_VOLUME_LIMITS[zone]
     return Math.min(weeklyKm * limit.shareOfWeek, limit.maxKm)
@@ -367,7 +367,7 @@ export function qualitySessionsPerWeek(effortId: string): number {
 }
 
 /**
- * Where a runner sits in Daniels' ideal 24-week season, counting back from the goal race.
+ * Where a runner sits in the VDOT model's ideal 24-week season, counting back from the goal race.
  * Null outside the 24 weeks. TODO(verify): the source says shorter or event-specific plans must
  * be adapted rather than split into equal blocks, so treat this as a rough guide.
  */
@@ -424,7 +424,7 @@ export function repetitionSession(weeklyKm: number | null, speedKmh: number | nu
 // ---------------------------------------------------------------------------------------------
 
 /**
- * Daniels' mileage rule: "increase weekly mileage by as many miles as the number of runs you do
+ * VDOT mileage progression: "increase weekly mileage by as many miles as the number of runs you do
  * each week", "never increase more than 10 miles", "stay with one amount of running for at least
  * 4 weeks", and do NOT apply a 10% rule. Distances are the miles of the rule converted to km;
  * rounding is for display only.
@@ -476,7 +476,7 @@ export function planWeekCount(weeksToGoal: number | null): number {
 /**
  * How many runs of a week are the long run, speed sessions and plain E running.
  * TODO(verify): at least one E run besides the long run is kept, so a speed day never replaces
- * the last easy day. The research says the three-day limit is a product decision, not a Daniels
+ * the last easy day. The research says the three-day limit is a product decision, not part of the model
  * rule, and that two speed days plus a long run should not be compressed into three days.
  */
 const WEEK_STRUCTURE = { longRuns: 1, minEasyRuns: 1 } as const

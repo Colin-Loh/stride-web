@@ -50,7 +50,7 @@ export type FitnessMethod = 'recent_race' | 'estimated_race' | 'easy_pace'
 
 /** What the plan builder needs from the onboarding answers. Nulls mean "not answered". */
 export interface PersonalBaseline {
-    /** Daniels VDOT. Null for an easy-pace answer, which has no published mapping to VDOT. */
+    /** VDOT score. Null for an easy-pace answer, which has no published mapping to VDOT. */
     vdot: number | null
     fitnessMethod: FitnessMethod | null
     /** The race behind the VDOT, for explaining it. */

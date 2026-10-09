@@ -27,7 +27,7 @@ export function BaselineScreen({ initial, submitAction, onBack, onDone }: Props)
             <p className="eyebrow">A few quick details</p>
             <h1>Let&apos;s get you running!</h1>
             <p className="lede">
-                Everything here is about what you can do now, not a goal. Your answers set your Jack Daniels training paces and session sizes.
+                Everything here is about what you can do now, not a goal. Your answers set your VDOT training paces and session sizes.
             </p>
 
             {visibleQuestions(answers).map((question) => (

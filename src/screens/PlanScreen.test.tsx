@@ -4,11 +4,11 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import { PlanScreen } from './PlanScreen'
 import { derivePersonalBaseline } from '../plan/baseline'
 import { formatPaceSeconds, roundSpeedUp } from '../plan/convert'
-import { trainingSpeedsKmh, vdotFromRace, ZONES } from '../plan/daniels'
+import { trainingSpeedsKmh, vdotFromRace, ZONES } from '../plan/vdot'
 import type { AnswerValues } from '../plan/questions'
 import { generateTrainingPlan } from '../plan/trainingPlan'
 
-const noop = () => {}
+const noop = () => { }
 const NOW = new Date(2026, 9, 8)
 const BASE: AnswerValues = { training_focus: 'base', weekly_volume: 15, running_days: 3, training_effort: 'base' }
 const render = (answers: AnswerValues, today = NOW) => {

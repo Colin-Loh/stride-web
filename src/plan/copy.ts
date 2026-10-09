@@ -1,6 +1,6 @@
 import type { SectionType } from './types'
 
-/** Words the runner reads and hears. Numbers that shape training live in daniels.ts, not here. */
+/** Words the runner reads and hears. Numbers that shape training live in vdot.ts, not here. */
 
 export const EFFORT_LABELS: Record<SectionType, string> = {
     warmup: 'Easy, conversational — you should be able to talk in sentences',
@@ -65,7 +65,7 @@ export const REPEAT_COPY: Record<'interval' | 'repetition', RepeatCopy> = {
 }
 
 export const RULES_DISCLAIMER =
-    'Paces and session sizes follow Jack Daniels\' VDOT system. Some details, such as warm-up and cool-down lengths, are sensible defaults rather than Daniels\' exact prescriptions, so adjust them to how you feel.'
+    'Paces and session sizes follow the VDOT model. Some details, such as warm-up and cool-down lengths, are sensible defaults rather than exact model prescriptions, so adjust them to how you feel.'
 
 /** Label for the answers screen's submit button, by what happens next. */
 export const ANSWERS_SUBMIT_LABELS = {
@@ -80,4 +80,4 @@ export const REDUCED_QUALITY_NOTE =
     'Your training effort asks for more speed days than your running days leave room for. Each week keeps a long run and at least one E run, so some speed days were left out.'
 
 export const CONFLICT_NOTE =
-    'Daniels caps the long run at a share of the week and at a maximum time, so with this many runs a week some of your E runs are longer than your long run. Adding a running day spreads the distance out.'
+    'The VDOT model caps the long run at a share of the week and at a maximum time, so with this many runs a week some of your E runs are longer than your long run. Adding a running day spreads the distance out.'

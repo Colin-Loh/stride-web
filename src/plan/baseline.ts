@@ -1,5 +1,5 @@
 import { speedFromPaceSecondsPerKm } from './convert'
-import { vdotFromRace } from './daniels'
+import { vdotFromRace } from './vdot'
 import type { AnswerValues, DistanceTime } from './questions'
 import type { FitnessMethod, PersonalBaseline } from './types'
 

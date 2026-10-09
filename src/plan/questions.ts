@@ -1,4 +1,4 @@
-import { RACE_DISTANCES, TRAINING_EFFORTS, TRAINING_FOCUSES } from './daniels'
+import { RACE_DISTANCES, TRAINING_EFFORTS, TRAINING_FOCUSES } from './vdot'
 
 /**
  * Every onboarding question, defined once as data. The screen renders this list generically and

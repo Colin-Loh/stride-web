@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { derivePersonalBaseline } from './baseline'
 import { roundSpeedUp } from './convert'
-import { repetitionSession, sessionCapKm, trainingSpeedsKmh, vdotFromRace } from './daniels'
+import { repetitionSession, sessionCapKm, trainingSpeedsKmh, vdotFromRace } from './vdot'
 import { generatePersonalizedWorkout } from './generate'
 import { calculateSectionMetrics, calculateWorkoutTotals } from './metrics'
 import type { AnswerValues } from './questions'
@@ -60,7 +60,7 @@ describe('derivePersonalBaseline', () => {
 })
 
 describe('generated sessions', () => {
-    it('runs E running at the Daniels easy speed, rounded up, over the distance the week gives it', () => {
+    it('runs E running at the VDOT easy speed, rounded up, over the distance the week gives it', () => {
         const run = main('filler', {}, 7.25)
         expect(run.speedKmh).toBe(roundSpeedUp(SPEEDS.E))
         expect(run.target).toEqual({ basis: 'distance', distanceKm: 7.2 })
@@ -198,7 +198,7 @@ describe('without a VDOT', () => {
 })
 
 describe('explanations', () => {
-    it('shows the race, VDOT and all five Daniels paces', () => {
+    it('shows the race, VDOT and all five VDOT paces', () => {
         const text = build('long').explanation.join(' ')
         expect(text).toContain('Your 5 km in 25:00 gives a VDOT of 38.3')
         for (const zone of ['easy', 'marathon', 'threshold', 'interval', 'repetition']) expect(text).toContain(zone)

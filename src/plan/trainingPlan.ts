@@ -2,7 +2,7 @@ import { SCHEMA_VERSION, type Session, type SessionKind, type TrainingPlan, type
 import { calculateSectionMetrics } from './metrics'
 import { CONFLICT_NOTE, REDUCED_QUALITY_NOTE } from './copy'
 import { addDays, weeksUntil } from './dates'
-import { DAYS_PER_WEEK, planWeekCount, qualityKinds, qualitySessionsPerWeek, trainingSpeedsKmh, weekStructure, weeklyVolumes } from './daniels'
+import { DAYS_PER_WEEK, planWeekCount, qualityKinds, qualitySessionsPerWeek, trainingSpeedsKmh, weekStructure, weeklyVolumes } from './vdot'
 import { fitnessNote, goalNote } from './explanations'
 import { buildWorkout } from './generate'
 import { buildPaceSet } from './paces'
@@ -36,7 +36,7 @@ function orderSessions(quality: SessionKind[], easy: number, long: boolean): Ses
 /**
  * A multi-week plan from the runner's answers. Each week holds the long run, the speed sessions
  * the training effort allows and E running for the rest of that week's target distance (from
- * `weeklyVolumes`), all sized with the caps in daniels.ts. Null when the weekly distance or
+ * `weeklyVolumes`), all sized with the caps in vdot.ts. Null when the weekly distance or
  * running days are unknown.
  */
 export function generateTrainingPlan(input: PlanInput): TrainingPlan | null {

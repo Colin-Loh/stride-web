@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { RACE_DISTANCES } from '../plan/daniels'
+import { RACE_DISTANCES } from '../plan/vdot'
 import type { AnswerValue, DistanceTime, Option, Question } from '../plan/questions'
 import { DurationInput } from './DurationInput'
 import { NumberField } from './NumberField'

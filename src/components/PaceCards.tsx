@@ -1,10 +1,10 @@
 import type { PaceSet } from '../domain/types'
 import { formatPaceSeconds } from '../plan/convert'
-import { ZONES, type Zone } from '../plan/daniels'
+import { ZONES, type Zone } from '../plan/vdot'
 
 const ZONE_ORDER = Object.keys(ZONES) as Zone[]
 
-/** The five Daniels paces. Without a race result only E is known, and the rest say why they are missing. */
+/** The five VDOT paces. Without a race result only E is known, and the rest say why they are missing. */
 export function PaceCards({ paces }: { paces: PaceSet }) {
     const known = ZONE_ORDER.filter((zone) => paces.zones[zone] !== null)
     const missingSome = known.length < ZONE_ORDER.length

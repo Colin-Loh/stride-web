@@ -1,6 +1,6 @@
 import { formatSpan } from './convert'
 import { REPEAT_COPY } from './copy'
-import { SESSION_STRUCTURE, ZONES, type Zone } from './daniels'
+import { SESSION_STRUCTURE, ZONES, type Zone } from './vdot'
 import { section } from './builderHelpers'
 import type { PersonalBaseline, PersonalizedWorkout } from './types'
 
@@ -57,7 +57,7 @@ export function buildRepeatWorkout(input: RepeatInput): PersonalizedWorkout {
         `${reps} reps of ${formatSpan(repSeconds)} with ${formatSpan(recoverySeconds)} of recovery between each.`,
         repSpeedKmh === null
             ? `No race result, so no target pace: run the reps by effort (RPE ${copy.rpe.rep}).`
-            : `Rep pace is your Daniels ${ZONES[REP_ZONE[category]].name.toLowerCase()} pace.`,
+            : `Rep pace is your VDOT ${ZONES[REP_ZONE[category]].name.toLowerCase()} pace.`,
     ]
     return { category, categoryName: input.categoryName, baseline, sections: [warmup, main, cooldown], explanation, adjustments: [] }
 }

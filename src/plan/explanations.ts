@@ -1,6 +1,6 @@
 import { formatDurationSeconds, formatPaceSeconds, paceSecondsPerKmFromSpeed } from './convert'
 import { weeksUntil } from './dates'
-import { isExtrapolatedVdot, RACE_DISTANCES, seasonPhase, ZONES, type TrainingSpeeds, type Zone } from './daniels'
+import { isExtrapolatedVdot, RACE_DISTANCES, seasonPhase, ZONES, type TrainingSpeeds, type Zone } from './vdot'
 import type { PersonalBaseline } from './types'
 
 const pace = (kmh: number) => `${formatPaceSeconds(paceSecondsPerKmFromSpeed(kmh))}/km`
@@ -15,7 +15,7 @@ export function fitnessNote(baseline: PersonalBaseline, speeds: TrainingSpeeds |
     }
     if (!speeds || baseline.vdot === null || baseline.race === null) return null
     const paces = (Object.keys(ZONES) as Zone[]).map((zone) => `${ZONES[zone].name.toLowerCase()} ${pace(speeds[zone])}`).join(', ')
-    const result = `Your ${raceLabel(baseline.race.distanceKm).toLowerCase()} in ${formatDurationSeconds(baseline.race.seconds)} gives a VDOT of ${baseline.vdot.toFixed(1)}. Daniels paces: ${paces}.`
+    const result = `Your ${raceLabel(baseline.race.distanceKm).toLowerCase()} in ${formatDurationSeconds(baseline.race.seconds)} gives a VDOT of ${baseline.vdot.toFixed(1)}. VDOT training paces: ${paces}.`
     const provisional = baseline.fitnessMethod === 'estimated_race'
         ? ' This comes from your own estimate, so treat it as provisional until you run a race or time trial.'
         : ''
@@ -25,17 +25,17 @@ export function fitnessNote(baseline: PersonalBaseline, speeds: TrainingSpeeds |
     return result + provisional + extrapolated
 }
 
-/** Where the goal race falls in Daniels' ideal 24-week season, or null when there is no date or it is out of range. */
+/** Where the goal race falls in the VDOT model's ideal 24-week season, or null when there is no date or it is out of range. */
 export function goalNote(baseline: PersonalBaseline, today: Date): string | null {
     if (!baseline.goalRaceDate) return null
     const weeks = weeksUntil(baseline.goalRaceDate, today)
     const phase = seasonPhase(weeks)
     return phase
-        ? `Your goal race is about ${weeks} week${weeks === 1 ? '' : 's'} away. In Daniels' ideal 24-week season that is the ${phase.name} phase: ${phase.summary}.`
+        ? `Your goal race is about ${weeks} week${weeks === 1 ? '' : 's'} away. In the VDOT model's ideal 24-week season that is the ${phase.name} phase: ${phase.summary}.`
         : null
 }
 
-/** What a zone is for and how hard it feels, from its definition in daniels.ts. */
+/** What a zone is for and how hard it feels, from its definition in vdot.ts. */
 export function zoneNote(zone: Zone): string {
     const { name, purpose, vo2MaxPercent, hrMaxPercent } = ZONES[zone]
     const ranges = [

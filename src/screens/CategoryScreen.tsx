@@ -10,10 +10,10 @@ interface Props {
 }
 
 const INTENSITY_LABELS: Record<PickableWorkoutId, string> = {
-    long: 'At your Daniels easy pace',
-    threshold: 'At your Daniels threshold pace',
-    interval: 'At your Daniels interval pace',
-    repetition: 'At your Daniels repetition pace',
+    long: 'At your VDOT easy pace',
+    threshold: 'At your VDOT threshold pace',
+    interval: 'At your VDOT interval pace',
+    repetition: 'At your VDOT repetition pace',
 }
 
 export function CategoryScreen({
@@ -31,7 +31,7 @@ export function CategoryScreen({
             </p>
             <h1>Which session today?</h1>
             <p className="lede">
-                Each one is built around your own running, using Jack Daniels' training paces.
+                Each one is built around your own running, using VDOT training paces.
             </p>
             <button type="button" className="primary" onClick={onShowPlan}>
                 My training plan

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { derivePersonalBaseline } from './baseline'
 import { roundSpeedUp } from './convert'
 import { currentWeekIndex } from './dates'
-import { longRunCapKm, sessionCapKm, trainingSpeedsKmh, vdotFromRace, weeklyVolumes } from './daniels'
+import { longRunCapKm, sessionCapKm, trainingSpeedsKmh, vdotFromRace, weeklyVolumes } from './vdot'
 import { calculateSectionMetrics } from './metrics'
 import { buildPaceSet } from './paces'
 import type { AnswerValues } from './questions'
@@ -19,7 +19,7 @@ const plan = (overrides: AnswerValues = {}, now = NOW) =>
     generateTrainingPlan({ baseline: derivePersonalBaseline({ ...REPORT, ...overrides }), now, newId: counter() })!
 
 describe('paces', () => {
-    it('gives all five Daniels paces for a known VDOT, with treadmill speeds rounded up', () => {
+    it('gives all five VDOT paces for a known VDOT, with treadmill speeds rounded up', () => {
         const vdot = vdotFromRace(5, 1500)!
         const speeds = trainingSpeedsKmh(vdot)!
         const set = buildPaceSet(derivePersonalBaseline({ ...REPORT, recent_race_time: 1500 }), 'p', '2026-10-08T12:00:00.000Z')
@@ -64,7 +64,7 @@ describe('generateTrainingPlan', () => {
         expect(threeDays.notes.join(' ')).toContain('speed days were left out')
     })
 
-    it('sizes every session inside its Daniels cap for that week', () => {
+    it('sizes every session inside its VDOT cap for that week', () => {
         const result = plan({ running_days: 5, training_effort: 'advanced_quality', weekly_volume: 40 })
         for (const week of result.weeks) {
             for (const session of week.sessions) {

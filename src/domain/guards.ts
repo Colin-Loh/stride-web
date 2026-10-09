@@ -1,5 +1,5 @@
 import { MAX_SPEED, MIN_SPEED } from '../plan/convert'
-import { ZONES } from '../plan/daniels'
+import { ZONES } from '../plan/vdot'
 import { isAnswers as isAnswerValues } from '../plan/questions'
 import type { PersonalBaseline, PersonalizedWorkout, PlanSection } from '../plan/types'
 import { WORKOUT_NAMES } from '../workouts'

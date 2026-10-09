@@ -2,7 +2,7 @@ import type { WorkoutId } from '../workouts'
 import type { AnswerValues } from '../plan/questions'
 import type { PersonalBaseline, PersonalizedWorkout, PlanSection } from '../plan/types'
 import type { SpeedChange } from '../run/engine'
-import type { Zone } from '../plan/daniels'
+import type { Zone } from '../plan/vdot'
 
 /**
  * The stored domain model. Everything here is plain JSON: strings, numbers, booleans, arrays and
@@ -23,14 +23,14 @@ export interface Stamped {
     updatedAt: string
 }
 
-/** One Daniels pace as shown on a pace card. */
+/** One VDOT pace as shown on a pace card. */
 export interface ZonePace {
     paceSecondsPerKm: number
     /** Treadmill speed, rounded up to 0.1 km/h. */
     speedKmh: number
 }
 
-/** The five Daniels paces. A zone is null when the runner's answers cannot give it. */
+/** The five VDOT paces. A zone is null when the runner's answers cannot give it. */
 export interface PaceSet extends Stamped {
     vdot: number | null
     zones: Record<Zone, ZonePace | null>

@@ -18,7 +18,7 @@ function sessionSummary(session: Session): string {
     return totals.durationSeconds === null ? 'by effort' : formatSpan(totals.durationSeconds)
 }
 
-/** The training plan: the runner's Daniels paces, then every week with its sessions. */
+/** The training plan: the runner's VDOT paces, then every week with its sessions. */
 export function PlanScreen({ plan, onOpenSession, onBack, today = new Date() }: Props) {
     const current = currentWeekIndex(plan.startDate, plan.weeks.length, today)
     return (
