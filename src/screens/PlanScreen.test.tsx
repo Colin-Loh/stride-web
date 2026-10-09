@@ -77,4 +77,11 @@ describe('week by week', () => {
         sessionButtons[2].props.onClick!()
         expect(opened).toEqual([plan.weeks[0].sessions[2].id])
     })
+
+    it('marks the taper weeks before a goal race', () => {
+        const html = render({ ...RACE, training_focus: 'half_marathon', goal_race_date: '2026-12-20', running_days: 4 })
+        const weeks = [...html.matchAll(/<li class="week[^"]*"[^>]*>(.*?)<\/li>/g)].map((match) => match[1])
+        expect(weeks.map((week) => week.includes('>Taper<'))).toEqual([...Array(9).fill(false), true, true, false])
+        expect(render(RACE)).not.toContain('>Taper<')
+    })
 })

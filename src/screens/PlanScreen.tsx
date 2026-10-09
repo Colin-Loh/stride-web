@@ -43,6 +43,7 @@ export function PlanScreen({ plan, onOpenSession, onBack, today = new Date() }: 
                     <li key={week.id} className={`week${index === current ? ' current' : ''}`} aria-current={index === current ? 'date' : undefined}>
                         <h3>
                             Week {week.number} · {week.targetKm.toFixed(1)} km
+                            {week.taper ? <span className="week-badge taper">Taper</span> : null}
                             {index === current ? <span className="week-badge">This week</span> : null}
                         </h3>
                         <p className="muted">Starts {week.startDate}</p>

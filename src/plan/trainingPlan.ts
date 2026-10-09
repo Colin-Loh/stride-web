@@ -1,11 +1,11 @@
 import { SCHEMA_VERSION, type Session, type SessionKind, type TrainingPlan, type Week } from '../domain/types'
 import { WORKOUT_NAMES } from '../workouts'
 import { calculateSectionMetrics } from './metrics'
-import { CONFLICT_NOTE, REDUCED_QUALITY_NOTE } from './copy'
-import { addDays, weeksUntil } from './dates'
+import { CONFLICT_NOTE, REDUCED_QUALITY_NOTE, TAPER_NOTE } from './copy'
+import { addDays, daysBetween, weeksUntil } from './dates'
 import {
-    DAYS_PER_WEEK, planWeekCount, qualityKinds, qualitySessionsPerWeek, steadyKindForFocus, trainingSpeedsKmh, weekStructure,
-    weeklyVolumes, type SteadyKind,
+    DAYS_PER_WEEK, hardDayPositions, planWeekCount, qualityKinds, qualitySessionsPerWeek, steadyKindForFocus, TAPER_FINAL_WEEK_HARD_CAP,
+    taperWeeks, trainingSpeedsKmh, weekStructure, weeklyVolumes, type SteadyKind, type WeekStructure,
 } from './vdot'
 import { fitnessNote, goalNote } from './explanations'
 import { buildWorkout } from './generate'
@@ -24,31 +24,34 @@ export interface PlanInput {
 const knownDistanceKm = (sections: PlanSection[]) =>
     sections.reduce((km, item) => km + (calculateSectionMetrics(item).distanceKm ?? 0), 0)
 
-/** A day in a plan week: its workout kind, and whether it is a steady run sized from the week's remainder. */
+/** A day in a plan week: its workout kind, and whether it is sized from the week's remaining distance. */
 interface Slot {
     kind: SessionKind
-    steady: boolean
+    shared: boolean
 }
 
-/** Speed sessions and steady (M or T) runs alternate, with the long run last. */
-function orderSessions(quality: SessionKind[], steadyKind: SteadyKind, steady: number, long: boolean): Slot[] {
-    const order: Slot[] = []
-    const speed = [...quality]
-    let remaining = steady
-    while (speed.length > 0 || remaining > 0) {
-        const next = speed.shift()
-        if (next) order.push({ kind: next, steady: false })
-        if (remaining > 0) { order.push({ kind: steadyKind, steady: true }); remaining -= 1 }
-    }
-    return long ? [...order, { kind: 'long', steady: false }] : order
+/**
+ * The week's runs in order: hard days (speed sessions, then steady M or T runs) on every other
+ * day so none touch, E runs between them, and the long run last. The long run is easy running, so
+ * the next week's first hard day is never right after one.
+ */
+function orderSessions(quality: SessionKind[], steadyKind: SteadyKind, structure: WeekStructure): Slot[] {
+    const hard: Slot[] = [
+        ...quality.map((kind) => ({ kind, shared: false })),
+        ...Array.from({ length: structure.steady }, () => ({ kind: steadyKind, shared: true })),
+    ]
+    const days: Slot[] = Array.from({ length: hard.length + structure.easy }, () => ({ kind: 'easyRun', shared: true }))
+    hardDayPositions(days.length, hard.length).forEach((day, index) => { days[day] = hard[index] })
+    return structure.long > 0 ? [...days, { kind: 'long', shared: false }] : days
 }
 
 /**
  * A multi-week plan from the runner's answers. Each week holds one long run, the speed sessions
- * the training effort allows, and steady runs (marathon pace or threshold, by training focus) on
- * the other days. The steady runs share the rest of that week's target distance (from
- * `weeklyVolumes`); every block is sized with the caps in vdot.ts. Null when the weekly distance
- * or running days are unknown.
+ * the training effort allows, steady runs (marathon pace or threshold, by training focus) and
+ * easy runs. Speed plus steady runs are at most `HARD_DAYS_PER_WEEK_CAP`, never on adjacent days.
+ * The steady and easy runs share the rest of that week's target distance (from `weeklyVolumes`,
+ * reduced by the taper before a goal race); every block is sized with the caps in vdot.ts. Null
+ * when the weekly distance or running days are unknown.
  */
 export function generateTrainingPlan(input: PlanInput): TrainingPlan | null {
     const { baseline, answersId = null, now = new Date(), newId = () => crypto.randomUUID() } = input
@@ -59,12 +62,14 @@ export function generateTrainingPlan(input: PlanInput): TrainingPlan | null {
     const startDate = toIsoDate(now)
     const goalWeeks = baseline.goalRaceDate === null ? null : weeksUntil(baseline.goalRaceDate, now)
     const volumes = weeklyVolumes(baseline.weeklyKm, baseline.daysPerWeek, planWeekCount(goalWeeks))
+    const tapered = taperWeeks(volumes, baseline.goalRaceDate === null ? -1 : daysBetween(startDate, baseline.goalRaceDate), baseline.trainingFocus)
     const wantedQuality = baseline.trainingEffort === null ? 0 : qualitySessionsPerWeek(baseline.trainingEffort)
-    const structure = weekStructure(baseline.daysPerWeek, baseline.trainingEffort)
+    const runsPerWeek = baseline.daysPerWeek
+    const structure = weekStructure(runsPerWeek, baseline.trainingEffort)
     const steadyKind = steadyKindForFocus(baseline.trainingFocus)
     let otherLongerThanLong = false
 
-    const weeks: Week[] = volumes.map((targetKm, index) => {
+    const weeks: Week[] = tapered.map(({ targetKm, taper, final }, index) => {
         const weekId = `${planId}-w${index + 1}`
         const weekBaseline: PersonalBaseline = { ...baseline, weeklyKm: targetKm }
         const toSession = (workout: PersonalizedWorkout, kind: SessionKind, position: number): Session => ({
@@ -73,24 +78,25 @@ export function generateTrainingPlan(input: PlanInput): TrainingPlan | null {
             sections: workout.sections, explanation: workout.explanation, adjustments: workout.adjustments,
         })
 
-        // `structure.easy` counts the days that are neither long nor speed; they become steady runs.
-        const steadySlots = structure.easy
-        const slots = orderSessions(qualityKinds(index, structure.quality), steadyKind, steadySlots, structure.long > 0)
-        const fixed = slots.filter((slot) => !slot.steady).map((slot) => buildWorkout({ category: slot.kind, baseline: weekBaseline }))
+        const shape = final ? weekStructure(runsPerWeek, baseline.trainingEffort, TAPER_FINAL_WEEK_HARD_CAP) : structure
+        const slots = orderSessions(qualityKinds(index, shape.quality), steadyKind, shape)
+        const fixed = slots.filter((slot) => !slot.shared).map((slot) => buildWorkout({ category: slot.kind, baseline: weekBaseline }))
         const fixedKm = fixed.reduce((km, workout) => km + knownDistanceKm(workout.sections), 0)
-        const steadyKm = steadySlots > 0 ? Math.max(0, targetKm - fixedKm) / steadySlots : 0
+        const sharedSlots = slots.length - fixed.length
+        const sharedKm = sharedSlots > 0 ? Math.max(0, targetKm - fixedKm) / sharedSlots : 0
         const longKm = fixed.find((workout) => workout.category === 'long')?.sections[0].target
-        if (steadySlots > 0 && longKm?.basis === 'distance' && steadyKm > longKm.distanceKm) otherLongerThanLong = true
+        if (sharedSlots > 0 && longKm?.basis === 'distance' && sharedKm > longKm.distanceKm) otherLongerThanLong = true
 
         const queue = [...fixed]
         const workouts = slots.map((slot) =>
-            slot.steady
-                ? buildWorkout({ category: slot.kind, baseline: weekBaseline, distanceKm: steadyKm })
+            slot.shared
+                ? buildWorkout({ category: slot.kind, baseline: weekBaseline, distanceKm: sharedKm })
                 : queue.shift()!)
         const kinds = slots.map((slot) => slot.kind)
         return {
             id: weekId, schemaVersion: SCHEMA_VERSION, createdAt: stamp, updatedAt: stamp,
             number: index + 1, startDate: addDays(startDate, index * DAYS_PER_WEEK), targetKm,
+            ...(taper ? { taper: true } : {}),
             sessions: workouts.map((workout, position) => toSession(workout, kinds[position], position + 1)),
         }
     })
@@ -99,6 +105,7 @@ export function generateTrainingPlan(input: PlanInput): TrainingPlan | null {
     const notes = [
         fitnessNote(baseline, rawSpeeds),
         goalNote(baseline, now),
+        tapered.some((week) => week.taper) ? TAPER_NOTE : null,
         wantedQuality > structure.quality ? REDUCED_QUALITY_NOTE : null,
         otherLongerThanLong ? CONFLICT_NOTE : null,
     ].filter((note): note is string => note !== null)

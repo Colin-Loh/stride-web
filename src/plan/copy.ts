@@ -78,7 +78,9 @@ export const ANSWERS_SUBMIT_LABELS = {
 export type AnswersSubmitAction = keyof typeof ANSWERS_SUBMIT_LABELS
 
 export const REDUCED_QUALITY_NOTE =
-    'Your training effort asks for more speed days than your running days leave room for. Each week keeps an Easy run and at least one steady run, so some speed days were left out.'
+    'Your training effort asks for more speed days than a week allows: hard days (speed and steady runs) are capped and never back to back, and each week keeps easy runs. Some speed days were left out.'
 
 export const CONFLICT_NOTE =
-    'The VDOT model caps the Easy run by weekly volume and maximum duration, so another steady session may be longer. Adding a running day spreads the distance out.'
+    'The VDOT model caps the Easy run by weekly volume and maximum duration, so another run may be longer. Adding a running day spreads the distance out.'
+
+export const TAPER_NOTE = 'The weeks marked Taper before your goal race run less distance with the same familiar paces, and the last one has at most one hard day. Easy days stay easy.'

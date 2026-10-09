@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest'
 import { derivePersonalBaseline } from './baseline'
 import { roundSpeedUp } from './convert'
 import { currentWeekIndex } from './dates'
-import { longRunCapKm, sessionCapKm, trainingSpeedsKmh, vdotFromRace, weeklyVolumes } from './vdot'
+import {
+    HARD_DAYS_PER_WEEK_CAP, longRunCapKm, sessionCapKm, TAPER_FINAL_WEEK_HARD_CAP, taperFractions, trainingSpeedsKmh, vdotFromRace, weeklyVolumes,
+} from './vdot'
 import { calculateSectionMetrics } from './metrics'
 import { buildPaceSet } from './paces'
 import type { AnswerValues } from './questions'
@@ -44,24 +46,26 @@ describe('paces', () => {
     })
 })
 
+const HARD_KINDS = ['threshold', 'interval', 'repetition', 'marathon']
+const isHard = (kind: string) => HARD_KINDS.includes(kind)
 const knownKm = (sections: PlanSection[]) => sections.reduce((km, item) => km + (calculateSectionMetrics(item).distanceKm ?? 0), 0)
 
 describe('generateTrainingPlan', () => {
-    it('builds 12 weeks following weeklyVolumes: one long run, other days threshold for a Base focus', () => {
+    it('builds 12 weeks following weeklyVolumes: one long run, a threshold run and an easy run for a Base focus', () => {
         const result = plan()
         expect(result.weeks).toHaveLength(12)
         expect(result.weeks.map((week) => week.targetKm)).toEqual(weeklyVolumes(15, 3, 12))
         for (const week of result.weeks) {
-            expect(week.sessions.map((session) => session.kind)).toEqual(['threshold', 'threshold', 'long'])
+            expect(week.sessions.map((session) => session.kind)).toEqual(['threshold', 'easyRun', 'long'])
         }
     })
 
-    it('uses marathon-pace runs on the other days for a half-marathon or marathon focus', () => {
+    it('uses marathon-pace runs as the steady days for a half-marathon or marathon focus', () => {
         for (const focus of ['half_marathon', 'marathon']) {
             const result = plan({ training_focus: focus })
-            expect(result.weeks[0].sessions.map((session) => session.kind)).toEqual(['marathon', 'marathon', 'long'])
+            expect(result.weeks[0].sessions.map((session) => session.kind)).toEqual(['marathon', 'easyRun', 'long'])
         }
-        expect(plan({ training_focus: '10k' }).weeks[0].sessions.map((session) => session.kind)).toEqual(['threshold', 'threshold', 'long'])
+        expect(plan({ training_focus: '10k' }).weeks[0].sessions.map((session) => session.kind)).toEqual(['threshold', 'easyRun', 'long'])
     })
 
     it('labels the long easy session Easy run and keeps exactly one per week', () => {
@@ -79,11 +83,11 @@ describe('generateTrainingPlan', () => {
     it('adds the speed sessions the training effort allows, rotating R, I, T by level', () => {
         const result = plan({ running_days: 5, training_effort: 'advanced_quality', weekly_volume: 40 })
         const kinds = (week: number) => result.weeks[week].sessions.map((session) => session.kind)
-        expect(kinds(0)).toEqual(['repetition', 'threshold', 'interval', 'threshold', 'long'])
-        expect(kinds(4)).toEqual(['interval', 'threshold', 'threshold', 'threshold', 'long'])
-        expect(kinds(8)).toEqual(['threshold', 'threshold', 'repetition', 'threshold', 'long'])
+        expect(kinds(0)).toEqual(['repetition', 'easyRun', 'interval', 'easyRun', 'long'])
+        expect(kinds(4)).toEqual(['interval', 'easyRun', 'threshold', 'easyRun', 'long'])
+        expect(kinds(8)).toEqual(['threshold', 'easyRun', 'repetition', 'easyRun', 'long'])
         const threeDays = plan({ running_days: 3, training_effort: 'advanced_quality' })
-        expect(threeDays.weeks[0].sessions.map((session) => session.kind)).toEqual(['repetition', 'threshold', 'long'])
+        expect(threeDays.weeks[0].sessions.map((session) => session.kind)).toEqual(['repetition', 'easyRun', 'long'])
         expect(threeDays.notes.join(' ')).toContain('speed days were left out')
     })
 
@@ -112,12 +116,13 @@ describe('generateTrainingPlan', () => {
         const result = plan()
         const week = result.weeks[0]
         const dayKm = week.sessions.map((session) => knownKm(session.sections))
-        expect(dayKm[0]).toBeCloseTo(dayKm[1], 5)
+        // The threshold and easy day share what is left; each is rounded down to 0.1 km.
+        expect(Math.abs(dayKm[0] - dayKm[1])).toBeLessThanOrEqual(0.2)
         expect(dayKm[2]).toBeCloseTo(15 * 0.25, 1)
         const total = dayKm.reduce((a, b) => a + b, 0)
         expect(total).toBeLessThanOrEqual(15 + 1e-9)
         expect(total).toBeGreaterThan(15 - 0.5)
-        expect(result.notes.join(' ')).toContain('another steady session may be longer')
+        expect(result.notes.join(' ')).toContain('another run may be longer')
     })
 
     it('runs until the goal race when it is further than 12 weeks away, and highlights the current week', () => {
@@ -163,5 +168,88 @@ describe('generateTrainingPlan', () => {
         expect(edited.weeks[2].sessions[1].updatedAt).toBe(later.toISOString())
         expect(edited.weeks[2].sessions[0]).toBe(result.weeks[2].sessions[0])
         expect(edited.weeks[3]).toBe(result.weeks[3])
+    })
+})
+
+describe('hard days', () => {
+    const EFFORTS = ['base', 'base_quality', 'advanced_quality']
+    const FOCUSES = ['base', '10k', 'half_marathon']
+
+    it.each([3, 4, 5, 6])('keeps a %i-day week at or under the cap with no two hard days adjacent', (days) => {
+        for (const effort of EFFORTS) {
+            for (const focus of FOCUSES) {
+                const result = plan({ running_days: days, training_effort: effort, training_focus: focus, weekly_volume: 40 })
+                for (const week of result.weeks) {
+                    const hard = week.sessions.map((session) => isHard(session.kind))
+                    expect(week.sessions, `${days}d ${effort} ${focus} week ${week.number}`).toHaveLength(days)
+                    expect(hard.filter(Boolean).length).toBeLessThanOrEqual(HARD_DAYS_PER_WEEK_CAP)
+                    hard.slice(1).forEach((isHardDay, index) => expect(isHardDay && hard[index]).toBe(false))
+                    expect(week.sessions.filter((session) => session.kind === 'long')).toHaveLength(1)
+                    expect(week.sessions.at(-1)!.kind).toBe('long')
+                }
+            }
+        }
+    })
+
+    it('lays out 3, 4 and 5 day advanced-quality weeks as hard, easy, hard with the Easy long run last', () => {
+        const layout = (days: number) => plan({ running_days: days, training_effort: 'advanced_quality', weekly_volume: 40 }).weeks[0].sessions.map((session) => session.kind)
+        expect(layout(3)).toEqual(['repetition', 'easyRun', 'long'])
+        expect(layout(4)).toEqual(['repetition', 'easyRun', 'interval', 'long'])
+        expect(layout(5)).toEqual(['repetition', 'easyRun', 'interval', 'easyRun', 'long'])
+    })
+
+    it('uses steady runs for the hard days a Base week has, and E runs for the rest', () => {
+        const kinds = plan({ running_days: 5, training_effort: 'base', training_focus: 'half_marathon', weekly_volume: 40 }).weeks[0].sessions.map((session) => session.kind)
+        expect(kinds).toEqual(['marathon', 'easyRun', 'marathon', 'easyRun', 'long'])
+    })
+
+    it('shares the leftover distance between steady and easy runs and stays within the week target', () => {
+        const week = plan({ running_days: 5, training_effort: 'base_quality', weekly_volume: 40 }).weeks[0]
+        const km = week.sessions.map((session) => knownKm(session.sections))
+        const shared = week.sessions.flatMap((session, index) => (session.kind === 'easyRun' || session.kind === 'threshold') && index !== 0 ? [km[index]] : [])
+        expect(Math.max(...shared) - Math.min(...shared)).toBeLessThanOrEqual(0.2)
+        expect(km.reduce((a, b) => a + b, 0)).toBeLessThanOrEqual(week.targetKm + 1e-9)
+    })
+})
+
+describe('taper', () => {
+    // 2026-10-08 start; a half marathon on 2026-12-20 is 73 days (10 weeks and 3 days) away.
+    const HALF: AnswerValues = { training_focus: 'half_marathon', goal_race_date: '2026-12-20', running_days: 4, training_effort: 'base_quality', weekly_volume: 30 }
+
+    it('reduces the last two weeks before a half marathon to 75% then 50% of the last full week and marks them', () => {
+        const result = plan(HALF)
+        const full = weeklyVolumes(30, 4, 12)
+        const tapered = result.weeks.filter((week) => week.taper)
+        expect(tapered.map((week) => week.number)).toEqual([10, 11])
+        const [fraction1, fraction2] = taperFractions('half_marathon')
+        expect(tapered[0].targetKm).toBeCloseTo(full[8] * fraction1, 9)
+        expect(tapered[1].targetKm).toBeCloseTo(full[8] * fraction2, 9)
+        for (const week of result.weeks.filter((item) => !item.taper)) expect(week.targetKm).toBe(full[week.number - 1])
+        expect(result.notes.join(' ')).toContain('Taper')
+    })
+
+    it('shrinks the sessions with the week and leaves at most one hard day in the last taper week', () => {
+        const result = plan(HALF)
+        const hardCount = (week: number) => result.weeks[week].sessions.filter((session) => isHard(session.kind)).length
+        expect(hardCount(8)).toBe(2)
+        expect(hardCount(9)).toBeLessThanOrEqual(2)
+        expect(hardCount(10)).toBeLessThanOrEqual(TAPER_FINAL_WEEK_HARD_CAP)
+        const longKm = (week: number) => knownKm(result.weeks[week].sessions.filter((session) => session.kind === 'long').flatMap((session) => session.sections))
+        expect(longKm(10)).toBeLessThan(longKm(9))
+        expect(longKm(9)).toBeLessThan(longKm(8))
+        for (const week of result.weeks.slice(8, 11)) {
+            for (const session of week.sessions) expect(validateWorkout(sessionWorkout(result, week, session)).ok).toBe(true)
+        }
+    })
+
+    it('does not taper without a goal date, a past goal date, or a Base focus', () => {
+        expect(plan({ ...HALF, goal_race_date: undefined }).weeks.some((week) => week.taper)).toBe(false)
+        expect(plan({ ...HALF, goal_race_date: '2026-09-01' }).weeks.some((week) => week.taper)).toBe(false)
+        expect(plan({ ...HALF, training_focus: 'base' }).weeks.some((week) => week.taper)).toBe(false)
+    })
+
+    it('ends the plan at the race week for a race further than 12 weeks away', () => {
+        const result = plan({ ...HALF, goal_race_date: '2027-03-04' })
+        expect(result.weeks.filter((week) => week.taper).map((week) => week.number)).toEqual([20, 21])
     })
 })
