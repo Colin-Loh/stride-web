@@ -27,6 +27,6 @@ export default function App({ repositories }: { repositories: Repositories }) {
       onBack={() => flow.setView(open.sessionId ? 'plan' : 'category')} />}
     {view === 'run' && session && <RunScreen session={session} muted={preferences.muted} character={preferences.character}
       onSession={flow.persistSession} onComplete={flow.handleComplete} onQuit={flow.quitRun} onToggleMute={flow.toggleMute} />}
-    {view === 'complete' && session && <CompleteScreen name={name} session={session} onAgain={flow.quitRun} />}
+    {view === 'complete' && session && <CompleteScreen name={name} session={session} character={preferences.character} weightKg={preferences.weightKg} onAgain={flow.quitRun} />}
   </main>
 }

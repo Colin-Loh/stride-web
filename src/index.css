@@ -90,8 +90,7 @@ select {
 
 .lede,
 .muted,
-.next,
-.celebrate {
+.next {
   color: var(--muted);
   margin: 0 0 20px;
 }
@@ -202,6 +201,24 @@ select {
 
 /* Duration, step count and --run-end come from the sheet, via RunnerSprite. */
 @keyframes run-cycle {
+  to {
+    background-position-x: var(--run-end);
+  }
+}
+
+/* The dance starts from frame 1 and, once finished, rests on the still frame (--still-x). */
+.runner.dance {
+  margin: 0;
+  flex: none;
+  background-position-x: var(--still-x);
+  animation-name: dance-cycle;
+}
+
+@keyframes dance-cycle {
+  from {
+    background-position-x: 0;
+  }
+
   to {
     background-position-x: var(--run-end);
   }
@@ -474,11 +491,6 @@ select {
   font-variant-numeric: tabular-nums;
 }
 
-.complete .celebrate {
-  font-size: 1.05rem;
-  color: var(--accent);
-}
-
 .field-error {
   color: var(--danger);
   font-size: 0.85rem;
@@ -542,4 +554,160 @@ select {
   font-size: 0.75rem;
   font-weight: 600;
   text-transform: uppercase;
+}
+
+.complete {
+  --rule: #34424f;
+}
+
+.complete-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.complete-head p {
+  margin: 0 0 8px;
+}
+
+.hero {
+  margin: 8px 0 12px;
+}
+
+.hero strong {
+  font-size: 3.6rem;
+  line-height: 1;
+  color: var(--text-h);
+  font-variant-numeric: tabular-nums;
+}
+
+.hero .unit {
+  margin-left: 8px;
+  font-size: 1.2rem;
+  color: var(--accent);
+}
+
+.hero p {
+  margin: 4px 0 0;
+}
+
+.stat-tiles {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin: 0 0 10px;
+}
+
+.tile {
+  background: #0c241c;
+  border: 1px solid var(--accent-dim);
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+
+.tile dt {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.tile dd {
+  margin: 4px 0 0;
+  color: var(--text-h);
+  font-size: 1.4rem;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+
+.tile dd small {
+  font-size: 0.8rem;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.tile dd.empty {
+  font-size: 0.9rem;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.secondary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin: 0 0 14px;
+}
+
+.chart {
+  width: 100%;
+  height: auto;
+  margin-bottom: 14px;
+}
+
+.zone-bar {
+  display: flex;
+  height: 26px;
+  border-radius: 7px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.zone-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  list-style: none;
+  margin: 0 0 14px;
+  padding: 0;
+}
+
+.zone-swatch {
+  display: inline-block;
+  width: 0.8em;
+  height: 0.8em;
+  margin-right: 4px;
+  border-radius: 2px;
+}
+
+.section-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 16px;
+  font-variant-numeric: tabular-nums;
+}
+
+.section-table caption {
+  text-align: left;
+  margin-bottom: 6px;
+}
+
+.section-table th,
+.section-table td {
+  padding: 6px 4px;
+  text-align: right;
+  border-bottom: 1px solid var(--rule);
+}
+
+.section-table th:first-child {
+  text-align: left;
+  font-weight: 600;
+  color: var(--text-h);
+}
+
+.share {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.share p {
+  margin: 0;
+  min-height: 1.4em;
+}
+
+.check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
 }

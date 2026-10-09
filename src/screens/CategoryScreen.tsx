@@ -51,7 +51,7 @@ export function CategoryScreen({
                 ))}
             </div>
             <button type="button" className="link" onClick={onChangeName}>
-                Change name or character
+                Change name, character or weight
             </button>
             <button type="button" className="link" onClick={onEditAnswers}>
                 Change my running answers
