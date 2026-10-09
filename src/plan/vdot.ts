@@ -467,15 +467,16 @@ export function weeklyVolumes(startKm: number, runsPerWeek: number, weeks: numbe
 }
 
 /**
- * Plan length in weeks: at least `minWeeks`, or until the goal race when one is set.
+ * Plan length in weeks: `minWeeks` without a goal race. With one, the plan ends in race week, so
+ * it never continues past the race at full volume (it can be shorter than `minWeeks`).
  * TODO(verify): `maxWeeks` is a product limit, not from the research, which gives no peak or
  * plan-length ceiling; it only keeps the week list and the climbing volume bounded.
  */
 const PLAN_LENGTH = { minWeeks: 12, maxWeeks: 52 } as const
 
 export function planWeekCount(weeksToGoal: number | null): number {
-    const wanted = weeksToGoal !== null && Number.isFinite(weeksToGoal) ? Math.ceil(weeksToGoal) : 0
-    return Math.min(PLAN_LENGTH.maxWeeks, Math.max(PLAN_LENGTH.minWeeks, wanted))
+    if (weeksToGoal === null || !Number.isFinite(weeksToGoal)) return PLAN_LENGTH.minWeeks
+    return Math.min(PLAN_LENGTH.maxWeeks, Math.max(1, Math.ceil(weeksToGoal)))
 }
 
 // ---------------------------------------------------------------------------------------------

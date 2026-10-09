@@ -253,3 +253,18 @@ describe('taper', () => {
         expect(result.weeks.filter((week) => week.taper).map((week) => week.number)).toEqual([20, 21])
     })
 })
+
+describe('goal race plan length', () => {
+    it('ends in race week and never continues past the race at full volume', () => {
+        const baseline = derivePersonalBaseline({
+            fitness_method: 'recent_race', recent_race_distance: 5, recent_race_time: 2100, training_focus: 'half_marathon',
+            weekly_volume: 30, running_days: 4, training_effort: 'base_quality', goal_race_date: '2026-12-20',
+        })
+        const result = generateTrainingPlan({ baseline, now: new Date('2026-10-08T00:00:00Z') })!
+        const last = result.weeks.at(-1)!
+        expect(last.startDate <= '2026-12-20').toBe(true)
+        expect(last.taper).toBe(true)
+        const peak = Math.max(...result.weeks.map((week) => week.targetKm))
+        expect(last.targetKm).toBeLessThan(peak)
+    })
+})

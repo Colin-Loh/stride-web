@@ -195,9 +195,10 @@ describe('weekly progression', () => {
         expect(weeklyVolumes(15, 0, 6)).toEqual(Array(6).fill(15))
     })
 
-    it('plans at least 12 weeks, or until the goal race, up to a limit', () => {
+    it('plans 12 weeks without a goal race, or exactly until race week, up to a limit', () => {
         expect(planWeekCount(null)).toBe(12)
-        expect(planWeekCount(5)).toBe(12)
+        expect(planWeekCount(5)).toBe(5)
+        expect(planWeekCount(0.3)).toBe(1)
         expect(planWeekCount(20.2)).toBe(21)
         expect(planWeekCount(500)).toBe(52)
     })
