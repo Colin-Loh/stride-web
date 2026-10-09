@@ -7,7 +7,7 @@ import type { PlanSection } from './types'
 
 describe('partial interval export', () => {
   it.each([20, 120, 150, 180, 200, 360, 360.25])('preserves %s seconds exactly', seconds => {
-    const plan = generatePersonalizedWorkout({ category: 'test', baseline: derivePersonalBaseline({}) })
+    const plan = generatePersonalizedWorkout({ category: 'threshold', baseline: derivePersonalBaseline({}) })
     const main: PlanSection = { id: 'main', label: 'Run', type: 'run', effort: 'steady', speedKmh: 12,
       target: { basis: 'time', durationSeconds: seconds }, runWalk: { runSeconds: 120, walkSeconds: 60, walkSpeedKmh: 6 } }
     plan.sections = [main]

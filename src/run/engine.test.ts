@@ -5,15 +5,17 @@ import { derivePersonalBaseline } from '../plan/baseline'
 import type { PersonalizedWorkout, PlanSection } from '../plan/types'
 
 const make = (sections?: PlanSection[]): PersonalizedWorkout => {
-  const plan = generatePersonalizedWorkout({ category: 'test', baseline: derivePersonalBaseline({ fitness_method: 'easy_pace', conversational_easy_pace: 360 }) })
+  const plan = generatePersonalizedWorkout({ category: 'threshold', baseline: derivePersonalBaseline({ fitness_method: 'easy_pace', conversational_easy_pace: 360 }) })
   return sections ? { ...plan, sections } : plan
 }
-const section = (id: string, seconds: number, speed: number | null): PlanSection => ({ id, type: 'run', label: id,
-  target: { basis: 'time', durationSeconds: seconds }, speedKmh: speed, effort: 'steady' })
+const section = (id: string, seconds: number, speed: number | null): PlanSection => ({
+  id, type: 'run', label: id,
+  target: { basis: 'time', durationSeconds: seconds }, speedKmh: speed, effort: 'steady'
+})
 
 describe('run replay', () => {
-  it('keeps every test section at 30 seconds despite speed changes', () => {
-    const plan = make()
+  it('keeps timed sections fixed despite speed changes', () => {
+    const plan = make([section('warmup', 30, 6), section('main', 30, 12), section('cooldown', 30, 6)])
     const changes = [{ atMs: 10_000, offset: 3.2 }, { atMs: 40_000, offset: -2 }]
     expect(runProgress(plan, changes, 29_999).index).toBe(0)
     expect(runProgress(plan, changes, 30_000).index).toBe(1)
@@ -42,7 +44,7 @@ describe('run replay', () => {
   })
   it('uses future section speeds in ETA instead of extending the current speed forever', () => {
     const plan = make([{ ...section('a', 0, 6), target: { basis: 'distance', distanceKm: 1 } },
-      { ...section('b', 0, 12), target: { basis: 'distance', distanceKm: 1 } }])
+    { ...section('b', 0, 12), target: { basis: 'distance', distanceKm: 1 } }])
     expect(runProgress(plan, [], Infinity).elapsedMs).toBeCloseTo(900_000)
   })
   it('runs unknown-speed time targets without inventing distance', () => {
@@ -56,8 +58,10 @@ describe('run replay', () => {
     expect(runProgress(plan, [], 240_000)).toMatchObject({ done: true, distanceKm: 0.7 })
   })
   it('replays run/walk distance sections across a long inactive period', () => {
-    const s = { ...section('main', 0, 12), target: { basis: 'distance' as const, distanceKm: 0.6 },
-      runWalk: { runSeconds: 120, walkSeconds: 60, walkSpeedKmh: 6 } }
+    const s = {
+      ...section('main', 0, 12), target: { basis: 'distance' as const, distanceKm: 0.6 },
+      runWalk: { runSeconds: 120, walkSeconds: 60, walkSpeedKmh: 6 }
+    }
     expect(runProgress(make([s]), [], Infinity).elapsedMs).toBeCloseTo(210_000)
   })
   it('stops accumulated distance at completion even if reopening much later', () => {
@@ -77,12 +81,15 @@ describe('section finish forecasts', () => {
     expect(current.distanceKm).toBeCloseTo(0.5)
   })
   it('forecasts run/walk distance sections through future phase boundaries', () => {
-    const plan = make([{ ...section('a', 0, 12), target: { basis: 'distance', distanceKm: 0.6 },
-      runWalk: { runSeconds: 120, walkSeconds: 60, walkSpeedKmh: 6 } }])
+    const plan = make([{
+      ...section('a', 0, 12), target: { basis: 'distance', distanceKm: 0.6 },
+      runWalk: { runSeconds: 120, walkSeconds: 60, walkSpeedKmh: 6 }
+    }])
     const forecast = runProgress(plan, [], Infinity)
     expect(forecast.sectionEndsMs[0] - 120_000).toBeCloseTo(90_000)
   })
   it('keeps timed section end times fixed after speed changes', () => {
-    expect(runProgress(make(), [{ atMs: 10_000, offset: 5 }], Infinity).sectionEndsMs).toEqual([30_000, 60_000, 90_000])
+    const plan = make([section('warmup', 30, 6), section('main', 30, 12), section('cooldown', 30, 6)])
+    expect(runProgress(plan, [{ atMs: 10_000, offset: 5 }], Infinity).sectionEndsMs).toEqual([30_000, 60_000, 90_000])
   })
 })

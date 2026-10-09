@@ -60,7 +60,7 @@ export function WorkoutScreen({ workout, onChange, onStart, onBack, backLabel }:
             ) : null}
 
             <div className="plan-steps">{workout.sections.map(item => <PlanSectionEditor key={item.id} section={item} onChange={replace}
-                fixed={workout.category === 'test'} onValidity={valid => setInvalidInputs(current => ({ ...current, [item.id]: !valid }))} />)}</div>
+                onValidity={valid => setInvalidInputs(current => ({ ...current, [item.id]: !valid }))} />)}</div>
 
             <h2>Totals</h2>
             <ul className="reasons">

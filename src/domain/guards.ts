@@ -62,7 +62,7 @@ function isBaseline(v: unknown): v is PersonalBaseline {
 }
 
 const WORKOUT_IDS = Object.keys(WORKOUT_NAMES)
-const SESSION_KINDS = WORKOUT_IDS.filter((id) => id !== 'test')
+const SESSION_KINDS = WORKOUT_IDS
 
 function isWorkout(v: unknown): v is PersonalizedWorkout {
     return record(v) && WORKOUT_IDS.includes(String(v.category)) && text(v.categoryName) && isBaseline(v.baseline)

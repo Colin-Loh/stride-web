@@ -5,13 +5,13 @@ import { setSectionPace, setSectionSpeed, setSectionTargetValue } from '../plan/
 import { formatSpan, roundSpeedUp } from '../plan/convert'
 import type { PlanSection } from '../plan/types'
 
-interface Props { section: PlanSection; onChange: (section: PlanSection) => void; onValidity: (valid: boolean) => void; fixed?: boolean }
-export function PlanSectionEditor({ section, onChange, onValidity, fixed = false }: Props) {
+interface Props { section: PlanSection; onChange: (section: PlanSection) => void; onValidity: (valid: boolean) => void }
+export function PlanSectionEditor({ section, onChange, onValidity }: Props) {
   const metrics = calculateSectionMetrics(section)
   return <div className="plan-step">
     <div className="plan-step-head"><strong>{section.label}</strong><span className="muted">{section.target.basis === 'time' ? 'Time target' : 'Distance target'}</span></div>
     <div className="pace-row">
-      <NumberField label={section.target.basis === 'time' ? 'Duration (min)' : 'Distance (km)'} step={0.1} disabled={fixed}
+      <NumberField label={section.target.basis === 'time' ? 'Duration (min)' : 'Distance (km)'} step={0.1}
         value={section.target.basis === 'time' ? Number((section.target.durationSeconds / 60).toFixed(3)) : section.target.distanceKm}
         onChange={v => onChange(setSectionTargetValue(section, (v ?? 0) * (section.target.basis === 'time' ? 60 : 1)))} />
       <NumberField label="Speed (km/h)" step={0.1} min={0.5} max={25} value={section.speedKmh ?? undefined}

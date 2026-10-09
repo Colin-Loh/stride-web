@@ -100,6 +100,10 @@ input {
   gap: 12px;
 }
 
+.primary+.stack {
+  margin-top: 16px;
+}
+
 .field {
   display: grid;
   gap: 8px;
@@ -469,7 +473,11 @@ input {
   font-size: 1.05rem;
   color: var(--accent);
 }
-.field-error { color: var(--danger); font-size: 0.85rem; }
+
+.field-error {
+  color: var(--danger);
+  font-size: 0.85rem;
+}
 
 .pace-cards {
   display: grid;

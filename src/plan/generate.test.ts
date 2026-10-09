@@ -60,12 +60,6 @@ describe('derivePersonalBaseline', () => {
 })
 
 describe('generated sessions', () => {
-    it('makes the test run three fixed 30-second sections, with no answers at all', () => {
-        const plan = generatePersonalizedWorkout({ category: 'test', baseline: derivePersonalBaseline({}) })
-        expect(plan.sections.map((s) => s.target)).toEqual(Array(3).fill({ basis: 'time', durationSeconds: 30 }))
-        expect(calculateWorkoutTotals(plan.sections).durationSeconds).toBe(90)
-    })
-
     it('runs E running at the Daniels easy speed, rounded up, over the distance the week gives it', () => {
         const run = main('filler', {}, 7.25)
         expect(run.speedKmh).toBe(roundSpeedUp(SPEEDS.E))
@@ -73,8 +67,12 @@ describe('generated sessions', () => {
         expect(validateWorkout(build('filler', {}, 7.25)).ok).toBe(true)
     })
 
+    it('offers only training sessions, without a test run', () => {
+        expect(WORKOUTS.map((workout) => workout.id)).toEqual(['threshold', 'interval', 'repetition', 'long'])
+        expect(WORKOUTS.map((workout) => workout.name).join(' ')).not.toMatch(/test run/i)
+    })
+
     it('has no easy, tempo or cruise workout any more', () => {
-        expect(WORKOUTS.map((workout) => workout.id)).toEqual(['test', 'threshold', 'interval', 'repetition', 'long'])
         expect(WORKOUTS.map((workout) => workout.name).join(' ')).not.toMatch(/easy|tempo|cruise/i)
     })
 

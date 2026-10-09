@@ -36,8 +36,8 @@ export interface PaceSet extends Stamped {
     zones: Record<Zone, ZonePace | null>
 }
 
-/** A kind of session inside a plan week; the 'test' run is never part of a plan. */
-export type SessionKind = Exclude<WorkoutId, 'test'>
+/** A kind of session inside a plan week. */
+export type SessionKind = WorkoutId
 
 export interface Session extends Stamped {
     kind: SessionKind

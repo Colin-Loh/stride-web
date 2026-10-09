@@ -10,7 +10,6 @@ interface Props {
 }
 
 const INTENSITY_LABELS: Record<PickableWorkoutId, string> = {
-    test: '90-second timer and sound check',
     long: 'At your Daniels easy pace',
     threshold: 'At your Daniels threshold pace',
     interval: 'At your Daniels interval pace',

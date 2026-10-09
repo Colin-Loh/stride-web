@@ -29,7 +29,7 @@ const ANSWERS = {
 } as const
 const makePlan = (id: string, now = new Date(2026, 9, 8)) =>
     generateTrainingPlan({ baseline: derivePersonalBaseline(ANSWERS), now, newId: () => id })!
-const makeRun = (id = 'run-1') => newRunSession(generatePersonalizedWorkout({ category: 'test', baseline: derivePersonalBaseline({}) }), id)
+const makeRun = (id = 'run-1') => newRunSession(generatePersonalizedWorkout({ category: 'threshold', baseline: derivePersonalBaseline(ANSWERS) }), id)
 const makeAnswers = (): Answers => {
     const stamp = '2026-10-08T12:00:00.000Z'
     return { id: 'answers-1', schemaVersion: SCHEMA_VERSION, createdAt: stamp, updatedAt: stamp, values: ANSWERS }
@@ -107,8 +107,10 @@ describe('old and invalid data is discarded with the notice, without crashing', 
         const plan = makePlan('plan-a')
         for (const kind of ['easy', 'tempo', 'cruise']) {
             clearStorageNotice()
-            const old = { ...plan, weeks: plan.weeks.map((week, index) => index === 0
-                ? { ...week, sessions: week.sessions.map((session) => ({ ...session, kind })) } : week) }
+            const old = {
+                ...plan, weeks: plan.weeks.map((week, index) => index === 0
+                    ? { ...week, sessions: week.sessions.map((session) => ({ ...session, kind })) } : week)
+            }
             values.set('stride.plan', JSON.stringify([old]))
             const repository = new LocalStoragePlanRepository()
             expect(await repository.load('plan-a')).toBeNull()

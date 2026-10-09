@@ -16,9 +16,6 @@ export { validateWorkout } from './validation'
 export { setSectionSpeed, setSectionPace, setSectionTargetValue } from './edit'
 export { planToSchema } from './schema'
 
-/** The sound-check test run is three sections of this length. */
-const TEST_SECTION_SECONDS = 30
-
 const QUALITY: readonly WorkoutId[] = ['threshold', 'interval', 'repetition']
 
 export interface WorkoutInput {
@@ -43,17 +40,6 @@ export function buildWorkout(input: WorkoutInput): PersonalizedWorkout {
     const finish = (workout: PersonalizedWorkout, zone: Zone): PersonalizedWorkout => ({
         ...workout, explanation: [zoneNote(zone), ...workout.explanation],
     })
-
-    if (category === 'test') {
-        const part = (id: PlanSection['type'], label: string) =>
-            section(id, id, label, { basis: 'time', durationSeconds: TEST_SECTION_SECONDS }, easy)
-        return {
-            category, categoryName, baseline,
-            sections: [part('warmup', 'Warm-up'), part('run', 'Steady section'), part('cooldown', 'Cool-down')],
-            explanation: ['Three fixed 30-second sections. Speed changes never shorten this test.'],
-            adjustments: [],
-        }
-    }
 
     if (category === 'interval' || category === 'repetition') {
         const zone: Zone = category === 'interval' ? 'I' : 'R'
@@ -114,7 +100,6 @@ export function buildWorkout(input: WorkoutInput): PersonalizedWorkout {
 export function generatePersonalizedWorkout(input: WorkoutInput & { today?: Date }): PersonalizedWorkout {
     const { baseline, today = new Date() } = input
     const workout = buildWorkout(input)
-    if (input.category === 'test') return workout
     const rawSpeeds = baseline.vdot === null ? null : trainingSpeedsKmh(baseline.vdot)
     const notes = [fitnessNote(baseline, rawSpeeds), goalNote(baseline, today)].filter((note): note is string => note !== null)
     return {

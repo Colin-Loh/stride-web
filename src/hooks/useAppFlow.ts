@@ -108,7 +108,7 @@ export function useAppFlow(repositories: Repositories) {
     }
 
     function pickCategory(category: PickableWorkoutId) {
-        if (category !== 'test' && missingQuestions(answers?.values ?? {}).length) {
+        if (missingQuestions(answers?.values ?? {}).length) {
             setPending({ kind: 'workout', category }); setView('baseline')
         } else openWorkout(category, answers?.values ?? {})
     }
