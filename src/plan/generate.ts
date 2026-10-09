@@ -85,12 +85,12 @@ export function buildWorkout(input: WorkoutInput): PersonalizedWorkout {
 
     const cap = weeklyKm !== null && easy !== null ? longRunCapKm(weeklyKm, easy) : null
     main = cap !== null && easy !== null
-        ? section('main', 'run', 'Long run', { basis: 'distance', distanceKm: tenthOfKm(cap) }, easy)
-        : section('main', 'run', 'Long run', { basis: 'time', durationSeconds: structure.longFallbackSeconds }, easy)
+        ? section('main', 'run', 'Easy run', { basis: 'distance', distanceKm: tenthOfKm(cap) }, easy)
+        : section('main', 'run', 'Easy run', { basis: 'time', durationSeconds: structure.longFallbackSeconds }, easy)
     main.effort = ZONES.E.purpose
     main.targetRpe = EASY_RPE
     explanation.push(main.target.basis === 'distance'
-        ? `The VDOT model caps a long run by a share of your ${weeklyKm} km week and by a maximum time at easy pace: ${main.target.distanceKm} km.`
+        ? `The VDOT model sizes this Easy run by a share of your ${weeklyKm} km week and a maximum duration at easy pace: ${main.target.distanceKm} km.`
         : 'We need your weekly distance and an easy pace to size this run, so it is timed instead.')
     if (easy === null) {
         adjustments.push('We have no pace for you yet, so sections are timed and show effort instead of speed.')

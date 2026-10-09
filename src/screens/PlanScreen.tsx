@@ -3,6 +3,7 @@ import type { Session, TrainingPlan } from '../domain/types'
 import { formatSpan } from '../plan/convert'
 import { currentWeekIndex } from '../plan/dates'
 import { calculateWorkoutTotals } from '../plan/metrics'
+import { WORKOUT_NAMES } from '../workouts'
 
 interface Props {
     plan: TrainingPlan
@@ -48,7 +49,7 @@ export function PlanScreen({ plan, onOpenSession, onBack, today = new Date() }: 
                         <div className="stack">
                             {week.sessions.map((session) => (
                                 <button key={session.id} type="button" className="choice workout" onClick={() => onOpenSession(session.id)}>
-                                    <strong>{session.name}</strong>
+                                    <strong>{WORKOUT_NAMES[session.kind]}</strong>
                                     <span className="muted">{sessionSummary(session)}</span>
                                 </button>
                             ))}

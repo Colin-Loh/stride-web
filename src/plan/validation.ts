@@ -65,7 +65,7 @@ export function validateWorkout(workout: PersonalizedWorkout): {
     // Limits also apply to edited and restored plans, not only generated defaults.
     if (workout.category === 'long' && totals.durationSeconds !== null
         && totals.durationSeconds > LONG_RUN_MAX_SECONDS + 0.01) {
-        issues.push({ message: 'The whole workout, including warm-up and cool-down, must fit within the VDOT model’s long-run time limit.' })
+        issues.push({ message: 'The whole workout, including warm-up and cool-down, must fit within the Easy run time limit.' })
     }
     // Interval and repetition running have a hard session cap; threshold volume is guidance, not a ceiling.
     const weekly = workout.baseline.weeklyKm

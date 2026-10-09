@@ -50,6 +50,17 @@ describe('week by week', () => {
         expect(html).toMatch(/class="week current"[^>]*aria-current="date"><h3>Week 6 /)
     })
 
+    it('shows the current Easy run label even when a saved session has the old name', () => {
+        const plan = generateTrainingPlan({ baseline: derivePersonalBaseline({ ...BASE, ...RACE }), now: NOW })!
+        const long = plan.weeks[0].sessions.find((session) => session.kind === 'long')!
+        long.name = 'Long run'
+
+        const html = renderToStaticMarkup(<PlanScreen plan={plan} today={NOW} onOpenSession={noop} onBack={noop} />)
+
+        expect(html).toContain('<strong>Easy run</strong>')
+        expect(html).not.toContain('<strong>Long run</strong>')
+    })
+
     it('opens the picked session of a week', () => {
         const plan = generateTrainingPlan({ baseline: derivePersonalBaseline({ ...BASE, ...RACE }), now: NOW })!
         const opened: string[] = []

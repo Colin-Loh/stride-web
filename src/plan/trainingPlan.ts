@@ -1,4 +1,5 @@
 import { SCHEMA_VERSION, type Session, type SessionKind, type TrainingPlan, type Week } from '../domain/types'
+import { WORKOUT_NAMES } from '../workouts'
 import { calculateSectionMetrics } from './metrics'
 import { CONFLICT_NOTE, REDUCED_QUALITY_NOTE } from './copy'
 import { addDays, weeksUntil } from './dates'
@@ -112,7 +113,7 @@ export function generateTrainingPlan(input: PlanInput): TrainingPlan | null {
 export function sessionWorkout(plan: TrainingPlan, week: Week, session: Session): PersonalizedWorkout {
     return {
         category: session.kind,
-        categoryName: session.name,
+        categoryName: WORKOUT_NAMES[session.kind],
         baseline: { ...plan.baseline, weeklyKm: week.targetKm },
         sections: session.sections,
         explanation: session.explanation,

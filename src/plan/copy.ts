@@ -78,7 +78,7 @@ export const ANSWERS_SUBMIT_LABELS = {
 export type AnswersSubmitAction = keyof typeof ANSWERS_SUBMIT_LABELS
 
 export const REDUCED_QUALITY_NOTE =
-    'Your training effort asks for more speed days than your running days leave room for. Each week keeps a long run and at least one steady run, so some speed days were left out.'
+    'Your training effort asks for more speed days than your running days leave room for. Each week keeps an Easy run and at least one steady run, so some speed days were left out.'
 
 export const CONFLICT_NOTE =
-    'The VDOT model caps the long run at a share of the week and at a maximum time, so with this many runs a week your other runs are longer than your long run. Adding a running day spreads the distance out.'
+    'The VDOT model caps the Easy run by weekly volume and maximum duration, so another steady session may be longer. Adding a running day spreads the distance out.'

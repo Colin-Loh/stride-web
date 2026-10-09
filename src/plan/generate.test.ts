@@ -86,8 +86,9 @@ describe('generated sessions', () => {
         expect(WORKOUTS.map((workout) => workout.name).join(' ')).not.toMatch(/test run/i)
     })
 
-    it('has no easy, tempo or cruise workout any more', () => {
-        expect(WORKOUTS.map((workout) => workout.name).join(' ')).not.toMatch(/easy|tempo|cruise/i)
+    it('labels the long-distance easy session Easy run', () => {
+        expect(WORKOUTS.find((workout) => workout.id === 'long')?.name).toBe('Easy run')
+        expect(WORKOUTS.map((workout) => workout.name).join(' ')).not.toMatch(/E running|tempo|cruise/i)
     })
 
     it('caps the long run at a share of the week, and at 150 minutes for a big week', () => {

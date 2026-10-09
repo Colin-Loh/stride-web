@@ -64,13 +64,14 @@ describe('generateTrainingPlan', () => {
         expect(plan({ training_focus: '10k' }).weeks[0].sessions.map((session) => session.kind)).toEqual(['threshold', 'threshold', 'long'])
     })
 
-    it('never has E running and has exactly one long run in every week', () => {
+    it('labels the long easy session Easy run and keeps exactly one per week', () => {
         for (const answers of [{}, { running_days: 5, training_effort: 'advanced_quality', weekly_volume: 40 }, { training_focus: 'marathon' }]) {
             for (const week of plan(answers).weeks) {
                 const kinds = week.sessions.map((session) => session.kind as string)
                 expect(kinds).not.toContain('filler')
                 expect(kinds.filter((kind) => kind === 'long')).toHaveLength(1)
-                expect(week.sessions.map((session) => session.name).join(' ')).not.toMatch(/E running|Easy run/)
+                expect(week.sessions.find((session) => session.kind === 'long')?.name).toBe('Easy run')
+                expect(week.sessions.map((session) => session.name).join(' ')).not.toContain('E running')
             }
         }
     })
@@ -116,7 +117,7 @@ describe('generateTrainingPlan', () => {
         const total = dayKm.reduce((a, b) => a + b, 0)
         expect(total).toBeLessThanOrEqual(15 + 1e-9)
         expect(total).toBeGreaterThan(15 - 0.5)
-        expect(result.notes.join(' ')).toContain('longer than your long run')
+        expect(result.notes.join(' ')).toContain('another steady session may be longer')
     })
 
     it('runs until the goal race when it is further than 12 weeks away, and highlights the current week', () => {

@@ -135,7 +135,7 @@ export const QUESTIONS = [
         input: { type: 'choice', options: toOptions(TRAINING_EFFORTS) },
         units: null,
         required: true,
-        hint: 'Every option includes a long run. When unsure, choose Base.',
+        hint: 'Every option includes an Easy run. When unsure, choose Base.',
     },
     {
         id: 'goal_race_date',
