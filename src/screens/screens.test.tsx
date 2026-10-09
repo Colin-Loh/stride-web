@@ -19,7 +19,7 @@ describe('screen regressions', () => {
       target: { basis: 'distance', distanceKm: 1 }
     }]
     const session = { ...newRunSession(plan, 'run-1'), startedAt: 1_000_000, speedChanges: [{ atMs: 300_000, offset: 6 }] }
-    const html = renderToStaticMarkup(<RunScreen session={session} muted character="cat" onSession={noop}
+    const html = renderToStaticMarkup(<RunScreen session={session} muted character="shooshy" onSession={noop}
       onComplete={noop} onQuit={noop} onToggleMute={noop} />)
     expect(html).toContain('Main · 2:30 left')
   })
@@ -32,7 +32,7 @@ describe('screen regressions', () => {
       target: { basis: 'time', durationSeconds: 200 }, runWalk: { runSeconds: 120, walkSeconds: 60, walkSpeedKmh: 6 }
     }]
     const html = renderToStaticMarkup(<RunScreen session={{ ...newRunSession(plan, 'run-1'), startedAt: 1_000_000 }} muted
-      character="cat" onSession={noop} onComplete={noop} onQuit={noop} onToggleMute={noop} />)
+      character="shooshy" onSession={noop} onComplete={noop} onQuit={noop} onToggleMute={noop} />)
     expect(html).toContain('Run 2 of 2')
   })
   it('asks only the always-visible questions before a fitness method is chosen', () => {

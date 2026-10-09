@@ -184,7 +184,7 @@ export function useAppFlow(repositories: Repositories) {
     return {
         ready, preferences, plan, session, answers, open, notice, view, setView, pickCategory, showPlan,
         finishAnswers, persistSession, changeWorkout, openSession, startWorkout, handleComplete, quitRun, toggleMute,
-        persistName: (name: string, character: Character) => persistPreferences({ ...preferences, name, character }),
+        persistName: (name: string, character: Character, weightKg: number | null) => persistPreferences({ ...preferences, name, character, weightKg }),
         dismissNotice: () => { clearStorageNotice(); setNotice('') },
         submitAction: (pending?.kind ?? 'edit') as AnswersSubmitAction,
         editAnswers: () => { setPending(null); setView('baseline') },

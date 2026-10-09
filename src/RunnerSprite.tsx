@@ -1,6 +1,6 @@
 import type { CSSProperties } from 'react'
 import { CHARACTER_SPRITES } from './sprites'
-import type { Character } from './domain/preferences'
+import { CHARACTER_NAMES, type Character } from './domain/preferences'
 
 export type RunnerState = 'running' | 'idle'
 
@@ -51,7 +51,7 @@ export function RunnerSprite({
         <span
             className={className ? `runner ${className}` : 'runner'}
             role="img"
-            aria-label={`${character} ${state}`}
+            aria-label={`${CHARACTER_NAMES[character]} ${state}`}
             data-state={state}
             style={style}
         />

@@ -1,4 +1,4 @@
-import { DEFAULT_PREFERENCES, toCharacter, type Preferences } from '../domain/preferences'
+import { DEFAULT_PREFERENCES, toCharacter, toWeightKg, type Preferences } from '../domain/preferences'
 import { isAnswersRecord, isRunSession, isTrainingPlan } from '../domain/guards'
 import type { Answers, RunSession, Stamped, TrainingPlan } from '../domain/types'
 import { OUTDATED_NOTICE, UNREADABLE_NOTICE, UNSAVED_NOTICE, warn } from './notice'
@@ -84,7 +84,7 @@ export class LocalStorageRunSessionRepository extends LocalStorageCollection<Run
     }
 }
 
-/** Name, character and mute setting, kept in their own keys so earlier saves stay readable. */
+/** Name, character, optional body weight and mute setting, kept in their own keys so earlier saves stay readable. */
 export class LocalStoragePreferencesRepository implements PreferencesRepository {
     async load(): Promise<Preferences> {
         const read = (key: string): unknown => {
@@ -104,7 +104,11 @@ export class LocalStoragePreferencesRepository implements PreferencesRepository 
         // Older saves stored the mute setting as 0 or 1.
         const validMuted = typeof muted === 'boolean' || muted === 0 || muted === 1
         if (muted !== undefined && !validMuted) warn(OUTDATED_NOTICE)
+        // A weight outside the accepted range is dropped, like any other unreadable value.
+        const weightKg = toWeightKg(stored.weightKg)
+        if (stored.weightKg !== undefined && weightKg === null) warn(OUTDATED_NOTICE)
         return {
+            weightKg,
             name: typeof stored.name === 'string' ? stored.name : DEFAULT_PREFERENCES.name,
             character: toCharacter(stored.character),
             muted: validMuted ? Boolean(muted) : DEFAULT_PREFERENCES.muted,
@@ -113,7 +117,11 @@ export class LocalStoragePreferencesRepository implements PreferencesRepository 
 
     async save(preferences: Preferences): Promise<void> {
         try {
-            localStorage.setItem(`${PREFIX}profile`, JSON.stringify(preferences.name === null ? { character: preferences.character } : { name: preferences.name, character: preferences.character }))
+            localStorage.setItem(`${PREFIX}profile`, JSON.stringify({
+                ...(preferences.name === null ? {} : { name: preferences.name }),
+                character: preferences.character,
+                ...(preferences.weightKg === null ? {} : { weightKg: preferences.weightKg }),
+            }))
             localStorage.setItem(`${PREFIX}muted`, JSON.stringify(preferences.muted))
         } catch {
             warn(UNSAVED_NOTICE)
