@@ -33,7 +33,7 @@ Open the printed local URL. Choose **Test run** for three fixed 30-second sectio
   - **Interval run** (I): warm-up, 3-minute reps at I pace with an equal jog, cool-down. Total I running is capped at the lesser of 8% of the week and 10 km; if one rep does not fit, a single shorter rep (at least 1 minute) is used.
   - **Repetition run** (R): warm-up, short reps at R pace (400 m, or 2 minutes at most) with recovery of twice the work time, cool-down. R running is capped at the lesser of 5% of the week and 5 miles.
   - **Test run**: three fixed 30-second sections.
-  - There is no separate easy run or cruise-interval workout. In a plan week, the distance left after the long run and speed sessions is filled with E running.
+  - There is no separate easy run or cruise-interval workout. In a plan week, the distance left after the long run and speed sessions goes to steady runs: an easy warm-up, a capped marathon-pace (half-marathon and marathon focus) or threshold (Base, 5K, 10K) block, and an easy cool-down.
   - Without a race result, speed sessions have no target pace and run by effort (RPE). Warm-up and cool-down are 10 minutes of easy running each (`TODO(verify)` in `vdot.ts`).
 - A time target keeps its duration when speed changes. A distance target finishes when estimated distance reaches its target.
 - Unknown-speed timed sections work by effort; distance and overall pace stay unknown. Distance targets require known speeds.
@@ -43,7 +43,7 @@ Open the printed local URL. Choose **Test run** for three fixed 30-second sectio
 
 - **My training plan** builds at least 12 weeks (or until the goal race date, up to 52 weeks) from your answers. The plan screen lists every week with its target distance and sessions, highlights the current week, and opens any session in the normal run flow. Editing a session on the workout screen is saved into the plan. Changing your answers rebuilds the plan from today.
 - Weekly distance follows the VDOT mileage progression, in `PROGRESSION` and `weeklyVolumes(startKm, runsPerWeek, weeks)` in `vdot.ts`: hold a level for 4 weeks, then add one mile (1.609 km) per weekly run, never more than 10 miles per step. The 10% rule is deliberately not used. Example, 15 km a week on 3 runs: weeks 1-4 at 15 km, 5-8 at 19.8 km, 9-12 at 24.7 km.
-- Each week has one long run, the speed sessions your training effort allows (Base 0, Base Quality 1, Advanced Quality 2) and E running for the rest of the target. At least one E run is kept besides the long run, so a three-day runner on Advanced Quality gets one speed day. Speed sessions rotate R, I, T by 4-week level.
+- Each week has one long run, the speed sessions your training effort allows (Base 0, Base Quality 1, Advanced Quality 2) and steady marathon-pace or threshold runs for the rest of the target. There is exactly one long run a week, and at least one steady run is kept besides it, so a three-day runner on Advanced Quality gets one speed day. Speed sessions rotate R, I, T by 4-week level.
 - The long-run rule (25% of the week or 150 minutes) is not relaxed, so on few runs a week your E runs can be longer than the long run. The plan says so in a note.
 - Not modelled because the research could not verify them (`TODO(verify)` in `vdot.ts`): down weeks, a smaller step for new runners, and a peak weekly volume.
 

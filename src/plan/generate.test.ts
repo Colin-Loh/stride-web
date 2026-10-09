@@ -60,11 +60,25 @@ describe('derivePersonalBaseline', () => {
 })
 
 describe('generated sessions', () => {
-    it('runs E running at the VDOT easy speed, rounded up, over the distance the week gives it', () => {
-        const run = main('filler', {}, 7.25)
-        expect(run.speedKmh).toBe(roundSpeedUp(SPEEDS.E))
-        expect(run.target).toEqual({ basis: 'distance', distanceKm: 7.2 })
-        expect(validateWorkout(build('filler', {}, 7.25)).ok).toBe(true)
+    it('sizes a marathon-pace plan day: capped M block, easy running before and after, totalling the day', () => {
+        const workout = build('marathon', {}, 7.25)
+        const [warmup, block, cooldown] = workout.sections
+        expect(block.speedKmh).toBe(roundSpeedUp(SPEEDS.M))
+        expect(warmup.type).toBe('warmup')
+        expect(cooldown.type).toBe('cooldown')
+        const km = workout.sections.map((item) => calculateSectionMetrics(item).distanceKm!)
+        expect(km[1]).toBeLessThanOrEqual(sessionCapKm('M', workout.baseline.weeklyKm!) + 1e-9)
+        expect(km.reduce((a, b) => a + b, 0)).toBeLessThanOrEqual(7.25 + 1e-9)
+        expect(km.reduce((a, b) => a + b, 0)).toBeGreaterThan(7.25 - 0.3)
+        expect(validateWorkout(workout).ok).toBe(true)
+    })
+
+    it('sizes a threshold plan day the same way when the plan gives it a distance', () => {
+        const workout = build('threshold', {}, 7.25)
+        const block = workout.sections.find((item) => item.id === 'main')!
+        expect(block.speedKmh).toBe(roundSpeedUp(SPEEDS.T))
+        expect(block.target.basis).toBe('distance')
+        expect(validateWorkout(workout).ok).toBe(true)
     })
 
     it('offers only training sessions, without a test run', () => {
