@@ -60,7 +60,8 @@ h1 {
 }
 
 button,
-input {
+input,
+select {
   font: inherit;
 }
 
@@ -377,6 +378,10 @@ input {
 .stack+.field,
 .stack+.pace-row,
 .card>.field+.field {
+  margin-top: 16px;
+}
+
+.question>.field+.field {
   margin-top: 16px;
 }
 
