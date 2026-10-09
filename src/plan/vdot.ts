@@ -201,6 +201,8 @@ export const SESSION_STRUCTURE = {
      */
     easyFallbackSeconds: 30 * SECONDS_PER_MINUTE,
     longFallbackSeconds: 45 * SECONDS_PER_MINUTE,
+    /** TODO(verify): length of the M block when weekly distance or pace is unknown; product default. */
+    marathonFallbackSeconds: 20 * SECONDS_PER_MINUTE,
     /** TODO(verify): the only warm-up length in the source is the "10 min E" before M running. */
     warmupSeconds: 10 * SECONDS_PER_MINUTE,
     cooldownSeconds: 10 * SECONDS_PER_MINUTE,
@@ -508,4 +510,22 @@ const QUALITY_ROTATION: readonly QualityKind[] = ['repetition', 'interval', 'thr
 export function qualityKinds(weekIndex: number, count: number): QualityKind[] {
     const level = Math.floor(weekIndex / PROGRESSION.weeksPerLevel)
     return Array.from({ length: count }, (_, slot) => QUALITY_ROTATION[(level + slot) % QUALITY_ROTATION.length])
+}
+
+export type SteadyKind = 'marathon' | 'threshold'
+
+/**
+ * The plan's non-long, non-speed days are steady runs: E warm-up, a capped M or T block, then E
+ * for the rest of that day's share of the week. M running suits half-marathon and marathon
+ * training [1][5]; threshold suits Base, 5K and 10K. Any other focus falls back to threshold.
+ * TODO(verify): Daniels' Base effort is E plus a long run only; making these days M or T is a
+ * product choice, not his prescription.
+ */
+const STEADY_KIND_BY_FOCUS: Readonly<Record<string, SteadyKind>> = {
+    half_marathon: 'marathon',
+    marathon: 'marathon',
+}
+
+export function steadyKindForFocus(focusId: string | null): SteadyKind {
+    return (focusId !== null && STEADY_KIND_BY_FOCUS[focusId]) || 'threshold'
 }

@@ -63,7 +63,7 @@ export function validateWorkout(workout: PersonalizedWorkout): {
     const totals = calculateWorkoutTotals(workout.sections)
 
     // Limits also apply to edited and restored plans, not only generated defaults.
-    if (['filler', 'long'].includes(workout.category) && totals.durationSeconds !== null
+    if (workout.category === 'long' && totals.durationSeconds !== null
         && totals.durationSeconds > LONG_RUN_MAX_SECONDS + 0.01) {
         issues.push({ message: 'The whole workout, including warm-up and cool-down, must fit within the VDOT model’s long-run time limit.' })
     }

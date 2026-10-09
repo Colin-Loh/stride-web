@@ -8,6 +8,7 @@ import { buildPaceSet } from './paces'
 import type { AnswerValues } from './questions'
 import { generateTrainingPlan, sessionWorkout, withSessionSections } from './trainingPlan'
 import { validateWorkout } from './validation'
+import type { PlanSection } from './types'
 
 const NOW = new Date(2026, 9, 8, 12, 0, 0)
 const REPORT: AnswerValues = {
@@ -43,24 +44,45 @@ describe('paces', () => {
     })
 })
 
+const knownKm = (sections: PlanSection[]) => sections.reduce((km, item) => km + (calculateSectionMetrics(item).distanceKm ?? 0), 0)
+
 describe('generateTrainingPlan', () => {
-    it('builds 12 weeks following weeklyVolumes, each with a long run and E running (Base effort)', () => {
+    it('builds 12 weeks following weeklyVolumes: one long run, other days threshold for a Base focus', () => {
         const result = plan()
         expect(result.weeks).toHaveLength(12)
         expect(result.weeks.map((week) => week.targetKm)).toEqual(weeklyVolumes(15, 3, 12))
         for (const week of result.weeks) {
-            expect(week.sessions.map((session) => session.kind)).toEqual(['filler', 'filler', 'long'])
+            expect(week.sessions.map((session) => session.kind)).toEqual(['threshold', 'threshold', 'long'])
+        }
+    })
+
+    it('uses marathon-pace runs on the other days for a half-marathon or marathon focus', () => {
+        for (const focus of ['half_marathon', 'marathon']) {
+            const result = plan({ training_focus: focus })
+            expect(result.weeks[0].sessions.map((session) => session.kind)).toEqual(['marathon', 'marathon', 'long'])
+        }
+        expect(plan({ training_focus: '10k' }).weeks[0].sessions.map((session) => session.kind)).toEqual(['threshold', 'threshold', 'long'])
+    })
+
+    it('never has E running and has exactly one long run in every week', () => {
+        for (const answers of [{}, { running_days: 5, training_effort: 'advanced_quality', weekly_volume: 40 }, { training_focus: 'marathon' }]) {
+            for (const week of plan(answers).weeks) {
+                const kinds = week.sessions.map((session) => session.kind as string)
+                expect(kinds).not.toContain('filler')
+                expect(kinds.filter((kind) => kind === 'long')).toHaveLength(1)
+                expect(week.sessions.map((session) => session.name).join(' ')).not.toMatch(/E running|Easy run/)
+            }
         }
     })
 
     it('adds the speed sessions the training effort allows, rotating R, I, T by level', () => {
         const result = plan({ running_days: 5, training_effort: 'advanced_quality', weekly_volume: 40 })
         const kinds = (week: number) => result.weeks[week].sessions.map((session) => session.kind)
-        expect(kinds(0)).toEqual(['repetition', 'filler', 'interval', 'filler', 'long'])
-        expect(kinds(4)).toEqual(['interval', 'filler', 'threshold', 'filler', 'long'])
-        expect(kinds(8)).toEqual(['threshold', 'filler', 'repetition', 'filler', 'long'])
+        expect(kinds(0)).toEqual(['repetition', 'threshold', 'interval', 'threshold', 'long'])
+        expect(kinds(4)).toEqual(['interval', 'threshold', 'threshold', 'threshold', 'long'])
+        expect(kinds(8)).toEqual(['threshold', 'threshold', 'repetition', 'threshold', 'long'])
         const threeDays = plan({ running_days: 3, training_effort: 'advanced_quality' })
-        expect(threeDays.weeks[0].sessions.map((session) => session.kind)).toEqual(['repetition', 'filler', 'long'])
+        expect(threeDays.weeks[0].sessions.map((session) => session.kind)).toEqual(['repetition', 'threshold', 'long'])
         expect(threeDays.notes.join(' ')).toContain('speed days were left out')
     })
 
@@ -85,14 +107,15 @@ describe('generateTrainingPlan', () => {
         }
     })
 
-    it('fills the rest of the week with E running and reports the long-run cap conflict', () => {
+    it('gives the steady days the rest of the week and reports the long-run cap conflict', () => {
         const result = plan()
         const week = result.weeks[0]
-        const km = week.sessions.map((session) => calculateSectionMetrics(session.sections[0]).distanceKm!)
-        expect(km[0]).toBe(km[1])
-        expect(km[2]).toBeCloseTo(15 * 0.25, 1)
-        expect(km[0] + km[1] + km[2]).toBeLessThanOrEqual(15 + 1e-9)
-        expect(km[0] + km[1] + km[2]).toBeGreaterThan(15 - 0.3)
+        const dayKm = week.sessions.map((session) => knownKm(session.sections))
+        expect(dayKm[0]).toBeCloseTo(dayKm[1], 5)
+        expect(dayKm[2]).toBeCloseTo(15 * 0.25, 1)
+        const total = dayKm.reduce((a, b) => a + b, 0)
+        expect(total).toBeLessThanOrEqual(15 + 1e-9)
+        expect(total).toBeGreaterThan(15 - 0.5)
         expect(result.notes.join(' ')).toContain('longer than your long run')
     })
 

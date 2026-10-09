@@ -2,7 +2,10 @@ import { SCHEMA_VERSION, type Session, type SessionKind, type TrainingPlan, type
 import { calculateSectionMetrics } from './metrics'
 import { CONFLICT_NOTE, REDUCED_QUALITY_NOTE } from './copy'
 import { addDays, weeksUntil } from './dates'
-import { DAYS_PER_WEEK, planWeekCount, qualityKinds, qualitySessionsPerWeek, trainingSpeedsKmh, weekStructure, weeklyVolumes } from './vdot'
+import {
+    DAYS_PER_WEEK, planWeekCount, qualityKinds, qualitySessionsPerWeek, steadyKindForFocus, trainingSpeedsKmh, weekStructure,
+    weeklyVolumes, type SteadyKind,
+} from './vdot'
 import { fitnessNote, goalNote } from './explanations'
 import { buildWorkout } from './generate'
 import { buildPaceSet } from './paces'
@@ -20,24 +23,31 @@ export interface PlanInput {
 const knownDistanceKm = (sections: PlanSection[]) =>
     sections.reduce((km, item) => km + (calculateSectionMetrics(item).distanceKm ?? 0), 0)
 
-/** Quality sessions and E runs alternate, with the long run last. */
-function orderSessions(quality: SessionKind[], easy: number, long: boolean): SessionKind[] {
-    const order: SessionKind[] = []
+/** A day in a plan week: its workout kind, and whether it is a steady run sized from the week's remainder. */
+interface Slot {
+    kind: SessionKind
+    steady: boolean
+}
+
+/** Speed sessions and steady (M or T) runs alternate, with the long run last. */
+function orderSessions(quality: SessionKind[], steadyKind: SteadyKind, steady: number, long: boolean): Slot[] {
+    const order: Slot[] = []
     const speed = [...quality]
-    let fillers = easy
-    while (speed.length > 0 || fillers > 0) {
+    let remaining = steady
+    while (speed.length > 0 || remaining > 0) {
         const next = speed.shift()
-        if (next) order.push(next)
-        if (fillers > 0) { order.push('filler'); fillers -= 1 }
+        if (next) order.push({ kind: next, steady: false })
+        if (remaining > 0) { order.push({ kind: steadyKind, steady: true }); remaining -= 1 }
     }
-    return long ? [...order, 'long'] : order
+    return long ? [...order, { kind: 'long', steady: false }] : order
 }
 
 /**
- * A multi-week plan from the runner's answers. Each week holds the long run, the speed sessions
- * the training effort allows and E running for the rest of that week's target distance (from
- * `weeklyVolumes`), all sized with the caps in vdot.ts. Null when the weekly distance or
- * running days are unknown.
+ * A multi-week plan from the runner's answers. Each week holds one long run, the speed sessions
+ * the training effort allows, and steady runs (marathon pace or threshold, by training focus) on
+ * the other days. The steady runs share the rest of that week's target distance (from
+ * `weeklyVolumes`); every block is sized with the caps in vdot.ts. Null when the weekly distance
+ * or running days are unknown.
  */
 export function generateTrainingPlan(input: PlanInput): TrainingPlan | null {
     const { baseline, answersId = null, now = new Date(), newId = () => crypto.randomUUID() } = input
@@ -50,7 +60,8 @@ export function generateTrainingPlan(input: PlanInput): TrainingPlan | null {
     const volumes = weeklyVolumes(baseline.weeklyKm, baseline.daysPerWeek, planWeekCount(goalWeeks))
     const wantedQuality = baseline.trainingEffort === null ? 0 : qualitySessionsPerWeek(baseline.trainingEffort)
     const structure = weekStructure(baseline.daysPerWeek, baseline.trainingEffort)
-    let easyLongerThanLong = false
+    const steadyKind = steadyKindForFocus(baseline.trainingFocus)
+    let otherLongerThanLong = false
 
     const weeks: Week[] = volumes.map((targetKm, index) => {
         const weekId = `${planId}-w${index + 1}`
@@ -61,18 +72,21 @@ export function generateTrainingPlan(input: PlanInput): TrainingPlan | null {
             sections: workout.sections, explanation: workout.explanation, adjustments: workout.adjustments,
         })
 
-        const kinds = orderSessions(qualityKinds(index, structure.quality), structure.easy, structure.long > 0)
-        const fixed = kinds.filter((kind) => kind !== 'filler').map((kind) => buildWorkout({ category: kind, baseline: weekBaseline }))
+        // `structure.easy` counts the days that are neither long nor speed; they become steady runs.
+        const steadySlots = structure.easy
+        const slots = orderSessions(qualityKinds(index, structure.quality), steadyKind, steadySlots, structure.long > 0)
+        const fixed = slots.filter((slot) => !slot.steady).map((slot) => buildWorkout({ category: slot.kind, baseline: weekBaseline }))
         const fixedKm = fixed.reduce((km, workout) => km + knownDistanceKm(workout.sections), 0)
-        const easyKm = structure.easy > 0 ? Math.max(0, targetKm - fixedKm) / structure.easy : 0
+        const steadyKm = steadySlots > 0 ? Math.max(0, targetKm - fixedKm) / steadySlots : 0
         const longKm = fixed.find((workout) => workout.category === 'long')?.sections[0].target
-        if (structure.easy > 0 && longKm?.basis === 'distance' && easyKm > longKm.distanceKm) easyLongerThanLong = true
+        if (steadySlots > 0 && longKm?.basis === 'distance' && steadyKm > longKm.distanceKm) otherLongerThanLong = true
 
         const queue = [...fixed]
-        const workouts = kinds.map((kind) =>
-            kind === 'filler'
-                ? buildWorkout({ category: 'filler', baseline: weekBaseline, distanceKm: easyKm })
+        const workouts = slots.map((slot) =>
+            slot.steady
+                ? buildWorkout({ category: slot.kind, baseline: weekBaseline, distanceKm: steadyKm })
                 : queue.shift()!)
+        const kinds = slots.map((slot) => slot.kind)
         return {
             id: weekId, schemaVersion: SCHEMA_VERSION, createdAt: stamp, updatedAt: stamp,
             number: index + 1, startDate: addDays(startDate, index * DAYS_PER_WEEK), targetKm,
@@ -85,7 +99,7 @@ export function generateTrainingPlan(input: PlanInput): TrainingPlan | null {
         fitnessNote(baseline, rawSpeeds),
         goalNote(baseline, now),
         wantedQuality > structure.quality ? REDUCED_QUALITY_NOTE : null,
-        easyLongerThanLong ? CONFLICT_NOTE : null,
+        otherLongerThanLong ? CONFLICT_NOTE : null,
     ].filter((note): note is string => note !== null)
 
     return {

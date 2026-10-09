@@ -1,15 +1,18 @@
-/** Every kind of workout the app builds. 'filler' is E running inside a training plan week; it has no card. */
-export type WorkoutId = 'long' | 'threshold' | 'interval' | 'repetition' | 'filler'
+/**
+ * Every kind of workout the app builds. 'marathon' is a marathon-pace (M) run that only appears
+ * inside training plan weeks; it has no card on the session picker.
+ */
+export type WorkoutId = 'long' | 'threshold' | 'interval' | 'repetition' | 'marathon'
 
 /** The workouts offered as cards on the session picker. */
-export type PickableWorkoutId = Exclude<WorkoutId, 'filler'>
+export type PickableWorkoutId = Exclude<WorkoutId, 'marathon'>
 
 export const WORKOUT_NAMES: Record<WorkoutId, string> = {
   long: 'Long run',
   threshold: 'Threshold run',
   interval: 'Interval run',
   repetition: 'Repetition run',
-  filler: 'E running',
+  marathon: 'Marathon-pace run',
 }
 
 export const WORKOUTS: { id: PickableWorkoutId; name: string; blurb: string }[] = [
