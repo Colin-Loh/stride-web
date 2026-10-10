@@ -149,6 +149,7 @@ describe('ShopScreen card actions', () => {
         const onUnequip = vi.fn()
         const { rerender } = interactive({ progression: progression({ wallets: { shiba: 9, shooshy: 0 } }), onBuy, onEquip, onUnequip })
         fireEvent.click(screen.getByRole('button', { name: 'Buy Sushi hat for 3 bones' }))
+        fireEvent.click(screen.getByRole('button', { name: 'Confirm purchase of Sushi hat for 3 bones' }))
         expect(onBuy).toHaveBeenCalledWith('chase-sushi-hat')
         rerender(<ShopScreen character="shiba" progression={progression({ inventory: { shiba: ['chase-sushi-hat'], shooshy: [] } })} onBuy={onBuy} onEquip={onEquip} onUnequip={onUnequip} onBack={noop} />)
         fireEvent.click(screen.getByRole('button', { name: 'Equip Sushi hat' }))
@@ -318,6 +319,102 @@ describe('ShopScreen state styling', () => {
             ['unaffordable', progression(), 'Sushi hat'],
         ] as const
         for (const [state, data, name] of states) expect(itemFor(render({ progression: data }), name)).toContain(`shop-card-${state}`)
+    })
+})
+
+describe('ShopScreen purchase confirm panel', () => {
+    const confirmDialog = () => screen.queryByRole('dialog')
+    const openSushi = (props: Partial<Parameters<typeof ShopScreen>[0]> = {}) => {
+        const onBuy = vi.fn()
+        const result = interactive({ progression: progression({ wallets: { shiba: 9, shooshy: 0 } }), onBuy, ...props })
+        fireEvent.click(screen.getByRole('button', { name: 'Buy Sushi hat for 3 bones' }))
+        return { ...result, onBuy }
+    }
+
+    it('does not call onBuy when a buyable item is clicked, and opens the dialog instead', () => {
+        const onBuy = vi.fn()
+        interactive({ progression: progression({ wallets: { shiba: 9, shooshy: 0 } }), onBuy })
+        fireEvent.click(screen.getByRole('button', { name: 'Buy Sushi hat for 3 bones' }))
+        expect(onBuy).not.toHaveBeenCalled()
+        const dialog = confirmDialog()
+        expect(dialog).not.toBeNull()
+        expect(dialog?.getAttribute('aria-modal')).toBe('true')
+    })
+
+    it('shows the item name, price, and balance before and after as numbers with the currency word', () => {
+        openSushi()
+        const dialog = confirmDialog() as HTMLElement
+        expect(dialog.textContent).toContain('Sushi hat')
+        expect(dialog.textContent).toContain('3 bones')
+        expect(dialog.textContent).toContain('9 bones')
+        expect(dialog.textContent).toContain('6 bones')
+    })
+
+    it('uses the singular word when the balance after the purchase is one', () => {
+        interactive({ progression: progression({ wallets: { shiba: 4, shooshy: 0 } }) })
+        fireEvent.click(screen.getByRole('button', { name: 'Buy Sushi hat for 3 bones' }))
+        expect((confirmDialog() as HTMLElement).textContent).toContain('1 bone')
+    })
+
+    it('moves focus into the dialog on open', () => {
+        openSushi()
+        expect(document.activeElement).toBe(confirmDialog())
+    })
+
+    it('calls onBuy exactly once on Confirm, then closes the dialog and returns focus to the card', () => {
+        const { onBuy } = openSushi()
+        fireEvent.click(screen.getByRole('button', { name: 'Confirm purchase of Sushi hat for 3 bones' }))
+        expect(onBuy).toHaveBeenCalledTimes(1)
+        expect(onBuy).toHaveBeenCalledWith('chase-sushi-hat')
+        expect(confirmDialog()).toBeNull()
+        expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Buy Sushi hat for 3 bones' }))
+    })
+
+    it('Cancel calls nothing, closes the dialog, and returns focus to the card', () => {
+        const onBuy = vi.fn()
+        const setItem = vi.spyOn(Storage.prototype, 'setItem')
+        interactive({ progression: progression({ wallets: { shiba: 9, shooshy: 0 } }), onBuy })
+        fireEvent.click(screen.getByRole('button', { name: 'Buy Sushi hat for 3 bones' }))
+        fireEvent.click(screen.getByRole('button', { name: 'Cancel purchase of Sushi hat' }))
+        expect(onBuy).not.toHaveBeenCalled()
+        expect(setItem).not.toHaveBeenCalled()
+        expect(confirmDialog()).toBeNull()
+        expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Buy Sushi hat for 3 bones' }))
+    })
+
+    it('Escape cancels with no change and closes the dialog', () => {
+        const onBuy = vi.fn()
+        const setItem = vi.spyOn(Storage.prototype, 'setItem')
+        interactive({ progression: progression({ wallets: { shiba: 9, shooshy: 0 } }), onBuy })
+        fireEvent.click(screen.getByRole('button', { name: 'Buy Sushi hat for 3 bones' }))
+        fireEvent.keyDown(document, { key: 'Escape' })
+        expect(onBuy).not.toHaveBeenCalled()
+        expect(setItem).not.toHaveBeenCalled()
+        expect(confirmDialog()).toBeNull()
+        expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Buy Sushi hat for 3 bones' }))
+    })
+
+    it('Escape closes only the confirm dialog, not the fitting room behind it', () => {
+        interactive({ progression: progression({ wallets: { shiba: 9, shooshy: 0 } }) })
+        fireEvent.click(fittingButton())
+        fireEvent.click(screen.getByRole('button', { name: 'Buy Sushi hat for 3 bones' }))
+        fireEvent.keyDown(document, { key: 'Escape' })
+        expect(confirmDialog()).toBeNull()
+        expect(screen.getByRole('region', { name: 'Fitting room' })).toBeTruthy()
+    })
+
+    it('has accessible names on both Confirm and Cancel', () => {
+        openSushi()
+        expect(screen.getByRole('button', { name: 'Confirm purchase of Sushi hat for 3 bones' })).toBeTruthy()
+        expect(screen.getByRole('button', { name: 'Cancel purchase of Sushi hat' })).toBeTruthy()
+    })
+
+    it('shows the new wallet balance once the parent applies the purchase', () => {
+        const { rerender, onBuy } = openSushi()
+        fireEvent.click(screen.getByRole('button', { name: 'Confirm purchase of Sushi hat for 3 bones' }))
+        expect(onBuy).toHaveBeenCalledTimes(1)
+        rerender(<ShopScreen character="shiba" progression={progression({ wallets: { shiba: 6, shooshy: 0 }, inventory: { shiba: ['chase-sushi-hat'], shooshy: [] } })} onBuy={onBuy} onEquip={noop} onUnequip={noop} onBack={noop} />)
+        expect(screen.getByLabelText('6 bones')).toBeTruthy()
     })
 })
 

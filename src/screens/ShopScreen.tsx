@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useId, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react'
 import type { Character } from '../domain/preferences'
 import type { Progression } from '../domain/types'
 import { itemsFor, type Cosmetic, type CosmeticId, type Slot } from '../cosmetics/catalog'
@@ -35,8 +35,11 @@ function stateOf(progression: Progression, item: Cosmetic): ItemState {
     return canAfford(progression, item.id) ? 'affordable' : 'unaffordable'
 }
 
-/** The entire card is the action; its accessible name retains the item and its state. */
-function ShopItem({ item, progression, onBuy, onEquip, onUnequip }: Omit<Props, 'character' | 'onBack'> & { item: Cosmetic }) {
+/**
+ * The entire card is the action; its accessible name retains the item and its state.
+ * A buy never happens here: it asks the screen to open the confirm panel.
+ */
+function ShopItem({ item, progression, onRequestBuy, onEquip, onUnequip }: Omit<Props, 'character' | 'onBack' | 'onBuy'> & { item: Cosmetic; onRequestBuy: (item: Cosmetic, trigger: HTMLButtonElement) => void }) {
     const { character, name, price } = item
     const cost = priceText(character, price)
     const state = stateOf(progression, item)
@@ -46,7 +49,7 @@ function ShopItem({ item, progression, onBuy, onEquip, onUnequip }: Omit<Props, 
                 : `Not enough ${CURRENCY[character].plural} for ${name}`
     const action = state === 'equipped' ? () => onUnequip(character, item.slot)
         : state === 'owned' ? () => onEquip(item.id)
-            : () => onBuy(item.id)
+            : (event: { currentTarget: HTMLButtonElement }) => onRequestBuy(item, event.currentTarget)
 
     return (
         <li className={`shop-card shop-card-${state}`}>
@@ -86,6 +89,9 @@ function BrickWall() {
 
 const FITTING_PANEL_ID = 'shop-fitting-panel'
 
+/** The balance as a number with its currency word, e.g. "9 bones" or "1 fish". */
+const balanceText = (character: Character, count: number) => `${count} ${wordFor(character, count)}`
+
 export function ShopScreen({ character, progression, onBuy, onEquip, onUnequip, onBack }: Props) {
     const count = progression.wallets[character]
     const worn = itemsFor(character).filter((item) => progression.equipped[character][item.slot] === item.id)
@@ -93,6 +99,59 @@ export function ShopScreen({ character, progression, onBuy, onEquip, onUnequip, 
     const [fittingOpen, setFittingOpen] = useState(false)
     const toggleRef = useRef<HTMLButtonElement>(null)
     const closeRef = useRef<HTMLButtonElement>(null)
+
+    // The purchase waiting for Confirm, and the card button that opened it (focus returns there).
+    const [pendingItem, setPendingItem] = useState<Cosmetic | null>(null)
+    const triggerRef = useRef<HTMLButtonElement | null>(null)
+    const dialogRef = useRef<HTMLDivElement>(null)
+    const confirmRef = useRef<HTMLButtonElement>(null)
+    const cancelRef = useRef<HTMLButtonElement>(null)
+    const confirmTitleId = useId()
+
+    const openConfirm = useCallback((item: Cosmetic, trigger: HTMLButtonElement) => {
+        triggerRef.current = trigger
+        setPendingItem(item)
+    }, [])
+
+    /** Hides the confirm panel and hands focus back to the card that opened it. Nothing is bought. */
+    const closeConfirm = useCallback(() => {
+        setPendingItem(null)
+        if (triggerRef.current?.isConnected) triggerRef.current.focus()
+    }, [])
+
+    const confirmPurchase = useCallback(() => {
+        if (!pendingItem) return
+        onBuy(pendingItem.id)
+        closeConfirm()
+    }, [pendingItem, onBuy, closeConfirm])
+
+    // Opening moves focus into the dialog, so keyboard users land inside it.
+    useEffect(() => {
+        if (pendingItem) dialogRef.current?.focus()
+    }, [pendingItem])
+
+    // While the confirm panel is open, Escape cancels it.
+    useEffect(() => {
+        if (!pendingItem) return
+        const onKeyDown = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') closeConfirm()
+        }
+        document.addEventListener('keydown', onKeyDown)
+        return () => document.removeEventListener('keydown', onKeyDown)
+    }, [pendingItem, closeConfirm])
+
+    /** Keeps Tab inside the two buttons while the dialog is open (aria-modal). */
+    const trapTab = (event: ReactKeyboardEvent<HTMLDivElement>) => {
+        if (event.key !== 'Tab') return
+        const active = document.activeElement
+        if (event.shiftKey && (active === dialogRef.current || active === confirmRef.current)) {
+            event.preventDefault()
+            cancelRef.current?.focus()
+        } else if (!event.shiftKey && active === cancelRef.current) {
+            event.preventDefault()
+            confirmRef.current?.focus()
+        }
+    }
 
     /** Hides the panel and hands focus back to the button that opened it. Nothing is stored. */
     const closeFitting = useCallback(() => {
@@ -105,15 +164,16 @@ export function ShopScreen({ character, progression, onBuy, onEquip, onUnequip, 
         if (fittingOpen) closeRef.current?.focus()
     }, [fittingOpen])
 
-    // Escape closes the panel from anywhere on the page while it is open.
+    // Escape closes the panel from anywhere on the page while it is open. It stands down while a
+    // purchase is waiting for Confirm, so one Escape closes only the confirm panel.
     useEffect(() => {
-        if (!fittingOpen) return
+        if (!fittingOpen || pendingItem) return
         const onKeyDown = (event: KeyboardEvent) => {
             if (event.key === 'Escape') closeFitting()
         }
         document.addEventListener('keydown', onKeyDown)
         return () => document.removeEventListener('keydown', onKeyDown)
-    }, [fittingOpen, closeFitting])
+    }, [fittingOpen, pendingItem, closeFitting])
 
     return (
         <section className="card shop">
@@ -129,9 +189,57 @@ export function ShopScreen({ character, progression, onBuy, onEquip, onUnequip, 
             </header>
             <ul className="shop-grid" aria-label="Accessories">
                 {itemsFor(character).map((item) => (
-                    <ShopItem key={item.id} item={item} progression={progression} onBuy={onBuy} onEquip={onEquip} onUnequip={onUnequip} />
+                    <ShopItem key={item.id} item={item} progression={progression} onRequestBuy={openConfirm} onEquip={onEquip} onUnequip={onUnequip} />
                 ))}
             </ul>
+            {pendingItem && (
+                <div className="shop-confirm-scrim">
+                    <div
+                        ref={dialogRef}
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby={confirmTitleId}
+                        tabIndex={-1}
+                        className="shop-confirm"
+                        onKeyDown={trapTab}
+                    >
+                        <h2 id={confirmTitleId}>Buy {pendingItem.name}?</h2>
+                        <dl className="shop-confirm-sums">
+                            <div>
+                                <dt>Price</dt>
+                                <dd>{priceText(character, pendingItem.price)}</dd>
+                            </div>
+                            <div>
+                                <dt>Balance before</dt>
+                                <dd>{balanceText(character, count)}</dd>
+                            </div>
+                            <div>
+                                <dt>Balance after</dt>
+                                <dd>{balanceText(character, count - pendingItem.price)}</dd>
+                            </div>
+                        </dl>
+                        <div className="shop-confirm-actions">
+                            <button
+                                ref={cancelRef}
+                                type="button"
+                                className="ghost"
+                                aria-label={`Cancel purchase of ${pendingItem.name}`}
+                                onClick={closeConfirm}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                ref={confirmRef}
+                                type="button"
+                                aria-label={`Confirm purchase of ${pendingItem.name} for ${priceText(character, pendingItem.price)}`}
+                                onClick={confirmPurchase}
+                            >
+                                Confirm
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
             <div className="shop-fitting-bar">
                 <button
                     ref={toggleRef}
