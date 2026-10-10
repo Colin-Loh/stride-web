@@ -16,6 +16,12 @@ export const CHARACTER_SPRITES: Record<Character, SpriteSheet> = {
     shooshy: { url: sprite('shooshy-run.png'), frames: 8, frameWidth: 236, frameHeight: 196, cycleSeconds: 0.55 },
 }
 
+/** The run cycle for an obese character, same timing as the healthy sheets. */
+export const OBESE_RUN_SHEETS: Record<Character, SpriteSheet> = {
+    shiba: { url: sprite('shiba-run-obese.png'), frames: 7, frameWidth: 296, frameHeight: 222, cycleSeconds: 0.55 },
+    shooshy: { url: sprite('shooshy-run-obese.png'), frames: 8, frameWidth: 236, frameHeight: 196, cycleSeconds: 0.55 },
+}
+
 /** A single still image, at its native frame size. */
 export interface StillImage {
     url: string
