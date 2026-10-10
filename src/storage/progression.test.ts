@@ -45,6 +45,7 @@ const makeProgression = (): Progression => ({
     wallets: { shiba: 3, shooshy: 0 },
     lastClaimedDate: { shiba: '2026-10-10', shooshy: '2026-10-09' },
     rewardedRunIds: ['run-1'],
+    grantsApplied: ['test-currency-20'],
     inventory: { shiba: [], shooshy: [] },
     equipped: { shiba: null, shooshy: null },
 })
@@ -114,14 +115,14 @@ describe('run session additions', () => {
 })
 
 describe('progression repository', () => {
-    it('creates a progression on first load with today as startDate and zero wallets, and saves it at once', async () => {
+    it('creates a progression on first load with today as startDate, 20 in each wallet, and the grant recorded, and saves it at once', async () => {
         vi.useFakeTimers()
         vi.setSystemTime(new Date(2026, 9, 10, 9, 0))
         const repository = new LocalStorageProgressionRepository()
         const created = await repository.load()
         expect(created).toMatchObject({
             id: 'progression', schemaVersion: SCHEMA_VERSION, startDate: '2026-10-10',
-            wallets: { shiba: 0, shooshy: 0 }, rewardedRunIds: [],
+            wallets: { shiba: 20, shooshy: 20 }, rewardedRunIds: [], grantsApplied: ['test-currency-20'],
             inventory: { shiba: [], shooshy: [] }, equipped: { shiba: null, shooshy: null },
         })
         expect(isProgression(created)).toBe(true)
@@ -146,14 +147,34 @@ describe('progression repository', () => {
         expect(storageNotice()).toBe('')
     })
 
+    it('grants 20 to each wallet once for a record saved before grants existed, and a second load adds nothing', async () => {
+        const { grantsApplied: _omitted, ...legacy } = makeProgression()
+        values.set('stride.progression', JSON.stringify(legacy))
+        const first = await new LocalStorageProgressionRepository().load()
+        expect(first.wallets).toEqual({ shiba: 23, shooshy: 20 })
+        expect(first.grantsApplied).toEqual(['test-currency-20'])
+        expect(JSON.parse(values.get('stride.progression')!)).toEqual(JSON.parse(JSON.stringify(first)))
+        expect(storageNotice()).toBe('')
+        const second = await new LocalStorageProgressionRepository().load()
+        expect(second.wallets).toEqual({ shiba: 23, shooshy: 20 })
+        expect(second.grantsApplied).toEqual(['test-currency-20'])
+    })
+
+    it('leaves wallets unchanged for a record that already has the grant id', async () => {
+        values.set('stride.progression', JSON.stringify(makeProgression()))
+        const loaded = await new LocalStorageProgressionRepository().load()
+        expect(loaded.wallets).toEqual({ shiba: 3, shooshy: 0 })
+        expect(storageNotice()).toBe('')
+    })
+
     it('preserves a corrupt record under stride.progression.invalid, shows the notice, and creates a fresh one', async () => {
         const corrupt = JSON.stringify({ ...makeProgression(), wallets: { shiba: -4, shooshy: 0 } })
         values.set('stride.progression', corrupt)
         const loaded = await new LocalStorageProgressionRepository().load()
         expect(values.get('stride.progression.invalid')).toBe(corrupt)
         expect(storageNotice()).toBe(OUTDATED_NOTICE)
-        expect(loaded.wallets).toEqual({ shiba: 0, shooshy: 0 })
-        expect(JSON.parse(values.get('stride.progression')!).wallets).toEqual({ shiba: 0, shooshy: 0 })
+        expect(loaded.wallets).toEqual({ shiba: 20, shooshy: 20 })
+        expect(JSON.parse(values.get('stride.progression')!).wallets).toEqual({ shiba: 20, shooshy: 20 })
     })
 
     it('preserves unparseable text too', async () => {
@@ -183,7 +204,7 @@ describe('progression repository', () => {
             removeItem: (key: string) => values.delete(key),
         })
         const loaded = await new LocalStorageProgressionRepository().load()
-        expect(loaded.wallets).toEqual({ shiba: 0, shooshy: 0 })
+        expect(loaded.wallets).toEqual({ shiba: 20, shooshy: 20 })
         expect(values.get('stride.progression')).toBe(corrupt)
         expect(values.has('stride.progression.invalid')).toBe(false)
     })

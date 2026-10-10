@@ -15,7 +15,7 @@ const base = (overrides: Partial<Progression> = {}): Progression => ({
     startDate: '2026-10-01',
     wallets: { shiba: 0, shooshy: 0 },
     lastClaimedDate: { shiba: '2026-10-01', shooshy: '2026-10-01' },
-    rewardedRunIds: [],
+    rewardedRunIds: [], grantsApplied: [],
     inventory: { shiba: [], shooshy: [] },
     equipped: { shiba: null, shooshy: null },
     ...overrides,
@@ -228,7 +228,7 @@ describe('load path', () => {
             values.set('stride.progression', JSON.stringify(stored))
             const loaded = await new LocalStorageProgressionRepository().load()
             expect(loaded.equipped).toEqual({ shiba: null, shooshy: null })
-            expect(loaded.wallets).toEqual({ shiba: 2, shooshy: 0 })
+            expect(loaded.wallets).toEqual({ shiba: 22, shooshy: 20 })
         } finally {
             vi.unstubAllGlobals()
         }

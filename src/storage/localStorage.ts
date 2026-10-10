@@ -2,6 +2,7 @@ import { DEFAULT_PREFERENCES, toCharacter, toWeightKg, type Preferences } from '
 import { isAnswersRecord, isCompletedRun, isProgression, isRunSession, isTrainingPlan } from '../domain/guards'
 import { SCHEMA_VERSION, type Answers, type CompletedRun, type Progression, type RunSession, type Stamped, type TrainingPlan } from '../domain/types'
 import { localDateOf } from '../progression/localDate'
+import { STARTING_CURRENCY, TEST_CURRENCY_GRANT_ID } from '../progression/startingCurrency'
 import { normalizeEquipped } from '../cosmetics/shop'
 import { OUTDATED_NOTICE, UNREADABLE_NOTICE, UNSAVED_NOTICE, warn } from './notice'
 import type { AnswersRepository, CompletedRunRepository, PlanRepository, PreferencesRepository, ProgressionRepository, Repositories, Repository, RunSessionRepository } from './repository'
@@ -95,6 +96,23 @@ export class LocalStorageCompletedRunRepository extends LocalStorageCollection<C
 
 const INVALID_PROGRESSION_KEY = `${PREFIX}progression.invalid`
 
+/**
+ * Adds the one-time test currency to a profile that has not received it. The wallet change and the
+ * grant marker are returned together, so they are saved together and cannot diverge. Returns the
+ * input unchanged when the grant was already applied.
+ */
+const withStartingGrant = (progression: Progression): Progression => {
+    if (progression.grantsApplied.includes(TEST_CURRENCY_GRANT_ID)) return progression
+    return {
+        ...progression,
+        wallets: {
+            shiba: progression.wallets.shiba + STARTING_CURRENCY,
+            shooshy: progression.wallets.shooshy + STARTING_CURRENCY,
+        },
+        grantsApplied: [...progression.grantsApplied, TEST_CURRENCY_GRANT_ID],
+    }
+}
+
 const newProgression = (now: Date): Progression => {
     const startDate = localDateOf(now.getTime())
     const stamp = now.toISOString()
@@ -104,9 +122,10 @@ const newProgression = (now: Date): Progression => {
         createdAt: stamp,
         updatedAt: stamp,
         startDate,
-        wallets: { shiba: 0, shooshy: 0 },
+        wallets: { shiba: STARTING_CURRENCY, shooshy: STARTING_CURRENCY },
         lastClaimedDate: { shiba: startDate, shooshy: startDate },
         rewardedRunIds: [],
+        grantsApplied: [TEST_CURRENCY_GRANT_ID],
         inventory: { shiba: [], shooshy: [] },
         equipped: { shiba: null, shooshy: null },
     }
@@ -136,7 +155,12 @@ export class LocalStorageProgressionRepository implements ProgressionRepository 
         }
         try {
             const value: unknown = JSON.parse(raw)
-            if (isProgression(value)) return normalizeEquipped(value)
+            if (isProgression(value)) {
+                const loaded = normalizeEquipped({ ...value, grantsApplied: value.grantsApplied ?? [] })
+                const granted = withStartingGrant(loaded)
+                if (granted !== loaded) await this.save(granted)
+                return granted
+            }
         } catch {
             // Fall through: unparseable text is preserved like any other invalid record.
         }

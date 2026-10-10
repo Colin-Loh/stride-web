@@ -122,6 +122,8 @@ export interface Progression extends Stamped {
     lastClaimedDate: PerCharacter<string>
     /** Ids of CompletedRun records already rewarded. */
     rewardedRunIds: string[]
+    /** Ids of one-time grants already applied to this profile. */
+    grantsApplied: string[]
     inventory: PerCharacter<string[]>
     equipped: PerCharacter<string | null>
 }

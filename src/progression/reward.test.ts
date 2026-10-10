@@ -30,7 +30,7 @@ const progression = (): Progression => ({
     id: 'progression', schemaVersion: SCHEMA_VERSION, createdAt: STAMP, updatedAt: STAMP, startDate: '2026-10-10',
     wallets: { shiba: 0, shooshy: 0 },
     lastClaimedDate: { shiba: '2026-10-10', shooshy: '2026-10-10' },
-    rewardedRunIds: [], inventory: { shiba: [], shooshy: [] }, equipped: { shiba: null, shooshy: null },
+    rewardedRunIds: [], grantsApplied: [], inventory: { shiba: [], shooshy: [] }, equipped: { shiba: null, shooshy: null },
 })
 
 /** A finished session as handleComplete leaves it. */
@@ -94,7 +94,7 @@ describe('recordCompletedRun', () => {
         expect((await repos.completedRuns.load('obese-start'))?.characterId).toBe('shiba')
         // The run log entry has no health field: the snapshot lives on the session only.
         expect(await repos.runSessions.load('obese-start')).toBeNull()
-        expect((await repos.progression.load()).wallets.shiba).toBe(1)
+        expect((await repos.progression.load()).wallets.shiba).toBe(21)
         const next = newRunSession(workout, 'next-run', new Date(STAMP), 'shiba', 'healthy')
         expect(next.healthAtStart).toBe('healthy')
     })
@@ -104,21 +104,21 @@ describe('recordCompletedRun', () => {
         const run = finished(1_500_000, { characterId: 'shiba', id: 'chase-run' })
         expect((await recordCompletedRun(repos, run)).awarded).toBe(true)
         const saved = await repos.progression.load()
-        expect(saved.wallets).toEqual({ shiba: 1, shooshy: 0 })
+        expect(saved.wallets).toEqual({ shiba: 21, shooshy: 20 })
         expect((await repos.completedRuns.load('chase-run'))?.characterId).toBe('shiba')
     })
 
     it('pays Shooshy fish for a run started as Shooshy', async () => {
         const repos = createLocalStorageRepositories()
         await recordCompletedRun(repos, finished(1_500_000, { characterId: 'shooshy', id: 'shoo-run' }))
-        expect((await repos.progression.load()).wallets).toEqual({ shiba: 0, shooshy: 1 })
+        expect((await repos.progression.load()).wallets).toEqual({ shiba: 20, shooshy: 21 })
     })
 
     it('does not award or log a 90-second run', async () => {
         const repos = createLocalStorageRepositories()
         expect((await recordCompletedRun(repos, finished(90_000, { id: 'short' }))).awarded).toBe(false)
         expect(await repos.completedRuns.load('short')).toBeNull()
-        expect((await repos.progression.load()).wallets).toEqual({ shiba: 0, shooshy: 0 })
+        expect((await repos.progression.load()).wallets).toEqual({ shiba: 20, shooshy: 20 })
     })
 
     it('credits a legacy session without characterId to Chase', async () => {
@@ -126,7 +126,7 @@ describe('recordCompletedRun', () => {
         const legacy = finished(1_500_000, { id: 'legacy' })
         delete legacy.characterId
         await recordCompletedRun(repos, legacy)
-        expect((await repos.progression.load()).wallets).toEqual({ shiba: 1, shooshy: 0 })
+        expect((await repos.progression.load()).wallets).toEqual({ shiba: 21, shooshy: 20 })
         expect((await repos.completedRuns.load('legacy'))?.characterId).toBe('shiba')
     })
 
@@ -135,7 +135,7 @@ describe('recordCompletedRun', () => {
         const run = finished(1_500_000, { characterId: 'shooshy', id: 'edited' })
         await recordCompletedRun(repos, run)
         await recordCompletedRun(repos, { ...run, updatedAt: '2026-10-10T06:00:00.000Z' })
-        expect((await repos.progression.load()).wallets.shooshy).toBe(1)
+        expect((await repos.progression.load()).wallets.shooshy).toBe(21)
         expect((await repos.completedRuns.load('edited'))).not.toBeNull()
         expect(values.get('stride.runlog')?.match(/"id":"edited"/g)).toHaveLength(1)
     })
@@ -144,7 +144,7 @@ describe('recordCompletedRun', () => {
         const run = finished(1_500_000, { characterId: 'shiba', id: 'reload' })
         await recordCompletedRun(createLocalStorageRepositories(), run)
         await recordCompletedRun(createLocalStorageRepositories(), run)
-        expect((await createLocalStorageRepositories().progression.load()).wallets.shiba).toBe(1)
+        expect((await createLocalStorageRepositories().progression.load()).wallets.shiba).toBe(21)
     })
 
     it('adds a missing run log entry on a repeat without a second unit', async () => {
@@ -154,6 +154,6 @@ describe('recordCompletedRun', () => {
         await repos.progression.save(awardRunReward(await repos.progression.load(), { id: 'partial', characterId: 'shiba' }).progression)
         expect((await recordCompletedRun(repos, run)).awarded).toBe(false)
         expect((await repos.completedRuns.load('partial'))).not.toBeNull()
-        expect((await repos.progression.load()).wallets.shiba).toBe(1)
+        expect((await repos.progression.load()).wallets.shiba).toBe(21)
     })
 })
