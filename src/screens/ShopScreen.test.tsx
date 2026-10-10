@@ -211,6 +211,16 @@ describe('ShopScreen grid and accessibility', () => {
     })
 })
 
+describe('ShopScreen lays out the item grid as a centred row', () => {
+    it.each(['shiba', 'shooshy'] as const)('centres three cards in the grid for %s', (character) => {
+        const html = render({ character })
+        const grid = html.match(/<ul class="shop-grid"[^>]*>/)
+        expect(grid).not.toBeNull()
+        expect(grid?.[0]).not.toContain('style=')
+        expect(cardsIn(html)).toHaveLength(3)
+    })
+})
+
 describe('cosmetic art urls', () => {
     it('points each item at its own still-frame art', () => {
         for (const item of COSMETICS) {
