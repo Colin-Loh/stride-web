@@ -34,8 +34,10 @@ export default function App({ repositories }: { repositories: Repositories }) {
     {view === 'status' && flow.progression && <HomeNav current="status" onPlan={flow.showPlan} onWorkouts={() => flow.setView('category')} onShop={flow.openShop} onStatus={flow.openStatus} />}
     {view === 'shop' && flow.progression && <ShopScreen character={preferences.character} progression={flow.progression}
       onBuy={flow.buyCosmetic} onEquip={flow.equipCosmetic} onUnequip={flow.unequipCosmetic} onBack={() => flow.setView('home')} />}
+    {view === 'shop' && flow.progression && <HomeNav current="shop" onPlan={flow.showPlan} onWorkouts={() => flow.setView('category')} onShop={flow.openShop} onStatus={flow.openStatus} />}
     {view === 'baseline' && <BaselineScreen initial={flow.answers?.values ?? {}} submitAction={flow.submitAction} onBack={() => flow.setView('category')} onDone={flow.finishAnswers} />}
     {view === 'plan' && plan && <PlanScreen plan={plan} onOpenSession={flow.openSession} onBack={() => flow.setView('category')} />}
+    {view === 'plan' && plan && <HomeNav current="plan" onPlan={flow.showPlan} onWorkouts={() => flow.setView('category')} onShop={flow.openShop} onStatus={flow.openStatus} />}
     {view === 'workout' && open && <WorkoutScreen workout={open.workout} onChange={flow.changeWorkout} onStart={flow.startWorkout}
       backLabel={open.sessionId ? 'Back to my plan' : 'Pick a different session'}
       onBack={() => flow.setView(open.sessionId ? 'plan' : 'category')} />}
