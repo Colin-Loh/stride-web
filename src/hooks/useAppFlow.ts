@@ -59,8 +59,8 @@ export function useAppFlow(repositories: Repositories) {
         let cancelled = false
         void Promise.all([
             repositories.preferences.load(), repositories.plans.list(), repositories.runSessions.list(), repositories.answers.list(),
-            repositories.completedRuns.list(),
-        ]).then(([loadedPreferences, plans, runs, savedAnswers, loadedRunLog]) => {
+            repositories.completedRuns.list(), repositories.progression.load(),
+        ]).then(([loadedPreferences, plans, runs, savedAnswers, loadedRunLog, loadedProgression]) => {
             if (cancelled) return
             const candidate = runs[0] ?? null
             const resumed = candidate && runnablePlan(candidate.plan) && loadedPreferences.name ? candidate : null
@@ -74,6 +74,7 @@ export function useAppFlow(repositories: Repositories) {
             setPlan(plans[0] ?? null)
             setAnswers(savedAnswers[0] ?? null)
             setRunLog(loadedRunLog)
+            setProgression(loadedProgression)
             setSession(resumedWithHealth)
             setView(startView(loadedPreferences.name, resumedWithHealth))
             setNotice(storageNotice())
@@ -224,7 +225,7 @@ export function useAppFlow(repositories: Repositories) {
         completing.current = true
         const finished: RunSession = { ...session, completed: true, paused: true, result: { elapsedMs: result.elapsedMs, distanceKm: result.distanceKm } }
         persistSession(finished)
-        remember(recordCompletedRun(repositories, finished).then(() => repositories.completedRuns.list()).then(setRunLog))
+        remember(recordCompletedRun(repositories, finished).then(() => Promise.all([repositories.completedRuns.list(), repositories.progression.load()])).then(([runs, loaded]) => { setRunLog(runs); setProgression(loaded) }))
         void releaseWakeLock(); stopCue()
         if (!preferences.muted) void playCelebration()
         setView('complete')
