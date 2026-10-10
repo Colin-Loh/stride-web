@@ -728,3 +728,41 @@ select {
   margin: 0 auto;
   image-rendering: pixelated;
 }
+
+/* The still picture and any equipped item drawn over it. The overlay is the same size as the still. */
+.still-frame {
+  position: relative;
+  display: block;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+.cosmetic-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: block;
+  pointer-events: none;
+  image-rendering: pixelated;
+}
+
+.shop-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+
+.shop-item {
+  display: grid;
+  gap: 6px;
+  padding: 12px 0;
+  border-top: 1px solid color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+.shop-item h3,
+.shop-item p {
+  margin: 0;
+}

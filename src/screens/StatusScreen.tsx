@@ -4,9 +4,12 @@ import type { CompletedRun, Progression } from '../domain/types'
 import { deriveHealth, type CharacterHealth } from '../progression/health'
 import { pendingIncome } from '../progression/income'
 import { CHARACTER_SPRITES, OBESE_STILLS } from '../sprites'
+import { CosmeticOverlay } from '../cosmetics/CosmeticOverlay'
+import { STILL_SCALE } from '../cosmetics/art'
+import { isCosmeticId } from '../cosmetics/catalog'
 
 /** Same scale as the other sprites, so frame edges stay on whole pixels. */
-const SPRITE_SCALE = 0.5
+const SPRITE_SCALE = STILL_SCALE
 
 interface CharacterRow {
     character: Character
@@ -25,38 +28,47 @@ interface Props {
     runs: readonly CompletedRun[]
     now: Date
     onCollect: (character: Character) => void
+    onShop: () => void
     onBack: () => void
 }
 
 /**
  * The still picture for a character: the obese still when obese, otherwise the first frame of
- * the run sheet. Decorative: the health label beside it carries the meaning, so alt is empty.
+ * the run sheet, with the equipped item drawn over it. Decorative: the health label beside it
+ * carries the meaning, so alt is empty.
  */
-function StatusSprite({ character, health }: { character: Character; health: CharacterHealth }) {
-    if (health.status === 'obese') {
-        const still = OBESE_STILLS[character]
-        return (
+function StatusSprite({ character, health, equipped }: { character: Character; health: CharacterHealth; equipped: string | null }) {
+    const sprite =
+        health.status === 'obese' ? (
             <img
                 className="status-sprite"
-                src={still.url}
-                width={Math.round(still.width * SPRITE_SCALE)}
-                height={Math.round(still.height * SPRITE_SCALE)}
+                src={OBESE_STILLS[character].url}
+                width={Math.round(OBESE_STILLS[character].width * SPRITE_SCALE)}
+                height={Math.round(OBESE_STILLS[character].height * SPRITE_SCALE)}
                 alt=""
             />
+        ) : (
+            <span
+                className="status-sprite status-sprite-run"
+                aria-hidden="true"
+                style={{
+                    backgroundImage: `url(${CHARACTER_SPRITES[character].url})`,
+                    backgroundSize: `${CHARACTER_SPRITES[character].frames * 100}% 100%`,
+                    backgroundPosition: '0 0',
+                    width: `${Math.round(CHARACTER_SPRITES[character].frameWidth * SPRITE_SCALE)}px`,
+                    height: `${Math.round(CHARACTER_SPRITES[character].frameHeight * SPRITE_SCALE)}px`,
+                } as CSSProperties}
+            />
         )
-    }
-    const sheet = CHARACTER_SPRITES[character]
-    const style = {
-        backgroundImage: `url(${sheet.url})`,
-        backgroundSize: `${sheet.frames * 100}% 100%`,
-        backgroundPosition: '0 0',
-        width: `${Math.round(sheet.frameWidth * SPRITE_SCALE)}px`,
-        height: `${Math.round(sheet.frameHeight * SPRITE_SCALE)}px`,
-    } as CSSProperties
-    return <span className="status-sprite status-sprite-run" aria-hidden="true" style={style} />
+    return (
+        <div className="still-frame">
+            {sprite}
+            {isCosmeticId(equipped) && <CosmeticOverlay itemId={equipped} />}
+        </div>
+    )
 }
 
-export function StatusScreen({ progression, runs, now, onCollect, onBack }: Props) {
+export function StatusScreen({ progression, runs, now, onCollect, onShop, onBack }: Props) {
     const health = deriveHealth(runs, now)
     return (
         <section className="card status">
@@ -70,7 +82,7 @@ export function StatusScreen({ progression, runs, now, onCollect, onBack }: Prop
                     const wallet = progression.wallets[character]
                     return (
                         <article key={character} className="status-card" aria-labelledby={`status-${character}`}>
-                            <StatusSprite character={character} health={characterHealth} />
+                            <StatusSprite character={character} health={characterHealth} equipped={progression.equipped[character]} />
                             <h2 id={`status-${character}`}>{characterHealth.label}</h2>
                             <p>{`${walletName[0].toUpperCase()}${walletName.slice(1)}: ${wallet}`}</p>
                             <p className="muted">{`Pending ${walletName}: ${pending}`}</p>
@@ -89,6 +101,9 @@ export function StatusScreen({ progression, runs, now, onCollect, onBack }: Prop
                     )
                 })}
             </div>
+            <button type="button" className="ghost" onClick={onShop}>
+                Shop
+            </button>
             <button type="button" className="link" onClick={onBack}>
                 Back
             </button>

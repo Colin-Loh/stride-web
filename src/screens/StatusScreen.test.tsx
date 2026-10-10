@@ -3,6 +3,7 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import { StatusScreen } from './StatusScreen'
 import { SCHEMA_VERSION, type CompletedRun, type Progression } from '../domain/types'
 import { OBESE_STILLS } from '../sprites'
+import { cosmeticUrl } from '../cosmetics/art'
 
 const noop = () => { }
 const STAMP = '2026-10-01T00:00:00.000Z'
@@ -25,7 +26,7 @@ const run = (id: string, characterId: CompletedRun['characterId'], planSessionId
 })
 
 const render = (props: Partial<Parameters<typeof StatusScreen>[0]> = {}) =>
-    renderToStaticMarkup(<StatusScreen progression={progression()} runs={[]} now={NOW} onCollect={noop} onBack={noop} {...props} />)
+    renderToStaticMarkup(<StatusScreen progression={progression()} runs={[]} now={NOW} onCollect={noop} onShop={noop} onBack={noop} {...props} />)
 
 /** The markup of one character's card, from its heading to the next card. */
 const cardFor = (html: string, name: string) => {
@@ -73,6 +74,40 @@ describe('StatusScreen sprites', () => {
         expect(cardFor(html, 'Chase')).not.toContain(OBESE_STILLS.shiba.url)
         expect(cardFor(html, 'Chase')).toContain('sprites/shiba-run.png')
         expect(cardFor(html, 'Shooshy')).toContain(OBESE_STILLS.shooshy.url)
+    })
+})
+
+describe('StatusScreen cosmetic overlay', () => {
+    it('draws no overlay when nothing is equipped', () => {
+        expect(render()).not.toContain('cosmetic-overlay')
+    })
+
+    it('draws the equipped item over only its own character still', () => {
+        const html = render({
+            progression: progression({
+                inventory: { shiba: ['chase-medal'], shooshy: ['shooshy-scarf'] },
+                equipped: { shiba: 'chase-medal', shooshy: null },
+            }),
+        })
+        expect(cardFor(html, 'Chase')).toContain(`src="${cosmeticUrl('chase-medal')}"`)
+        expect(cardFor(html, 'Chase')).toMatch(/<img[^>]*class="cosmetic-overlay"[^>]*aria-hidden="true"/)
+        expect(cardFor(html, 'Shooshy')).not.toContain('cosmetic-overlay')
+        expect(html).not.toContain(cosmeticUrl('shooshy-scarf'))
+    })
+
+    it('shows the overlay for Shooshy on the run still when Shooshy is healthy', () => {
+        const html = render({
+            runs: [run('r1', 'shooshy')],
+            progression: progression({ inventory: { shiba: [], shooshy: ['shooshy-ribbon'] }, equipped: { shiba: null, shooshy: 'shooshy-ribbon' } }),
+        })
+        expect(cardFor(html, 'Shooshy')).toContain(`src="${cosmeticUrl('shooshy-ribbon')}"`)
+        expect(cardFor(html, 'Shooshy')).toContain('sprites/shooshy-run.png')
+        expect(cardFor(html, 'Chase')).not.toContain('cosmetic-overlay')
+    })
+
+    it('has a Shop button that opens the shop', () => {
+        const html = render()
+        expect(html).toContain('>Shop<')
     })
 })
 
