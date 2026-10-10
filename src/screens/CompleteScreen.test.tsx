@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { CompleteScreen } from './CompleteScreen'
 import { DanceSprite } from '../DanceSprite'
+import { CHARACTER_NAMES } from '../domain/preferences'
 import { derivePersonalBaseline } from '../plan/baseline'
 import { generatePersonalizedWorkout } from '../plan/generate'
 import type { PlanSection } from '../plan/types'
@@ -91,5 +92,10 @@ describe('DanceSprite', () => {
         const shooshy = renderToStaticMarkup(<DanceSprite character="shooshy" />)
         expect(shooshy).toContain('width:118px;height:98px')
         expect(shooshy).toContain('sprites/shooshy-dance.png')
+    })
+
+    it('labels the shiba dance as Chase celebrating', () => {
+        expect(CHARACTER_NAMES.shiba).toBe('Chase')
+        expect(renderToStaticMarkup(<DanceSprite character="shiba" />)).toContain('aria-label="Chase celebrating"')
     })
 })
