@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { CHARACTER_NAMES, type Character } from '../domain/preferences'
+import type { Character } from '../domain/preferences'
 import type { Progression } from '../domain/types'
 import { itemsFor, type Cosmetic, type CosmeticId } from '../cosmetics/catalog'
 import { cosmeticUrl } from '../cosmetics/art'
@@ -95,6 +95,40 @@ function ShopItem({ item, progression, onBuy, onEquip, onUnequip }: Omit<Props, 
     )
 }
 
+/**
+ * The brick wall behind the sign: a pixel-style pattern of two courses of bricks, the second
+ * course offset by half a brick. Decorative, so it carries no text.
+ */
+function BrickWall() {
+    return (
+        <svg className="shop-wall" aria-hidden="true" focusable="false">
+            <defs>
+                <pattern id="shop-brick" width="32" height="16" patternUnits="userSpaceOnUse">
+                    <rect width="32" height="16" fill="#1d4a3a" />
+                    <rect x="0" y="0" width="32" height="2" fill="#0b1f18" />
+                    <rect x="0" y="0" width="2" height="8" fill="#0b1f18" />
+                    <rect x="16" y="8" width="2" height="8" fill="#0b1f18" />
+                    <rect x="3" y="4" width="10" height="3" fill="#245a46" />
+                    <rect x="19" y="12" width="10" height="3" fill="#245a46" />
+                </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#shop-brick)" />
+        </svg>
+    )
+}
+
+/** A pixel-style hanging lamp, drawn in the Stride palette. Decorative. */
+function Lamp() {
+    return (
+        <svg className="shop-lamp" viewBox="0 0 48 40" aria-hidden="true" focusable="false">
+            <rect x="23" y="0" width="2" height="12" fill="#0b1f18" />
+            <path d="M14 22 L34 22 L40 34 L8 34 Z" fill="#3dd68c" />
+            <rect x="8" y="34" width="32" height="3" fill="#1f7a52" />
+            <rect x="21" y="25" width="6" height="4" fill="#f4fff9" />
+        </svg>
+    )
+}
+
 export function ShopScreen({ character, progression, onBuy, onEquip, onUnequip, onBack }: Props) {
     const count = progression.wallets[character]
     const equippedId = progression.equipped[character]
@@ -102,12 +136,20 @@ export function ShopScreen({ character, progression, onBuy, onEquip, onUnequip, 
 
     return (
         <section className="card shop">
-            <p className="shop-balance">
-                <CurrencyIcon character={character} />
-                <span>{`${count} ${wordFor(character, count)}`}</span>
-            </p>
-            <p className="eyebrow">Shop</p>
-            <h1>{`${CHARACTER_NAMES[character]}'s accessories`}</h1>
+            <header className="shop-header">
+                <BrickWall />
+                <Lamp />
+                <div className="shop-sign">
+                    <h1>Welcome to the Stride Shop!</h1>
+                </div>
+                <p className="shop-balance">
+                    <CurrencyIcon character={character} />
+                    <span>{`${count} ${wordFor(character, count)}`}</span>
+                </p>
+            </header>
+            <div className="shop-strip">
+                <h2>Accessories</h2>
+            </div>
             <section className="shop-fitting" aria-label="Fitting room">
                 <CharacterStill character={character} status="healthy" equipped={equippedId} />
                 <p className="shop-wearing">{equippedItem ? `Wearing: ${equippedItem.name}` : 'Nothing equipped'}</p>
