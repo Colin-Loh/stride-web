@@ -39,6 +39,7 @@ export default function App({ repositories }: { repositories: Repositories }) {
       backLabel={open.sessionId ? 'Back to my plan' : 'Pick a different session'}
       onBack={() => flow.setView(open.sessionId ? 'plan' : 'category')} />}
     {view === 'run' && session && <RunScreen session={session} muted={preferences.muted} character={preferences.character}
+      equipped={flow.progression?.equipped[preferences.character]}
       onSession={flow.persistSession} onComplete={flow.handleComplete} onQuit={flow.quitRun} onToggleMute={flow.toggleMute} />}
     {view === 'complete' && session && <CompleteScreen name={name} session={session} character={preferences.character} weightKg={preferences.weightKg} onAgain={flow.quitRun} />}
   </main>
