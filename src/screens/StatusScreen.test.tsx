@@ -116,6 +116,15 @@ describe('StatusScreen health', () => {
         expect(html).toMatch(/<img[^>]*class="cosmetic-overlay"[^>]*aria-hidden="true"/)
         expect(html).not.toContain(cosmeticUrl('chase-black-sunglasses'))
     })
+
+    it('draws every equipped slot over the still, one overlay per slot', () => {
+        const html = render({
+            progression: progression({ inventory: { shiba: ['chase-black-sunglasses', 'chase-sushi-hat'], shooshy: [] }, equipped: { shiba: { face: 'chase-black-sunglasses', head: 'chase-sushi-hat', body: null }, shooshy: { face: null, head: null, body: null } } }),
+        })
+        expect(html).toContain(`src="${cosmeticUrl('chase-black-sunglasses')}"`)
+        expect(html).toContain(`src="${cosmeticUrl('chase-sushi-hat')}"`)
+        expect(html.match(/class="cosmetic-overlay"/g)).toHaveLength(2)
+    })
 })
 
 describe('StatusScreen wallet', () => {

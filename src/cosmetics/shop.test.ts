@@ -29,10 +29,10 @@ const owning = (...ids: string[]): Progression => {
 }
 
 describe('catalog', () => {
-    it('lists exactly the two approved Chase items and no Shooshy items', () => {
-        expect(COSMETICS.map((item) => item.id).sort()).toEqual(['chase-black-sunglasses', 'chase-sushi-hat'])
+    it('lists exactly the approved sunglasses and sushi hat for each character, no hotdog', () => {
+        expect(COSMETICS.map((item) => item.id).sort()).toEqual(['chase-black-sunglasses', 'chase-sushi-hat', 'shooshy-black-sunglasses', 'shooshy-sushi-hat'])
         expect(itemsFor('shiba').map((item) => item.id).sort()).toEqual(['chase-black-sunglasses', 'chase-sushi-hat'])
-        expect(itemsFor('shooshy')).toEqual([])
+        expect(itemsFor('shooshy').map((item) => item.id).sort()).toEqual(['shooshy-black-sunglasses', 'shooshy-sushi-hat'])
     })
 
     it('uses the decided names, slots and prices', () => {
@@ -49,8 +49,8 @@ describe('catalog', () => {
         }
     })
 
-    it('rejects the removed Shooshy ids as unknown', () => {
-        for (const id of ['shooshy-black-sunglasses', 'shooshy-hotdog', 'shooshy-sushi-hat']) {
+    it('rejects the removed hotdog ids as unknown', () => {
+        for (const id of ['chase-hotdog', 'shooshy-hotdog']) {
             const result = purchase(base({ wallets: { shiba: 9, shooshy: 9 } }), id, NOW)
             expect(result.ok).toBe(false)
             expect(result.reason).toBe('unknown')
@@ -124,6 +124,7 @@ describe('canAfford', () => {
         expect(canAfford(p, 'chase-black-sunglasses')).toBe(true)
         expect(canAfford(base({ wallets: { shiba: 0, shooshy: 9 } }), 'chase-sushi-hat')).toBe(false)
         expect(canAfford(p, 'shooshy-sushi-hat')).toBe(false)
+        expect(canAfford(base({ wallets: { shiba: 0, shooshy: 3 } }), 'shooshy-sushi-hat')).toBe(true)
         expect(canAfford(p, 'nope')).toBe(false)
     })
 })
