@@ -17,9 +17,6 @@ export const nothingWorn = (): WornSlots => ({ face: null, head: null, body: nul
 export const COSMETIC_IDS = [
     'chase-black-sunglasses',
     'chase-sushi-hat',
-    'shooshy-black-sunglasses',
-    'shooshy-hotdog',
-    'shooshy-sushi-hat',
 ] as const
 
 export type CosmeticId = (typeof COSMETIC_IDS)[number]
@@ -31,16 +28,13 @@ export interface Cosmetic {
     name: string
     /** Whole units of the owning character's wallet. */
     price: number
-    /** Still-frame overlay art, created by the art ticket. */
+    /** Still-frame overlay art at public/cosmetics/<id>.png. */
     artPath: string
 }
 
 export const COSMETICS: readonly Cosmetic[] = [
     { id: 'chase-black-sunglasses', character: 'shiba', slot: 'face', name: 'Black sunglasses', price: 2, artPath: 'public/cosmetics/chase-black-sunglasses.png' },
     { id: 'chase-sushi-hat', character: 'shiba', slot: 'head', name: 'Sushi hat', price: 3, artPath: 'public/cosmetics/chase-sushi-hat.png' },
-    { id: 'shooshy-black-sunglasses', character: 'shooshy', slot: 'face', name: 'Black sunglasses', price: 2, artPath: 'public/cosmetics/shooshy-black-sunglasses.png' },
-    { id: 'shooshy-hotdog', character: 'shooshy', slot: 'body', name: 'Hotdog outfit', price: 4, artPath: 'public/cosmetics/shooshy-hotdog.png' },
-    { id: 'shooshy-sushi-hat', character: 'shooshy', slot: 'head', name: 'Sushi hat', price: 3, artPath: 'public/cosmetics/shooshy-sushi-hat.png' },
 ]
 
 export const COSMETIC_BY_ID: Readonly<Record<CosmeticId, Cosmetic>> = Object.freeze(

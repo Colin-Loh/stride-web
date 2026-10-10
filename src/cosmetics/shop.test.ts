@@ -29,18 +29,15 @@ const owning = (...ids: string[]): Progression => {
 }
 
 describe('catalog', () => {
-    it('has one item per slot for Shooshy and two items for Chase (no Chase hotdog yet)', () => {
-        expect(itemsFor('shooshy').map((item) => item.slot).sort()).toEqual(['body', 'face', 'head'])
+    it('lists exactly the two approved Chase items and no Shooshy items', () => {
+        expect(COSMETICS.map((item) => item.id).sort()).toEqual(['chase-black-sunglasses', 'chase-sushi-hat'])
         expect(itemsFor('shiba').map((item) => item.id).sort()).toEqual(['chase-black-sunglasses', 'chase-sushi-hat'])
-        expect(COSMETICS).toHaveLength(5)
+        expect(itemsFor('shooshy')).toEqual([])
     })
 
     it('uses the decided names, slots and prices', () => {
         expect(COSMETIC_BY_ID['chase-black-sunglasses']).toMatchObject({ slot: 'face', price: 2, name: 'Black sunglasses' })
         expect(COSMETIC_BY_ID['chase-sushi-hat']).toMatchObject({ slot: 'head', price: 3, name: 'Sushi hat' })
-        expect(COSMETIC_BY_ID['shooshy-black-sunglasses']).toMatchObject({ slot: 'face', price: 2, name: 'Black sunglasses' })
-        expect(COSMETIC_BY_ID['shooshy-hotdog']).toMatchObject({ slot: 'body', price: 4, name: 'Hotdog outfit' })
-        expect(COSMETIC_BY_ID['shooshy-sushi-hat']).toMatchObject({ slot: 'head', price: 3, name: 'Sushi hat' })
     })
 
     it('gives every price as an integer from 1 to 5, and art at public/cosmetics/<id>.png', () => {
@@ -49,6 +46,14 @@ describe('catalog', () => {
             expect(item.price).toBeGreaterThanOrEqual(1)
             expect(item.price).toBeLessThanOrEqual(5)
             expect(item.artPath).toBe(`public/cosmetics/${item.id}.png`)
+        }
+    })
+
+    it('rejects the removed Shooshy ids as unknown', () => {
+        for (const id of ['shooshy-black-sunglasses', 'shooshy-hotdog', 'shooshy-sushi-hat']) {
+            const result = purchase(base({ wallets: { shiba: 9, shooshy: 9 } }), id, NOW)
+            expect(result.ok).toBe(false)
+            expect(result.reason).toBe('unknown')
         }
     })
 })
@@ -83,25 +88,17 @@ describe('purchase', () => {
         expect(second.progression.inventory.shiba).toEqual(['chase-sushi-hat'])
     })
 
-    it('does not let Chase buy a fish item, even with fish in the wallet', () => {
+    it('does not let Chase buy with fish, even with fish in the wallet', () => {
         const chase = purchase(base({ wallets: { shiba: 0, shooshy: 10 } }), 'chase-sushi-hat', NOW)
         expect(chase.ok).toBe(false)
         expect(chase.reason).toBe('unaffordable')
     })
 
-    it('does not let Shooshy buy a bone item, even with bones in the wallet', () => {
-        const p = base({ wallets: { shiba: 10, shooshy: 0 } })
-        const result = purchase(p, 'shooshy-sushi-hat', NOW)
-        expect(result.ok).toBe(false)
-        expect(result.reason).toBe('unaffordable')
-        expect(result.progression).toEqual(p)
-    })
-
     it('spends only the item character wallet', () => {
-        const p = base({ wallets: { shiba: 3, shooshy: 7 } })
-        const result = purchase(p, 'shooshy-hotdog', NOW)
-        expect(result.progression.wallets).toEqual({ shiba: 3, shooshy: 3 })
-        expect(result.progression.inventory).toEqual({ shiba: [], shooshy: ['shooshy-hotdog'] })
+        const p = base({ wallets: { shiba: 5, shooshy: 7 } })
+        const result = purchase(p, 'chase-black-sunglasses', NOW)
+        expect(result.progression.wallets).toEqual({ shiba: 3, shooshy: 7 })
+        expect(result.progression.inventory).toEqual({ shiba: ['chase-black-sunglasses'], shooshy: [] })
     })
 
     it('rejects an unknown id without changing anything', () => {
@@ -124,7 +121,8 @@ describe('canAfford', () => {
     it('checks the item character wallet only', () => {
         const p = base({ wallets: { shiba: 3, shooshy: 0 } })
         expect(canAfford(p, 'chase-sushi-hat')).toBe(true)
-        expect(canAfford(p, 'shooshy-hotdog')).toBe(false)
+        expect(canAfford(p, 'chase-black-sunglasses')).toBe(true)
+        expect(canAfford(base({ wallets: { shiba: 0, shooshy: 9 } }), 'chase-sushi-hat')).toBe(false)
         expect(canAfford(p, 'shooshy-sushi-hat')).toBe(false)
         expect(canAfford(p, 'nope')).toBe(false)
     })
@@ -158,35 +156,31 @@ describe('equip and unequip', () => {
         expect(p.inventory.shiba).toEqual(['chase-sushi-hat', 'chase-black-sunglasses'])
     })
 
-    it('equipping three items in three slots leaves all three worn', () => {
-        let p = owning('shooshy-black-sunglasses', 'shooshy-hotdog', 'shooshy-sushi-hat')
-        p = equip(p, 'shooshy-black-sunglasses').progression
-        p = equip(p, 'shooshy-hotdog').progression
-        p = equip(p, 'shooshy-sushi-hat').progression
-        expect(p.equipped.shooshy).toEqual({ face: 'shooshy-black-sunglasses', head: 'shooshy-sushi-hat', body: 'shooshy-hotdog' })
+    it('equipping one item per slot leaves both worn, and the empty body slot stays empty', () => {
+        let p = owning('chase-black-sunglasses', 'chase-sushi-hat')
+        p = equip(p, 'chase-black-sunglasses').progression
+        p = equip(p, 'chase-sushi-hat').progression
+        expect(p.equipped.shiba).toEqual({ face: 'chase-black-sunglasses', head: 'chase-sushi-hat', body: null })
     })
 
-    it('an item in one slot leaves the worn items in other slots alone', () => {
-        let p = owning('shooshy-black-sunglasses', 'shooshy-hotdog', 'shooshy-sushi-hat')
-        p = equip(p, 'shooshy-black-sunglasses').progression
-        p = equip(p, 'shooshy-hotdog').progression
-        p = equip(p, 'shooshy-sushi-hat').progression
-        const hatAgain = equip(p, 'shooshy-sushi-hat').progression
-        expect(hatAgain.equipped.shooshy).toEqual({ face: 'shooshy-black-sunglasses', head: 'shooshy-sushi-hat', body: 'shooshy-hotdog' })
+    it('equipping again in the same slot keeps the other slots as they were', () => {
+        let p = owning('chase-black-sunglasses', 'chase-sushi-hat')
+        p = equip(p, 'chase-black-sunglasses').progression
+        p = equip(p, 'chase-sushi-hat').progression
+        const hatAgain = equip(p, 'chase-sushi-hat').progression
+        expect(hatAgain.equipped.shiba).toEqual({ face: 'chase-black-sunglasses', head: 'chase-sushi-hat', body: null })
     })
 
     it('does not touch the other character when equipping', () => {
-        let p = owning('chase-sushi-hat', 'shooshy-sushi-hat')
+        let p = owning('chase-sushi-hat')
+        p = { ...p, inventory: { ...p.inventory, shooshy: [] } }
+        const shooshyBefore = structuredClone(p.equipped.shooshy)
         p = equip(p, 'chase-sushi-hat').progression
-        p = equip(p, 'shooshy-sushi-hat').progression
         expect(p.equipped.shiba.head).toBe('chase-sushi-hat')
-        expect(p.equipped.shooshy.head).toBe('shooshy-sushi-hat')
+        expect(p.equipped.shooshy).toEqual(shooshyBefore)
     })
 
-    it('a shiba cannot equip a shooshy item, and a shooshy cannot equip a shiba item', () => {
-        const shibaWearsFish = equip(base({ inventory: { shiba: ['shooshy-sushi-hat'], shooshy: [] } }), 'shooshy-sushi-hat')
-        expect(shibaWearsFish.ok).toBe(false)
-        expect(shibaWearsFish.reason).toBe('not-owned')
+    it('a shooshy cannot equip a shiba item, even when it is in the shooshy inventory', () => {
         const shooshyWearsBone = equip(base({ inventory: { shiba: [], shooshy: ['chase-sushi-hat'] } }), 'chase-sushi-hat')
         expect(shooshyWearsBone.ok).toBe(false)
         expect(shooshyWearsBone.reason).toBe('not-owned')
@@ -203,11 +197,12 @@ describe('equip and unequip', () => {
     })
 
     it('unequip on one character does not touch the other', () => {
-        let p = owning('chase-sushi-hat', 'shooshy-sushi-hat')
+        let p = owning('chase-sushi-hat')
         p = equip(p, 'chase-sushi-hat').progression
-        p = equip(p, 'shooshy-sushi-hat').progression
+        const shooshyBefore = structuredClone(p.equipped.shooshy)
         const after = unequip(p, 'shiba', 'head')
-        expect(after.equipped.shooshy.head).toBe('shooshy-sushi-hat')
+        expect(after.equipped.shiba.head).toBeNull()
+        expect(after.equipped.shooshy).toEqual(shooshyBefore)
     })
 
     it('equip and unequip cost nothing', () => {
@@ -225,15 +220,15 @@ describe('normalizeEquipped', () => {
     it('clears a slot whose id is not in the inventory and keeps the other slots', () => {
         const p = base({
             wallets: { shiba: 0, shooshy: 2 },
-            inventory: { shiba: ['chase-sushi-hat'], shooshy: ['shooshy-sushi-hat'] },
+            inventory: { shiba: ['chase-sushi-hat'], shooshy: [] },
             equipped: {
                 shiba: { face: 'chase-black-sunglasses', head: 'chase-sushi-hat', body: null },
-                shooshy: { face: null, head: 'shooshy-sushi-hat', body: null },
+                shooshy: { face: null, head: 'chase-sushi-hat', body: null },
             },
         })
         const fixed = normalizeEquipped(p)
         expect(fixed.equipped.shiba).toEqual({ face: null, head: 'chase-sushi-hat', body: null })
-        expect(fixed.equipped.shooshy).toEqual({ face: null, head: 'shooshy-sushi-hat', body: null })
+        expect(fixed.equipped.shooshy).toEqual(nothingWorn())
         expect(fixed.inventory).toEqual(p.inventory)
         expect(fixed.wallets).toEqual(p.wallets)
     })
