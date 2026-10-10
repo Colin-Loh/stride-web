@@ -134,7 +134,9 @@ export function isCompletedRun(v: unknown): v is CompletedRun {
 export function isProgression(v: unknown): v is Progression {
     if (!isStamped(v) || v.id !== 'progression') return false
     const progression = v as unknown as Record<string, unknown>
+    // grantsApplied is absent in saves written before grants existed; load treats that as [].
     return isoDate(progression.startDate) && perCharacter(nonnegativeInteger)(progression.wallets)
         && perCharacter(isoDate)(progression.lastClaimedDate) && strings(progression.rewardedRunIds)
+        && (progression.grantsApplied === undefined || strings(progression.grantsApplied))
         && perCharacter(strings)(progression.inventory) && perCharacter(nullOr(text))(progression.equipped)
 }
