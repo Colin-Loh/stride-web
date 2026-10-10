@@ -711,3 +711,20 @@ select {
   gap: 8px;
   color: var(--muted);
 }
+
+.status-card {
+  display: grid;
+  gap: 8px;
+  padding: 16px 0;
+  border-top: 1px solid color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
+.status-card h2 {
+  margin: 0;
+}
+
+.status-sprite {
+  display: block;
+  margin: 0 auto;
+  image-rendering: pixelated;
+}

@@ -16,6 +16,19 @@ export const CHARACTER_SPRITES: Record<Character, SpriteSheet> = {
     shooshy: { url: sprite('shooshy-run.png'), frames: 8, frameWidth: 236, frameHeight: 196, cycleSeconds: 0.55 },
 }
 
+/** A single still image, at its native frame size. */
+export interface StillImage {
+    url: string
+    width: number
+    height: number
+}
+
+/** The obese still for each character, shown on the status screen when the character is obese. */
+export const OBESE_STILLS: Record<Character, StillImage> = {
+    shiba: { url: sprite('shiba-obese.png'), width: 296, height: 222 },
+    shooshy: { url: sprite('shooshy-obese.png'), width: 236, height: 196 },
+}
+
 /** The celebration dance: 12 frames at 90 ms each (output/sprites/sprites.json). */
 export const DANCE_SPRITES: Record<Character, SpriteSheet> = {
     shiba: { url: sprite('shiba-dance.png'), frames: 12, frameWidth: 296, frameHeight: 222, cycleSeconds: 1.08 },
