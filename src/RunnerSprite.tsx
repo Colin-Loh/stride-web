@@ -1,6 +1,8 @@
 import type { CSSProperties } from 'react'
 import { CHARACTER_SPRITES, OBESE_RUN_SHEETS } from './sprites'
 import { CHARACTER_NAMES, type Character } from './domain/preferences'
+import type { WornSlots } from './cosmetics/catalog'
+import { overlayUrls } from './cosmetics/runOverlay'
 
 export type RunnerState = 'running' | 'idle'
 export type RunnerHealth = 'healthy' | 'obese'
@@ -21,6 +23,8 @@ interface Props {
     cycleSeconds?: number
     /** Selects the obese run sheet. Healthy is the default. */
     health?: RunnerHealth
+    /** The items worn in each slot. Each one with run art is drawn over the body sheet. */
+    equipped?: WornSlots
     className?: string
 }
 
@@ -31,9 +35,12 @@ export function RunnerSprite({
     speedKmh,
     cycleSeconds,
     health = 'healthy',
+    equipped,
     className,
 }: Props) {
     const sheet = health === 'obese' ? OBESE_RUN_SHEETS[character] : CHARACTER_SPRITES[character]
+    // Overlays copy the body sheet's frame grid and timing, so each one stays on the same frame.
+    const overlays = equipped ? overlayUrls(equipped, health) : []
     // Stride frequency scales with speed, so the cycle is inversely proportional.
     const paced = sheet.cycleSeconds * (BASE_KMH / (speedKmh ?? BASE_KMH))
     const duration =
@@ -58,6 +65,18 @@ export function RunnerSprite({
             aria-label={`${CHARACTER_NAMES[character]} ${state}`}
             data-state={state}
             style={style}
-        />
+        >
+            {overlays.map((url) => (
+                <span
+                    key={url}
+                    className="runner-overlay"
+                    aria-hidden="true"
+                    style={{
+                        ...style,
+                        backgroundImage: `url(${url})`,
+                    }}
+                />
+            ))}
+        </span>
     )
 }

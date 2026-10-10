@@ -200,6 +200,28 @@ select {
   margin: 0 auto;
 }
 
+/* Worn items sit on the body frame. They share the body's timing and frame grid, so they stay aligned. */
+.runner {
+  position: relative;
+}
+
+.runner-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  background-repeat: no-repeat;
+  background-position: 0 0;
+  image-rendering: pixelated;
+  pointer-events: none;
+  animation-name: run-cycle;
+  animation-iteration-count: infinite;
+  animation-play-state: paused;
+}
+
+.runner[data-state='running'] .runner-overlay {
+  animation-play-state: running;
+}
+
 /* Duration, step count and --run-end come from the sheet, via RunnerSprite. */
 @keyframes run-cycle {
   to {
@@ -226,7 +248,8 @@ select {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .runner {
+  .runner,
+  .runner-overlay {
     animation: none;
   }
 }
