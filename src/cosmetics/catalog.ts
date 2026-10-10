@@ -1,13 +1,25 @@
 import type { Character } from '../domain/preferences'
 
-/** Every cosmetic id. Each item belongs to exactly one character. */
+/** Where an item is worn. Each slot holds at most one item per character. */
+export type Slot = 'face' | 'head' | 'body'
+
+export const SLOTS: readonly Slot[] = ['face', 'head', 'body']
+
+export const CHARACTERS: readonly Character[] = ['shiba', 'shooshy']
+
+/** One value per slot, with null for an empty slot. */
+export type WornSlots = Record<Slot, string | null>
+
+/** Nothing worn in any slot. */
+export const nothingWorn = (): WornSlots => ({ face: null, head: null, body: null })
+
+/** Every cosmetic id. Each item belongs to exactly one character and one slot. */
 export const COSMETIC_IDS = [
-    'chase-bandana',
-    'chase-sunglasses',
-    'chase-medal',
-    'shooshy-ribbon',
-    'shooshy-scarf',
-    'shooshy-headband',
+    'chase-black-sunglasses',
+    'chase-sushi-hat',
+    'shooshy-black-sunglasses',
+    'shooshy-hotdog',
+    'shooshy-sushi-hat',
 ] as const
 
 export type CosmeticId = (typeof COSMETIC_IDS)[number]
@@ -15,6 +27,7 @@ export type CosmeticId = (typeof COSMETIC_IDS)[number]
 export interface Cosmetic {
     id: CosmeticId
     character: Character
+    slot: Slot
     name: string
     /** Whole units of the owning character's wallet. */
     price: number
@@ -23,12 +36,11 @@ export interface Cosmetic {
 }
 
 export const COSMETICS: readonly Cosmetic[] = [
-    { id: 'chase-bandana', character: 'shiba', name: 'Bandana', price: 1, artPath: 'public/cosmetics/chase-bandana.png' },
-    { id: 'chase-sunglasses', character: 'shiba', name: 'Aviator sunglasses', price: 3, artPath: 'public/cosmetics/chase-sunglasses.png' },
-    { id: 'chase-medal', character: 'shiba', name: "Runner's medal", price: 5, artPath: 'public/cosmetics/chase-medal.png' },
-    { id: 'shooshy-ribbon', character: 'shooshy', name: 'Ribbon bow', price: 1, artPath: 'public/cosmetics/shooshy-ribbon.png' },
-    { id: 'shooshy-scarf', character: 'shooshy', name: 'Knit scarf', price: 3, artPath: 'public/cosmetics/shooshy-scarf.png' },
-    { id: 'shooshy-headband', character: 'shooshy', name: 'Sports headband', price: 5, artPath: 'public/cosmetics/shooshy-headband.png' },
+    { id: 'chase-black-sunglasses', character: 'shiba', slot: 'face', name: 'Black sunglasses', price: 2, artPath: 'public/cosmetics/chase-black-sunglasses.png' },
+    { id: 'chase-sushi-hat', character: 'shiba', slot: 'head', name: 'Sushi hat', price: 3, artPath: 'public/cosmetics/chase-sushi-hat.png' },
+    { id: 'shooshy-black-sunglasses', character: 'shooshy', slot: 'face', name: 'Black sunglasses', price: 2, artPath: 'public/cosmetics/shooshy-black-sunglasses.png' },
+    { id: 'shooshy-hotdog', character: 'shooshy', slot: 'body', name: 'Hotdog outfit', price: 4, artPath: 'public/cosmetics/shooshy-hotdog.png' },
+    { id: 'shooshy-sushi-hat', character: 'shooshy', slot: 'head', name: 'Sushi hat', price: 3, artPath: 'public/cosmetics/shooshy-sushi-hat.png' },
 ]
 
 export const COSMETIC_BY_ID: Readonly<Record<CosmeticId, Cosmetic>> = Object.freeze(

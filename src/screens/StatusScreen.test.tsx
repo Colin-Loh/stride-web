@@ -17,7 +17,7 @@ const progression = (overrides: Partial<Progression> = {}): Progression => ({
     startDate: '2026-10-01',
     wallets: { shiba: 0, shooshy: 0 },
     lastClaimedDate: { shiba: '2026-10-10', shooshy: '2026-10-10' },
-    rewardedRunIds: [], grantsApplied: [], inventory: { shiba: [], shooshy: [] }, equipped: { shiba: null, shooshy: null },
+    rewardedRunIds: [], grantsApplied: [], inventory: { shiba: [], shooshy: [] }, equipped: { shiba: { face: null, head: null, body: null }, shooshy: { face: null, head: null, body: null } },
     ...overrides,
 })
 
@@ -110,11 +110,11 @@ describe('StatusScreen health', () => {
 
     it('draws the equipped item only over the selected character still', () => {
         const html = render({
-            progression: progression({ inventory: { shiba: ['chase-medal'], shooshy: ['shooshy-scarf'] }, equipped: { shiba: 'chase-medal', shooshy: 'shooshy-scarf' } }),
+            progression: progression({ inventory: { shiba: ['chase-sushi-hat'], shooshy: ['shooshy-hotdog'] }, equipped: { shiba: { face: null, head: 'chase-sushi-hat', body: null }, shooshy: { face: null, head: null, body: 'shooshy-hotdog' } } }),
         })
-        expect(html).toContain(`src="${cosmeticUrl('chase-medal')}"`)
+        expect(html).toContain(`src="${cosmeticUrl('chase-sushi-hat')}"`)
         expect(html).toMatch(/<img[^>]*class="cosmetic-overlay"[^>]*aria-hidden="true"/)
-        expect(html).not.toContain(cosmeticUrl('shooshy-scarf'))
+        expect(html).not.toContain(cosmeticUrl('shooshy-hotdog'))
     })
 })
 

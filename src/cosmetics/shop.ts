@@ -1,6 +1,6 @@
 import type { Character } from '../domain/preferences'
 import type { Progression } from '../domain/types'
-import { COSMETIC_BY_ID, isCosmeticId } from './catalog'
+import { CHARACTERS, COSMETIC_BY_ID, isCosmeticId, SLOTS, type Slot, type WornSlots } from './catalog'
 
 /** Why a purchase or equip was refused. */
 export type ShopFailure = 'unknown' | 'owned' | 'unaffordable' | 'not-owned'
@@ -44,8 +44,9 @@ export function purchase(progression: Progression, itemId: string, now = new Dat
 }
 
 /**
- * Wears an owned cosmetic. Equipping a second item for the same character replaces the first.
- * Free and unlimited. Fails when the id is unknown or not owned.
+ * Wears an owned cosmetic in its own slot. Only that slot changes: the previous item in the same
+ * slot is replaced, and items in other slots stay on. Free and unlimited. Fails when the id is
+ * unknown or not owned by its character.
  */
 export function equip(progression: Progression, itemId: string): ShopResult {
     if (!isCosmeticId(itemId)) return { progression, ok: false, reason: 'unknown' }
@@ -55,31 +56,57 @@ export function equip(progression: Progression, itemId: string): ShopResult {
         ok: true,
         progression: {
             ...progression,
-            equipped: { ...progression.equipped, [item.character]: itemId },
+            equipped: {
+                ...progression.equipped,
+                [item.character]: { ...progression.equipped[item.character], [item.slot]: itemId },
+            },
         },
     }
 }
 
-/** Takes off whatever the character is wearing. Free and unlimited. Inventory is unchanged. */
-export function unequip(progression: Progression, character: Character): Progression {
+/** Takes off whatever the character wears in one slot. Other slots are kept. Free. Inventory is unchanged. */
+export function unequip(progression: Progression, character: Character, slot: Slot): Progression {
     return {
         ...progression,
-        equipped: { ...progression.equipped, [character]: null },
+        equipped: {
+            ...progression.equipped,
+            [character]: { ...progression.equipped[character], [slot]: null },
+        },
     }
 }
 
 /**
- * Clears any equipped id that is not in that character's inventory. Everything else is kept.
+ * Clears any slot whose id is not in that character's inventory. Every other slot is kept.
  * Returns the same object when nothing needs clearing. Called on load.
  */
 export function normalizeEquipped(progression: Progression): Progression {
-    const characters: Character[] = ['shiba', 'shooshy']
-    const stale = characters.filter((character) => {
-        const id = progression.equipped[character]
-        return id !== null && !progression.inventory[character].includes(id)
-    })
-    if (stale.length === 0) return progression
+    let changed = false
     const equipped = { ...progression.equipped }
-    for (const character of stale) equipped[character] = null
-    return { ...progression, equipped }
+    for (const character of CHARACTERS) {
+        const worn: WornSlots = { ...progression.equipped[character] }
+        for (const slot of SLOTS) {
+            const id = worn[slot]
+            if (id !== null && !progression.inventory[character].includes(id)) {
+                worn[slot] = null
+                changed = true
+            }
+        }
+        equipped[character] = worn
+    }
+    return changed ? { ...progression, equipped } : progression
+}
+
+/**
+ * Drops inventory ids that are not in the catalog, with no refund. Returns the same object when
+ * nothing is unknown. Called on load, after the legacy migration.
+ */
+export function dropUnknownItems(progression: Progression): Progression {
+    let changed = false
+    const inventory = { ...progression.inventory }
+    for (const character of CHARACTERS) {
+        const kept = progression.inventory[character].filter((id) => isCosmeticId(id))
+        if (kept.length !== progression.inventory[character].length) changed = true
+        inventory[character] = kept
+    }
+    return changed ? { ...progression, inventory } : progression
 }

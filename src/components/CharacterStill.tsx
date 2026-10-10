@@ -4,12 +4,13 @@ import type { HealthStatus } from '../progression/health'
 import { CHARACTER_SPRITES, OBESE_STILLS } from '../sprites'
 import { CosmeticOverlay } from '../cosmetics/CosmeticOverlay'
 import { STILL_SCALE } from '../cosmetics/art'
-import { isCosmeticId } from '../cosmetics/catalog'
+import { isCosmeticId, SLOTS, type WornSlots } from '../cosmetics/catalog'
 
 interface Props {
     character: Character
     status: HealthStatus
-    equipped: string | null
+    /** The item worn in each slot. Every worn item is drawn over the still. */
+    equipped: WornSlots
 }
 
 /**
@@ -43,7 +44,7 @@ export function CharacterStill({ character, status, equipped }: Props) {
     return (
         <div className="still-frame">
             {sprite}
-            {isCosmeticId(equipped) && <CosmeticOverlay itemId={equipped} />}
+            {SLOTS.map((slot) => isCosmeticId(equipped[slot]) && <CosmeticOverlay key={slot} itemId={equipped[slot]} />)}
         </div>
     )
 }

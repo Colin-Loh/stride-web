@@ -29,7 +29,7 @@ describe('isProgression grantsApplied', () => {
     const progression = (): Progression => ({
         id: 'progression', schemaVersion: SCHEMA_VERSION, createdAt: '2026-10-10T00:00:00.000Z', updatedAt: '2026-10-10T00:00:00.000Z',
         startDate: '2026-10-10', wallets: { shiba: 0, shooshy: 0 }, lastClaimedDate: { shiba: '2026-10-10', shooshy: '2026-10-10' },
-        rewardedRunIds: [], grantsApplied: [], inventory: { shiba: [], shooshy: [] }, equipped: { shiba: null, shooshy: null },
+        rewardedRunIds: [], grantsApplied: [], inventory: { shiba: [], shooshy: [] }, equipped: { shiba: { face: null, head: null, body: null }, shooshy: { face: null, head: null, body: null } },
     })
 
     it('accepts a legacy record without grantsApplied', () => {

@@ -15,7 +15,7 @@ const progression = (overrides: Partial<Progression> = {}): Progression => ({
     startDate: '2026-10-01',
     wallets: { shiba: 0, shooshy: 0 },
     lastClaimedDate: { shiba: '2026-10-01', shooshy: '2026-10-01' },
-    rewardedRunIds: [], grantsApplied: [], inventory: { shiba: [], shooshy: [] }, equipped: { shiba: null, shooshy: null },
+    rewardedRunIds: [], grantsApplied: [], inventory: { shiba: [], shooshy: [] }, equipped: { shiba: { face: null, head: null, body: null }, shooshy: { face: null, head: null, body: null } },
     ...overrides,
 })
 
@@ -47,21 +47,18 @@ afterEach(() => {
 const cardsIn = (html: string) => html.match(/<li class="shop-card[^"]*"/g) ?? []
 
 describe('ShopScreen shows only the selected character', () => {
-    it('renders exactly the three items for Chase and none for Shooshy', () => {
+    it('renders exactly the two items for Chase and none for Shooshy', () => {
         const html = render({ character: 'shiba' })
-        expect(cardsIn(html)).toHaveLength(3)
+        expect(cardsIn(html)).toHaveLength(2)
         for (const item of itemsFor('shiba')) expect(html).toContain(`aria-label="Not enough bones for ${escape(item.name)}"`)
-        expect(html).not.toContain('Knit scarf')
-        expect(html).not.toContain('Sports headband')
-        expect(html).not.toContain('Ribbon bow')
+        expect(html).not.toContain('cosmetics/icons/shooshy-')
     })
 
     it('renders exactly the three items for Shooshy and none for Chase', () => {
         const html = render({ character: 'shooshy', progression: progression({ wallets: { shiba: 9, shooshy: 2 } }) })
         expect(cardsIn(html)).toHaveLength(3)
         for (const item of itemsFor('shooshy')) expect(itemFor(html, item.name)).toContain(`cosmetics/icons/${item.id}.png`)
-        expect(html).not.toContain('Bandana')
-        expect(html).not.toContain('Runner')
+        expect(html).not.toContain('cosmetics/icons/chase-')
     })
 
     it('shows only the selected character wallet as an icon and number', () => {
@@ -98,11 +95,11 @@ describe('ShopScreen visual card contents', () => {
     })
 
     it('marks owned items with a check and equipped items with a highlighted frame and check', () => {
-        const owned = itemFor(render({ progression: progression({ inventory: { shiba: ['chase-bandana'], shooshy: [] } }) }), 'Bandana')
+        const owned = itemFor(render({ progression: progression({ inventory: { shiba: ['chase-sushi-hat'], shooshy: [] } }) }), 'Sushi hat')
         expect(owned).toContain('shop-card-owned')
         expect(owned).toContain('class="shop-owned-mark"')
         expect(owned).not.toContain('shop-card-equipped')
-        const equipped = itemFor(render({ progression: progression({ inventory: { shiba: ['chase-bandana'], shooshy: [] }, equipped: { shiba: 'chase-bandana', shooshy: null } }) }), 'Bandana')
+        const equipped = itemFor(render({ progression: progression({ inventory: { shiba: ['chase-sushi-hat'], shooshy: [] }, equipped: { shiba: { face: null, head: 'chase-sushi-hat', body: null }, shooshy: { face: null, head: null, body: null } } }) }), 'Sushi hat')
         expect(equipped).toContain('shop-card-equipped')
         expect(equipped).toContain('class="shop-owned-mark"')
         expect(equipped).not.toMatch(/>Worn<|>Owned</)
@@ -111,56 +108,56 @@ describe('ShopScreen visual card contents', () => {
 
 describe('ShopScreen card actions', () => {
     it('enables Buy with the existing aria-label when the character can afford the item', () => {
-        const html = render({ progression: progression({ wallets: { shiba: 1, shooshy: 0 } }) })
-        const bandana = itemFor(html, 'Bandana')
-        expect(bandana).toContain('aria-label="Buy Bandana for 1 bone"')
-        expect(bandana).toContain('class="shop-price"')
-        expect(bandana).not.toMatch(/<button[^>]*disabled/)
+        const html = render({ progression: progression({ wallets: { shiba: 3, shooshy: 0 } }) })
+        const sushi = itemFor(html, 'Sushi hat')
+        expect(sushi).toContain('aria-label="Buy Sushi hat for 3 bones"')
+        expect(sushi).toContain('class="shop-price"')
+        expect(sushi).not.toMatch(/<button[^>]*disabled/)
     })
 
     it('disables the action at insufficient funds with the existing aria-label', () => {
         const html = render({ progression: progression({ wallets: { shiba: 2, shooshy: 0 } }) })
-        const medal = itemFor(html, "Runner's medal")
-        expect(medal).toMatch(/<button[^>]*disabled/)
-        expect(medal).toContain('aria-label="Not enough bones for Runner&#x27;s medal"')
-        expect(medal).toContain('class="shop-price"')
+        const sushi = itemFor(html, 'Sushi hat')
+        expect(sushi).toMatch(/<button[^>]*disabled/)
+        expect(sushi).toContain('aria-label="Not enough bones for Sushi hat"')
+        expect(sushi).toContain('class="shop-price"')
     })
 
     it('uses fish wording for unaffordable Shooshy items', () => {
         const html = render({ character: 'shooshy' })
-        const headband = itemFor(html, 'Sports headband')
-        expect(headband).toMatch(/<button[^>]*disabled/)
-        expect(headband).toContain('aria-label="Not enough fish for Sports headband"')
+        const sushi = itemFor(html, 'Sushi hat')
+        expect(sushi).toMatch(/<button[^>]*disabled/)
+        expect(sushi).toContain('aria-label="Not enough fish for Sushi hat"')
     })
 
     it('shows an Equip button for an owned, unequipped item', () => {
-        const html = render({ progression: progression({ inventory: { shiba: ['chase-bandana'], shooshy: [] } }) })
-        const bandana = itemFor(html, 'Bandana')
-        expect(bandana).toContain('aria-label="Equip Bandana"')
-        expect(bandana).not.toContain('aria-label="Buy')
+        const html = render({ progression: progression({ inventory: { shiba: ['chase-sushi-hat'], shooshy: [] } }) })
+        const sushi = itemFor(html, 'Sushi hat')
+        expect(sushi).toContain('aria-label="Equip Sushi hat"')
+        expect(sushi).not.toContain('aria-label="Buy')
     })
 
     it('shows an Unequip button for the equipped item', () => {
         const html = render({
-            progression: progression({ inventory: { shiba: ['chase-bandana'], shooshy: [] }, equipped: { shiba: 'chase-bandana', shooshy: null } }),
+            progression: progression({ inventory: { shiba: ['chase-sushi-hat'], shooshy: [] }, equipped: { shiba: { face: null, head: 'chase-sushi-hat', body: null }, shooshy: { face: null, head: null, body: null } } }),
         })
-        const bandana = itemFor(html, 'Bandana')
-        expect(bandana).toContain('aria-label="Unequip Bandana"')
-        expect(bandana).toContain('class="shop-owned-mark"')
+        const sushi = itemFor(html, 'Sushi hat')
+        expect(sushi).toContain('aria-label="Unequip Sushi hat"')
+        expect(sushi).toContain('class="shop-owned-mark"')
     })
     it('routes buy, equip and unequip through the existing handlers', () => {
         const onBuy = vi.fn()
         const onEquip = vi.fn()
         const onUnequip = vi.fn()
         const { rerender } = interactive({ progression: progression({ wallets: { shiba: 9, shooshy: 0 } }), onBuy, onEquip, onUnequip })
-        fireEvent.click(screen.getByRole('button', { name: 'Buy Bandana for 1 bone' }))
-        expect(onBuy).toHaveBeenCalledWith('chase-bandana')
-        rerender(<ShopScreen character="shiba" progression={progression({ inventory: { shiba: ['chase-bandana'], shooshy: [] } })} onBuy={onBuy} onEquip={onEquip} onUnequip={onUnequip} onBack={noop} />)
-        fireEvent.click(screen.getByRole('button', { name: 'Equip Bandana' }))
-        expect(onEquip).toHaveBeenCalledWith('chase-bandana')
-        rerender(<ShopScreen character="shiba" progression={progression({ inventory: { shiba: ['chase-bandana'], shooshy: [] }, equipped: { shiba: 'chase-bandana', shooshy: null } })} onBuy={onBuy} onEquip={onEquip} onUnequip={onUnequip} onBack={noop} />)
-        fireEvent.click(screen.getByRole('button', { name: 'Unequip Bandana' }))
-        expect(onUnequip).toHaveBeenCalledWith('shiba')
+        fireEvent.click(screen.getByRole('button', { name: 'Buy Sushi hat for 3 bones' }))
+        expect(onBuy).toHaveBeenCalledWith('chase-sushi-hat')
+        rerender(<ShopScreen character="shiba" progression={progression({ inventory: { shiba: ['chase-sushi-hat'], shooshy: [] } })} onBuy={onBuy} onEquip={onEquip} onUnequip={onUnequip} onBack={noop} />)
+        fireEvent.click(screen.getByRole('button', { name: 'Equip Sushi hat' }))
+        expect(onEquip).toHaveBeenCalledWith('chase-sushi-hat')
+        rerender(<ShopScreen character="shiba" progression={progression({ inventory: { shiba: ['chase-sushi-hat'], shooshy: [] }, equipped: { shiba: { face: null, head: 'chase-sushi-hat', body: null }, shooshy: { face: null, head: null, body: null } } })} onBuy={onBuy} onEquip={onEquip} onUnequip={onUnequip} onBack={noop} />)
+        fireEvent.click(screen.getByRole('button', { name: 'Unequip Sushi hat' }))
+        expect(onUnequip).toHaveBeenCalledWith('shiba', 'head')
     })
 })
 
@@ -184,21 +181,21 @@ describe('ShopScreen fitting room button and panel', () => {
 
     it('names the equipped item and draws its overlay when one is worn', () => {
         const { container } = interactive({
-            progression: progression({ inventory: { shiba: ['chase-medal'], shooshy: [] }, equipped: { shiba: 'chase-medal', shooshy: null } }),
+            progression: progression({ inventory: { shiba: ['chase-sushi-hat'], shooshy: [] }, equipped: { shiba: { face: null, head: 'chase-sushi-hat', body: null }, shooshy: { face: null, head: null, body: null } } }),
         })
         fireEvent.click(fittingButton())
-        expect(screen.getByText("Wearing: Runner's medal")).toBeTruthy()
+        expect(screen.getByText('Wearing: Sushi hat')).toBeTruthy()
         expect(screen.queryByText('Nothing equipped')).toBeNull()
-        expect(container.querySelector('.shop-fitting .cosmetic-overlay')?.getAttribute('src')).toBe(cosmeticUrl('chase-medal'))
+        expect(container.querySelector('.shop-fitting .cosmetic-overlay')?.getAttribute('src')).toBe(cosmeticUrl('chase-sushi-hat'))
     })
 
     it('draws the overlay that matches the equipped id, not another item', () => {
         const { container } = interactive({
-            progression: progression({ inventory: { shiba: ['chase-medal', 'chase-bandana'], shooshy: [] }, equipped: { shiba: 'chase-bandana', shooshy: null } }),
+            progression: progression({ inventory: { shiba: ['chase-black-sunglasses', 'chase-sushi-hat'], shooshy: [] }, equipped: { shiba: { face: null, head: 'chase-sushi-hat', body: null }, shooshy: { face: null, head: null, body: null } } }),
         })
         fireEvent.click(fittingButton())
         const overlays = [...container.querySelectorAll('.shop-fitting .cosmetic-overlay')].map((img) => img.getAttribute('src'))
-        expect(overlays).toEqual([cosmeticUrl('chase-bandana')])
+        expect(overlays).toEqual([cosmeticUrl('chase-sushi-hat')])
     })
 
     it('closes with the Close button and returns focus to the Fitting Room button', () => {
@@ -245,11 +242,11 @@ describe('ShopScreen fitting room button and panel', () => {
 })
 
 describe('ShopScreen grid and accessibility', () => {
-    it('renders a grid of three equal-format icon cards', () => {
+    it('renders a grid of equal-format icon cards, one per item for the character', () => {
         const html = render()
         expect(html).toContain('class="shop-grid" aria-label="Accessories"')
-        expect(cardsIn(html)).toHaveLength(3)
-        expect(html.match(/class="shop-art-image"/g)).toHaveLength(3)
+        expect(cardsIn(html)).toHaveLength(itemsFor('shiba').length)
+        expect(html.match(/class="shop-art-image"/g)).toHaveLength(itemsFor('shiba').length)
         expect(html).not.toContain('<h3>')
     })
 
@@ -271,12 +268,12 @@ describe('ShopScreen grid and accessibility', () => {
 })
 
 describe('ShopScreen lays out the item grid as a centred row', () => {
-    it.each(['shiba', 'shooshy'] as const)('centres three cards in the grid for %s', (character) => {
+    it.each(['shiba', 'shooshy'] as const)('centres the cards in the grid for %s', (character) => {
         const html = render({ character })
         const grid = html.match(/<ul class="shop-grid"[^>]*>/)
         expect(grid).not.toBeNull()
         expect(grid?.[0]).not.toContain('style=')
-        expect(cardsIn(html)).toHaveLength(3)
+        expect(cardsIn(html)).toHaveLength(itemsFor(character).length)
     })
 })
 
@@ -317,10 +314,10 @@ describe('ShopScreen currency pill', () => {
 describe('ShopScreen state styling', () => {
     it('has a distinct card class for each purchase or ownership state', () => {
         const states = [
-            ['equipped', progression({ inventory: { shiba: ['chase-bandana'], shooshy: [] }, equipped: { shiba: 'chase-bandana', shooshy: null } }), 'Bandana'],
-            ['owned', progression({ inventory: { shiba: ['chase-bandana'], shooshy: [] } }), 'Bandana'],
-            ['affordable', progression({ wallets: { shiba: 1, shooshy: 0 } }), 'Bandana'],
-            ['unaffordable', progression(), 'Bandana'],
+            ['equipped', progression({ inventory: { shiba: ['chase-sushi-hat'], shooshy: [] }, equipped: { shiba: { face: null, head: 'chase-sushi-hat', body: null }, shooshy: { face: null, head: null, body: null } } }), 'Sushi hat'],
+            ['owned', progression({ inventory: { shiba: ['chase-sushi-hat'], shooshy: [] } }), 'Sushi hat'],
+            ['affordable', progression({ wallets: { shiba: 3, shooshy: 0 } }), 'Sushi hat'],
+            ['unaffordable', progression(), 'Sushi hat'],
         ] as const
         for (const [state, data, name] of states) expect(itemFor(render({ progression: data }), name)).toContain(`shop-card-${state}`)
     })

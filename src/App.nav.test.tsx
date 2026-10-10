@@ -15,7 +15,7 @@ vi.mock('./hooks/useAppFlow', () => ({
         plan: { id: 'plan' },
         open: null,
         notice: '',
-        progression: { wallets: { shiba: 0, shooshy: 0 }, inventory: { shiba: [], shooshy: [] }, equipped: { shiba: null, shooshy: null } },
+        progression: { wallets: { shiba: 0, shooshy: 0 }, inventory: { shiba: [], shooshy: [] }, equipped: { shiba: { face: null, head: null, body: null }, shooshy: { face: null, head: null, body: null } } },
         runLog: [],
         answers: null,
         setView: () => {},

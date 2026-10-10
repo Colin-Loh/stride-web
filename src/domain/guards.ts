@@ -4,7 +4,7 @@ import { isAnswers as isAnswerValues } from '../plan/questions'
 import type { PersonalBaseline, PersonalizedWorkout, PlanSection } from '../plan/types'
 import { WORKOUT_NAMES } from '../workouts'
 import type { Character } from './preferences'
-import { SCHEMA_VERSION, type Answers, type CompletedRun, type PaceSet, type Progression, type RunSession, type Session, type Stamped, type TrainingPlan, type Week } from './types'
+import { SCHEMA_VERSION, type Answers, type CompletedRun, type PaceSet, type RunSession, type Session, type Stamped, type StoredProgression, type TrainingPlan, type Week } from './types'
 
 /**
  * Runtime checks for stored data. Anything that does not pass is discarded, never repaired:
@@ -131,12 +131,20 @@ export function isCompletedRun(v: unknown): v is CompletedRun {
         && isoDateTime(run.completedAt) && nonnegative(run.elapsedMs) && nullOr(nonnegative)(run.distanceKm)
 }
 
-export function isProgression(v: unknown): v is Progression {
+/**
+ * Accepts the current save and the legacy save. Legacy equipped is one id or null per character.
+ * Current equipped is a slot record per character. Load converts legacy to the slot shape.
+ */
+const isStoredEquipped = (v: unknown): boolean => nullOr(text)(v)
+    || (record(v) && ['face', 'head', 'body'].every((slot) => v[slot] === undefined || nullOr(text)(v[slot])))
+
+export function isProgression(v: unknown): v is StoredProgression {
     if (!isStamped(v) || v.id !== 'progression') return false
     const progression = v as unknown as Record<string, unknown>
     // grantsApplied is absent in saves written before grants existed; load treats that as [].
     return isoDate(progression.startDate) && perCharacter(nonnegativeInteger)(progression.wallets)
         && perCharacter(isoDate)(progression.lastClaimedDate) && strings(progression.rewardedRunIds)
         && (progression.grantsApplied === undefined || strings(progression.grantsApplied))
-        && perCharacter(strings)(progression.inventory) && perCharacter(nullOr(text))(progression.equipped)
+        && perCharacter(strings)(progression.inventory) && perCharacter(isStoredEquipped)(progression.equipped)
 }
+

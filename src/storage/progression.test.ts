@@ -4,6 +4,8 @@ import { generatePersonalizedWorkout } from '../plan/generate'
 import { derivePersonalBaseline } from '../plan/baseline'
 import { newRunSession } from '../run/session'
 import { isCompletedRun, isProgression, isRunSession } from '../domain/guards'
+import { LEGACY_ITEMS } from '../cosmetics/legacy'
+import { nothingWorn } from '../cosmetics/catalog'
 import { localDateOf } from '../progression/localDate'
 import {
     createLocalStorageRepositories, LocalStorageCompletedRunRepository, LocalStorageProgressionRepository,
@@ -45,9 +47,9 @@ const makeProgression = (): Progression => ({
     wallets: { shiba: 3, shooshy: 0 },
     lastClaimedDate: { shiba: '2026-10-10', shooshy: '2026-10-09' },
     rewardedRunIds: ['run-1'],
-    grantsApplied: ['test-currency-20'],
+    grantsApplied: ['test-currency-20', 'refund-legacy-accessories-v1'],
     inventory: { shiba: [], shooshy: [] },
-    equipped: { shiba: null, shooshy: null },
+    equipped: { shiba: nothingWorn(), shooshy: nothingWorn() },
 })
 
 describe('run log repository', () => {
@@ -122,8 +124,8 @@ describe('progression repository', () => {
         const created = await repository.load()
         expect(created).toMatchObject({
             id: 'progression', schemaVersion: SCHEMA_VERSION, startDate: '2026-10-10',
-            wallets: { shiba: 20, shooshy: 20 }, rewardedRunIds: [], grantsApplied: ['test-currency-20'],
-            inventory: { shiba: [], shooshy: [] }, equipped: { shiba: null, shooshy: null },
+            wallets: { shiba: 20, shooshy: 20 }, rewardedRunIds: [], grantsApplied: ['test-currency-20', 'refund-legacy-accessories-v1'],
+            inventory: { shiba: [], shooshy: [] }, equipped: { shiba: { face: null, head: null, body: null }, shooshy: { face: null, head: null, body: null } },
         })
         expect(isProgression(created)).toBe(true)
         expect(JSON.parse(values.get('stride.progression')!)).toEqual(JSON.parse(JSON.stringify(created)))
@@ -152,12 +154,12 @@ describe('progression repository', () => {
         values.set('stride.progression', JSON.stringify(legacy))
         const first = await new LocalStorageProgressionRepository().load()
         expect(first.wallets).toEqual({ shiba: 23, shooshy: 20 })
-        expect(first.grantsApplied).toEqual(['test-currency-20'])
+        expect(first.grantsApplied).toEqual(['refund-legacy-accessories-v1', 'test-currency-20'])
         expect(JSON.parse(values.get('stride.progression')!)).toEqual(JSON.parse(JSON.stringify(first)))
         expect(storageNotice()).toBe('')
         const second = await new LocalStorageProgressionRepository().load()
         expect(second.wallets).toEqual({ shiba: 23, shooshy: 20 })
-        expect(second.grantsApplied).toEqual(['test-currency-20'])
+        expect(second.grantsApplied).toEqual(['refund-legacy-accessories-v1', 'test-currency-20'])
     })
 
     it('leaves wallets unchanged for a record that already has the grant id', async () => {
@@ -221,5 +223,62 @@ describe('completed run guard', () => {
 describe('local date of a progression start', () => {
     it('matches the local day of the creation instant', () => {
         expect(localDateOf(new Date(2026, 9, 10, 23, 30).getTime())).toBe('2026-10-10')
+    })
+})
+
+describe('legacy accessory migration and slot load', () => {
+    const legacyId = (price: number, character: 'shiba' | 'shooshy') =>
+        LEGACY_ITEMS.find((item) => item.price === price && item.character === character)!.id
+    const MARKER = 'refund-legacy-accessories-v1'
+
+    it('refunds owned legacy items once, removes them, clears their slots, and a second load changes nothing', async () => {
+        const medal = legacyId(5, 'shiba')
+        const scarf = legacyId(3, 'shooshy')
+        const legacy = {
+            ...makeProgression(),
+            wallets: { shiba: 0, shooshy: 0 },
+            grantsApplied: ['test-currency-20'],
+            inventory: { shiba: [medal], shooshy: [scarf] },
+            equipped: { shiba: medal, shooshy: scarf },
+        }
+        values.set('stride.progression', JSON.stringify(legacy))
+        const first = await new LocalStorageProgressionRepository().load()
+        expect(first.wallets).toEqual({ shiba: 5, shooshy: 3 })
+        expect(first.inventory).toEqual({ shiba: [], shooshy: [] })
+        expect(first.equipped).toEqual({ shiba: nothingWorn(), shooshy: nothingWorn() })
+        expect(first.grantsApplied.filter((id) => id === MARKER)).toHaveLength(1)
+        const second = await new LocalStorageProgressionRepository().load()
+        expect(second.wallets).toEqual({ shiba: 5, shooshy: 3 })
+        expect(second.grantsApplied.filter((id) => id === MARKER)).toHaveLength(1)
+    })
+
+    it('loads a legacy-shape equipped record as all-null slots', async () => {
+        values.set('stride.progression', JSON.stringify({
+            ...makeProgression(),
+            equipped: { shiba: null, shooshy: null },
+        }))
+        const loaded = await new LocalStorageProgressionRepository().load()
+        expect(loaded.equipped).toEqual({ shiba: nothingWorn(), shooshy: nothingWorn() })
+    })
+
+    it('clears an invalid stored slot id and keeps the valid slots', async () => {
+        values.set('stride.progression', JSON.stringify({
+            ...makeProgression(),
+            inventory: { shiba: ['chase-black-sunglasses'], shooshy: [] },
+            equipped: { shiba: { face: 'chase-black-sunglasses', head: 'chase-sushi-hat', body: null }, shooshy: nothingWorn() },
+        }))
+        const loaded = await new LocalStorageProgressionRepository().load()
+        expect(loaded.equipped.shiba).toEqual({ face: 'chase-black-sunglasses', head: null, body: null })
+    })
+
+    it('keeps all worn slots through a save and reload', async () => {
+        const worn = {
+            ...makeProgression(),
+            inventory: { shiba: ['chase-black-sunglasses', 'chase-sushi-hat'], shooshy: [] },
+            equipped: { shiba: { face: 'chase-black-sunglasses', head: 'chase-sushi-hat', body: null }, shooshy: nothingWorn() },
+        }
+        await new LocalStorageProgressionRepository().save(worn)
+        const reloaded = await new LocalStorageProgressionRepository().load()
+        expect(reloaded.equipped).toEqual(worn.equipped)
     })
 })

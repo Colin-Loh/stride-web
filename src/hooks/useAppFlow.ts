@@ -18,7 +18,7 @@ import type { PickableWorkoutId } from '../workouts'
 import { claimIncome } from '../progression/income'
 import { recordCompletedRun } from '../progression/reward'
 import { purchase, equip, unequip } from '../cosmetics/shop'
-import type { CosmeticId } from '../cosmetics/catalog'
+import type { CosmeticId, Slot } from '../cosmetics/catalog'
 import { releaseWakeLock } from '../wakeLock'
 import { startView } from './startView'
 
@@ -145,8 +145,8 @@ export function useAppFlow(repositories: Repositories) {
         changeShop((current) => { const result = equip(current, itemId); return result.ok ? result.progression : current })
     }
 
-    function unequipCosmetic(character: Character) {
-        changeShop((current) => unequip(current, character))
+    function unequipCosmetic(character: Character, slot: Slot) {
+        changeShop((current) => unequip(current, character, slot))
     }
 
     /** Claims one character's pending income and saves the progression once. Nothing is written when nothing is pending. Resolves with the number claimed. */
