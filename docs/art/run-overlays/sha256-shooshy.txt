@@ -1,0 +1,6 @@
+95b46acb7e9a933951e69b44507969cc603c5ec652ac6881188b412af58eb471  public/cosmetics/run/shooshy-black-sunglasses-healthy.png
+95b46acb7e9a933951e69b44507969cc603c5ec652ac6881188b412af58eb471  public/cosmetics/run/shooshy-black-sunglasses-obese.png
+5b8a72a38b3563bce6610df4c7ed6c939234525cb4811ea852215ba1279cd4e7  public/cosmetics/run/shooshy-sushi-hat-healthy.png
+5b8a72a38b3563bce6610df4c7ed6c939234525cb4811ea852215ba1279cd4e7  public/cosmetics/run/shooshy-sushi-hat-obese.png
+4578f4c1b53ff74e5f2079de83d686d7cdea3a7ab319fc9c7edaf8ad6e030331  docs/art/run-overlays/shooshy-healthy.png
+42c08da71ec9c7a04b2cd418e0621cf207d022ffdebc0c58ba44bb03499be9c3  docs/art/run-overlays/shooshy-obese.png
