@@ -9,7 +9,7 @@ import { RunScreen } from './screens/RunScreen'
 import { CompleteScreen } from './screens/CompleteScreen'
 import { StatusScreen } from './screens/StatusScreen'
 import { ShopScreen } from './screens/ShopScreen'
-import { HomeNav, HomeScreen } from './screens/HomeScreen'
+import { HomeNav } from './components/HomeNav'
 
 /** The app depends on repository interfaces only; main.tsx chooses the implementation. */
 export default function App({ repositories }: { repositories: Repositories }) {
@@ -22,16 +22,13 @@ export default function App({ repositories }: { repositories: Repositories }) {
     {view === 'name' && <NameScreen initialName={name} initialCharacter={preferences.character} initialWeightKg={preferences.weightKg}
       storedCharacter={preferences.name ? preferences.character : undefined}
       onContinue={(next, character, weightKg) => { flow.persistName(next, character, weightKg); flow.setView('home') }} />}
-    {view === 'home' && flow.progression && <HomeScreen character={preferences.character} progression={flow.progression} runs={flow.runLog} now={new Date()}
-      onPlan={flow.showPlan} onWorkouts={() => flow.setView('category')} onShop={flow.openShop} onStatus={flow.openStatus}
-      onCollect={flow.collectIncome} />}
     {view === 'category' && <CategoryScreen name={name} selected={open?.workout.category}
       onChangeName={() => flow.setView('name')} onEditAnswers={flow.editAnswers} onPick={flow.pickCategory} onShowPlan={flow.showPlan}
       onShowStatus={flow.openStatus} />}
     {view === 'category' && <HomeNav current="workouts" onPlan={flow.showPlan} onWorkouts={() => flow.setView('category')} onShop={flow.openShop} onStatus={flow.openStatus} />}
-    {view === 'status' && flow.progression && <StatusScreen progression={flow.progression} runs={flow.runLog} now={new Date()}
-      onBack={() => flow.setView('category')} />}
-    {view === 'status' && flow.progression && <HomeNav current="status" onPlan={flow.showPlan} onWorkouts={() => flow.setView('category')} onShop={flow.openShop} onStatus={flow.openStatus} />}
+    {(view === 'home' || view === 'status') && flow.progression && <StatusScreen character={preferences.character} progression={flow.progression} runs={flow.runLog} now={new Date()}
+      onCollect={flow.collectIncome} onBack={() => flow.setView('category')} />}
+    {(view === 'home' || view === 'status') && flow.progression && <HomeNav current="status" onPlan={flow.showPlan} onWorkouts={() => flow.setView('category')} onShop={flow.openShop} onStatus={flow.openStatus} />}
     {view === 'shop' && flow.progression && <ShopScreen character={preferences.character} progression={flow.progression}
       onBuy={flow.buyCosmetic} onEquip={flow.equipCosmetic} onUnequip={flow.unequipCosmetic} onBack={() => flow.setView('home')} />}
     {view === 'shop' && flow.progression && <HomeNav current="shop" onPlan={flow.showPlan} onWorkouts={() => flow.setView('category')} onShop={flow.openShop} onStatus={flow.openStatus} />}

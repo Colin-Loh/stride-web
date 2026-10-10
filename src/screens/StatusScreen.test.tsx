@@ -2,17 +2,19 @@ import { describe, expect, it } from 'vitest'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { StatusScreen } from './StatusScreen'
 import { SCHEMA_VERSION, type CompletedRun, type Progression } from '../domain/types'
+import type { Character } from '../domain/preferences'
 import { OBESE_STILLS } from '../sprites'
 import { cosmeticUrl } from '../cosmetics/art'
 
-const noop = () => { }
+const noop = async () => 0
+const back = () => { }
 const STAMP = '2026-10-01T00:00:00.000Z'
 // Local calendar day D is 2026-10-10 (month index 9 is October).
 const NOW = new Date(2026, 9, 10, 12, 0)
 
 const progression = (overrides: Partial<Progression> = {}): Progression => ({
     id: 'progression', schemaVersion: SCHEMA_VERSION, createdAt: STAMP, updatedAt: STAMP,
-    startDate: '2026-10-10',
+    startDate: '2026-10-01',
     wallets: { shiba: 0, shooshy: 0 },
     lastClaimedDate: { shiba: '2026-10-10', shooshy: '2026-10-10' },
     rewardedRunIds: [], inventory: { shiba: [], shooshy: [] }, equipped: { shiba: null, shooshy: null },
@@ -26,104 +28,146 @@ const run = (id: string, characterId: CompletedRun['characterId'], planSessionId
 })
 
 const render = (props: Partial<Parameters<typeof StatusScreen>[0]> = {}) =>
-    renderToStaticMarkup(<StatusScreen progression={progression()} runs={[]} now={NOW} onBack={noop} {...props} />)
+    renderToStaticMarkup(
+        <StatusScreen character="shiba" progression={progression()} runs={[]} now={NOW} onCollect={noop} onBack={back} {...props} />,
+    )
 
-/** The markup of one character's card, from its heading to the next card. */
-const cardFor = (html: string, name: string) => {
-    const heading = html.indexOf(`<h2 id="status-${name === 'Chase' ? 'shiba' : 'shooshy'}"`)
-    const start = html.lastIndexOf('<article', heading)
-    const next = html.indexOf('<article', heading + 1)
-    return html.slice(start, next === -1 ? undefined : next)
-}
+const buttonOf = (html: string) => html.match(/<button[^>]*quest-button[^>]*>/)?.[0] ?? ''
 
-describe('StatusScreen health labels', () => {
-    it('shows both characters as obese on a fresh install', () => {
-        const html = render()
+describe('StatusScreen one character', () => {
+    it('shows Chase only when Chase is the locked character', () => {
+        const html = render({ character: 'shiba' })
+        expect(html).toContain('<h1>How is Chase?</h1>')
         expect(html).toContain('Chase is obese')
+        expect(html).not.toContain('Shooshy')
+        expect(html).not.toContain('shooshy')
+        expect(html).not.toContain('Fish')
+        expect(html).not.toContain('fish')
+    })
+
+    it('shows Shooshy only when Shooshy is the locked character', () => {
+        const html = render({ character: 'shooshy', progression: progression({ wallets: { shiba: 4, shooshy: 2 } }) })
+        expect(html).toContain('<h1>How is Shooshy?</h1>')
         expect(html).toContain('Shooshy is obese')
-        expect(html).not.toContain('very healthy')
+        expect(html).not.toContain('Chase')
+        expect(html).not.toContain('shiba')
+        expect(html).not.toContain('Bones')
+        expect(html).not.toContain('bone')
     })
 
-    it('shows a character as very healthy after a qualifying run, and leaves the other obese', () => {
-        const html = render({ runs: [run('r1', 'shiba')] })
-        expect(cardFor(html, 'Chase')).toContain('Chase is very healthy')
-        expect(cardFor(html, 'Shooshy')).toContain('Shooshy is obese')
-    })
-
-    it('shows the plan-session count as information, not as a health change', () => {
-        const html = render({ runs: [run('r1', 'shiba', 'week-1-session-1')] })
-        expect(cardFor(html, 'Chase')).toContain('Completed plan sessions in the last 7 days: 1')
-        expect(cardFor(html, 'Chase')).toContain('Chase is very healthy')
+    it('renders exactly one status card', () => {
+        expect(render().match(/<article/g)?.length).toBe(1)
     })
 
     it('shows the plain-text rule explanation', () => {
         expect(render()).toContain('Obese after 7 days with no completed run of 5 minutes or more. A new run restores health.')
     })
+
+    it('shows Back and no Shop button', () => {
+        const html = render()
+        expect(html).toContain('>Back<')
+        expect(html).not.toContain('>Shop<')
+    })
 })
 
-describe('StatusScreen sprites', () => {
-    it('uses the obese still for an obese character, with an empty alt', () => {
+describe('StatusScreen health', () => {
+    it('shows the obese label and obese still for Chase on a fresh install', () => {
         const html = render()
         expect(html).toContain(`src="${OBESE_STILLS.shiba.url}"`)
-        expect(html).toContain(`src="${OBESE_STILLS.shooshy.url}"`)
-        expect(cardFor(html, 'Chase')).toMatch(/<img[^>]*alt=""/)
+        expect(html).not.toContain('very healthy')
     })
 
-    it('drops the obese still for a healthy character and shows the run sprite instead', () => {
+    it('shows the healthy label and run frame after a qualifying run', () => {
         const html = render({ runs: [run('r1', 'shiba')] })
-        expect(cardFor(html, 'Chase')).not.toContain(OBESE_STILLS.shiba.url)
-        expect(cardFor(html, 'Chase')).toContain('sprites/shiba-run.png')
-        expect(cardFor(html, 'Shooshy')).toContain(OBESE_STILLS.shooshy.url)
-    })
-})
-
-describe('StatusScreen cosmetic overlay', () => {
-    it('draws no overlay when nothing is equipped', () => {
-        expect(render()).not.toContain('cosmetic-overlay')
+        expect(html).toContain('Chase is very healthy')
+        expect(html).toContain('sprites/shiba-run.png')
+        expect(html).not.toContain(OBESE_STILLS.shiba.url)
     })
 
-    it('draws the equipped item over only its own character still', () => {
+    it('shows Shooshy obese still and then the run frame when healthy', () => {
+        const obese = render({ character: 'shooshy' })
+        expect(obese).toContain(`src="${OBESE_STILLS.shooshy.url}"`)
+        const healthy = render({ character: 'shooshy', runs: [run('r1', 'shooshy')] })
+        expect(healthy).toContain('Shooshy is very healthy')
+        expect(healthy).toContain('sprites/shooshy-run.png')
+        expect(healthy).not.toContain(OBESE_STILLS.shooshy.url)
+    })
+
+    it('ignores a qualifying run credited to the other character', () => {
+        const html = render({ character: 'shooshy', runs: [run('r1', 'shiba')] })
+        expect(html).toContain('Shooshy is obese')
+    })
+
+    it('shows the plan-session count as information, not as a health change', () => {
+        const html = render({ runs: [run('r1', 'shiba', 'week-1-session-1')] })
+        expect(html).toContain('Completed plan sessions in the last 7 days: 1')
+        expect(html).toContain('Chase is very healthy')
+    })
+
+    it('keeps the still decorative', () => {
+        expect(render()).toMatch(/<img[^>]*alt=""/)
+    })
+
+    it('draws the equipped item only over the selected character still', () => {
         const html = render({
-            progression: progression({
-                inventory: { shiba: ['chase-medal'], shooshy: ['shooshy-scarf'] },
-                equipped: { shiba: 'chase-medal', shooshy: null },
-            }),
+            progression: progression({ inventory: { shiba: ['chase-medal'], shooshy: ['shooshy-scarf'] }, equipped: { shiba: 'chase-medal', shooshy: 'shooshy-scarf' } }),
         })
-        expect(cardFor(html, 'Chase')).toContain(`src="${cosmeticUrl('chase-medal')}"`)
-        expect(cardFor(html, 'Chase')).toMatch(/<img[^>]*class="cosmetic-overlay"[^>]*aria-hidden="true"/)
-        expect(cardFor(html, 'Shooshy')).not.toContain('cosmetic-overlay')
+        expect(html).toContain(`src="${cosmeticUrl('chase-medal')}"`)
+        expect(html).toMatch(/<img[^>]*class="cosmetic-overlay"[^>]*aria-hidden="true"/)
         expect(html).not.toContain(cosmeticUrl('shooshy-scarf'))
     })
+})
 
-    it('shows the overlay for Shooshy on the run still when Shooshy is healthy', () => {
-        const html = render({
-            runs: [run('r1', 'shooshy')],
-            progression: progression({ inventory: { shiba: [], shooshy: ['shooshy-ribbon'] }, equipped: { shiba: null, shooshy: 'shooshy-ribbon' } }),
-        })
-        expect(cardFor(html, 'Shooshy')).toContain(`src="${cosmeticUrl('shooshy-ribbon')}"`)
-        expect(cardFor(html, 'Shooshy')).toContain('sprites/shooshy-run.png')
-        expect(cardFor(html, 'Chase')).not.toContain('cosmetic-overlay')
+describe('StatusScreen wallet', () => {
+    it('shows the bones wallet line for Chase, singular and plural', () => {
+        expect(render({ progression: progression({ wallets: { shiba: 1, shooshy: 0 } }) })).toContain('<p>Bones: 1</p>')
+        expect(render({ progression: progression({ wallets: { shiba: 3, shooshy: 0 } }) })).toContain('<p>Bones: 3</p>')
     })
 
-    it('has no Shop button: the shop is reached from home only', () => {
-        const html = render()
-        expect(html).not.toContain('>Shop<')
-        expect(html).toContain('>Back<')
+    it('shows the fish wallet line for Shooshy', () => {
+        const html = render({ character: 'shooshy', progression: progression({ wallets: { shiba: 0, shooshy: 7 } }) })
+        expect(html).toContain('<p>Fish: 7</p>')
+    })
+
+    it('does not show the other wallet', () => {
+        const html = render({ progression: progression({ wallets: { shiba: 3, shooshy: 7 } }) })
+        expect(html).toContain('Bones: 3')
+        expect(html).not.toContain('Fish')
+        expect(html).not.toContain('Fish: 7')
     })
 })
 
-describe('StatusScreen wallets', () => {
-    it('shows each wallet as a read-only line with its currency name', () => {
-        const html = render({ progression: progression({ wallets: { shiba: 3, shooshy: 7 } }) })
-        expect(cardFor(html, 'Chase')).toContain('Bones: 3')
-        expect(cardFor(html, 'Shooshy')).toContain('Fish: 7')
+describe('StatusScreen quest button', () => {
+    const questFor = (character: Character, lastClaimed: string, startDate = '2026-10-01') =>
+        render({
+            character,
+            progression: progression({ startDate, lastClaimedDate: { shiba: lastClaimed, shooshy: lastClaimed } }),
+        })
+
+    it('is on this screen, with the ready name when one unit is pending', () => {
+        const html = questFor('shiba', '2026-10-09')
+        expect(buttonOf(html)).toContain('aria-label="Quest: collect 1 bone"')
+        expect(buttonOf(html)).toContain('aria-disabled="false"')
     })
 
-    it('has no collect button and no pending line', () => {
-        const html = render({ progression: progression({ lastClaimedDate: { shiba: '2026-10-07', shooshy: '2026-10-10' } }) })
-        expect(html).not.toContain('Collect')
-        expect(html).not.toContain('Pending')
-        expect(html).not.toContain('Nothing to collect')
-        expect(html).not.toContain('<button type="button" class="primary"')
+    it('uses the fish name for Shooshy when units are pending', () => {
+        const html = questFor('shooshy', '2026-10-07')
+        expect(buttonOf(html)).toContain('aria-label="Quest: collect 3 fish"')
+    })
+
+    it('shows the claimed state after today is collected', () => {
+        const html = questFor('shiba', '2026-10-10')
+        expect(buttonOf(html)).toContain('aria-label="Quest done today"')
+        expect(buttonOf(html)).toContain('aria-disabled="true"')
+    })
+
+    it('shows the nothing-yet state on the first day', () => {
+        const html = questFor('shiba', '2026-10-10', '2026-10-10')
+        expect(buttonOf(html)).toContain('aria-label="Quest: nothing to collect yet"')
+        expect(buttonOf(html)).toContain('aria-disabled="true"')
+    })
+
+    it('shows the backlog note once', () => {
+        expect(render().match(/Up to 14 days can be collected. Older days are not kept./g)?.length).toBe(1)
     })
 })
