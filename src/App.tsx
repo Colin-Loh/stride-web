@@ -19,8 +19,9 @@ export default function App({ repositories }: { repositories: Repositories }) {
   return <main className="shell">
     {flow.notice && <div className="notice" role="status">{flow.notice}<button type="button" className="link" onClick={flow.dismissNotice}>Dismiss</button></div>}
     {view === 'name' && <NameScreen initialName={name} initialCharacter={preferences.character} initialWeightKg={preferences.weightKg}
-      onContinue={(next, character, weightKg) => { flow.persistName(next, character, weightKg); flow.setView('category') }} />}
-    {view === 'category' && <CategoryScreen name={name} selected={open?.workout.category}
+      storedCharacter={preferences.name ? preferences.character : undefined}
+      onContinue={(next, character, weightKg) => { flow.persistName(next, character, weightKg); flow.setView('home') }} />}
+    {(view === 'home' || view === 'category') && <CategoryScreen name={name} selected={open?.workout.category}
       onChangeName={() => flow.setView('name')} onEditAnswers={flow.editAnswers} onPick={flow.pickCategory} onShowPlan={flow.showPlan}
       onShowStatus={flow.openStatus} />}
     {view === 'status' && flow.progression && <StatusScreen progression={flow.progression} runs={flow.runLog} now={new Date()}

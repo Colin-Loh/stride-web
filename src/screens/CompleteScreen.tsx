@@ -52,7 +52,7 @@ export function CompleteScreen({ name, session, character, weightKg, onAgain }: 
       <span>Avg set speed {formatSpeed(summary.averageKmh)} km/h</span>
       <span>{summary.pausedSeconds > 0 ? `Paused ${formatClock(summary.pausedSeconds)}` : 'No pauses'}</span>
     </p>
-    {summary.kcal === null && weightKg === null ? <p className="muted">Open Change name, character or weight on the workout list to add it.</p> : null}
+    {summary.kcal === null && weightKg === null ? <p className="muted">Open Change name or weight on the workout list to add it.</p> : null}
 
     <details>
       <summary>How are these estimated?</summary>

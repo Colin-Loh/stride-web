@@ -20,8 +20,9 @@ import { recordCompletedRun } from '../progression/reward'
 import { purchase, equip, unequip } from '../cosmetics/shop'
 import type { CosmeticId } from '../cosmetics/catalog'
 import { releaseWakeLock } from '../wakeLock'
+import { startView } from './startView'
 
-type View = 'name' | 'category' | 'baseline' | 'plan' | 'workout' | 'run' | 'complete' | 'status' | 'shop'
+type View = 'name' | 'home' | 'category' | 'baseline' | 'plan' | 'workout' | 'run' | 'complete' | 'status' | 'shop'
 
 /** What the runner was doing when we had to ask for answers first. */
 type Pending = { kind: 'plan' } | { kind: 'workout'; category: PickableWorkoutId }
@@ -74,7 +75,7 @@ export function useAppFlow(repositories: Repositories) {
             setAnswers(savedAnswers[0] ?? null)
             setRunLog(loadedRunLog)
             setSession(resumedWithHealth)
-            setView(!loadedPreferences.name ? 'name' : resumedWithHealth ? (resumedWithHealth.completed ? 'complete' : 'run') : 'category')
+            setView(startView(loadedPreferences.name, resumedWithHealth))
             setNotice(storageNotice())
             setReady(true)
         })

@@ -53,7 +53,7 @@ export function CategoryScreen({
                 ))}
             </div>
             <button type="button" className="link" onClick={onChangeName}>
-                Change name, character or weight
+                Change name or weight
             </button>
             <button type="button" className="link" onClick={onShowStatus}>
                 My status
