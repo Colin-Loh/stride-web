@@ -1,0 +1,6 @@
+2c134bb9d0288d73a40a00d9003559e454e28f1a1a6d059c11deed617742884b  public/cosmetics/run/chase-black-sunglasses-healthy.png
+a5071188e582864af450e082cab6933e80102847fa0fc34c8932b35ea9217623  public/cosmetics/run/chase-black-sunglasses-obese.png
+a65aa032bf759c8f8bcd5fa3646b6e4def107247be41bd1bb84c016e5cb5682a  public/cosmetics/run/chase-sushi-hat-healthy.png
+7b06ab3fbf5480c77582fb0f7ece40c159ebe11f4d536f2f1dbe4671745dc8f5  public/cosmetics/run/chase-sushi-hat-obese.png
+f7daf027f2e608a606b21a383b59d71e7db6874cf38b888d104f9e26db0df41f  docs/art/run-overlays/chase-healthy.png
+5d8dd7d0e6e80ec545abec345057bf9f3e8bb3a51ceb69c230a0d26a2d870707  docs/art/run-overlays/chase-obese.png
