@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Draw Chase's still-frame accessories and their shop icons.
+"""Draw Chase and Shooshy's still-frame accessories and shop icons.
 
-Run from any directory with Pillow installed. Shapes are drawn on a single 4px
-grid and enlarged with nearest-neighbour sampling. PNGs have binary alpha and
-no metadata. The review sheet composites each accessory over the first frame
-of Chase's run sheet at the app's 0.5x still scale.
+Run from any directory with Pillow installed. Shapes use a 4px grid and
+nearest-neighbour sampling. PNGs have binary alpha and no metadata. The
+review sheet composites each accessory over its run sheet's first frame at
+the app's 0.5x still scale.
 """
 from pathlib import Path
 
@@ -13,21 +13,18 @@ from PIL import Image, ImageDraw
 ROOT = Path(__file__).resolve().parents[2]
 OUT = ROOT / "public" / "cosmetics"
 GRID = 4
-SIZE = (296, 222)
-IDS = ("chase-black-sunglasses", "chase-hotdog", "chase-sushi-hat")
+SIZES = {"chase": (296, 222), "shooshy": (236, 196)}
+IDS = ("chase-black-sunglasses", "chase-sushi-hat",
+       "shooshy-black-sunglasses", "shooshy-sushi-hat")
 
 # The outline is sampled from the opaque edge of public/sprites/shiba-run.png,
 # frame zero, at (96, 84): RGB (34, 17, 5). Other colours belong to the items.
 INK = "#221105"
+# Shooshy's near-black edge is RGB (20, 20, 20) in the run sprite.
+SHOOSHY_INK = "#141414"
 GLASS = "#101821"
 GLASS_LIGHT = "#34495a"
 GLINT = "#a5d1d5"
-BUN = "#e5a658"
-BUN_LIGHT = "#f8cb82"
-BUN_DARK = "#ad612f"
-SAUSAGE = "#ab3d30"
-SAUSAGE_LIGHT = "#df6950"
-MUSTARD = "#ffd34b"
 RICE = "#fff1d8"
 RICE_SHADE = "#dccdb1"
 SALMON = "#f28a68"
@@ -61,26 +58,6 @@ def paint(name: str, canvas: Image.Image) -> None:
         box(60, 18, 60, 18, GLINT)
         box(57, 18, 58, 18, INK)
         box(49, 18, 50, 18, GLASS)
-    elif name == "chase-hotdog":
-        # The bun wraps Chase's torso, not his face, legs or fluffy tail.
-        # Its front tip curves upward at the neck. A sausage and mustard
-        # zigzag make the silhouette read as a costume rather than a coat.
-        poly([(24, 22), (40, 21), (48, 23), (52, 26), (53, 30),
-              (50, 34), (47, 37), (36, 40), (23, 39), (18, 36),
-              (16, 32), (18, 27)], INK)
-        poly([(23, 23), (40, 22), (47, 24), (51, 27), (51, 30),
-              (48, 32), (36, 35), (22, 35), (18, 33), (19, 28)], BUN)
-        poly([(24, 24), (38, 23), (45, 24), (49, 26), (47, 28),
-              (36, 27), (21, 28)], BUN_LIGHT)
-        poly([(22, 32), (36, 34), (48, 31), (47, 35), (36, 38),
-              (23, 37), (19, 34)], BUN_DARK)
-        poly([(21, 27), (40, 26), (49, 28), (49, 31), (39, 35),
-              (23, 34), (18, 32), (18, 29)], INK)
-        poly([(21, 28), (40, 27), (48, 29), (47, 31), (38, 34),
-              (23, 33), (19, 31)], SAUSAGE)
-        poly([(22, 28), (39, 28), (46, 29), (43, 30), (22, 30)], SAUSAGE_LIGHT)
-        poly([(21, 30), (25, 29), (29, 31), (34, 29), (38, 31),
-              (43, 29), (47, 30)], MUSTARD)
     elif name == "chase-sushi-hat":
         # Salmon nigiri: an outlined rice mound, salmon with white fat
         # stripes, and a dark nori band. The lower edge sits on his ears.
@@ -105,35 +82,74 @@ def paint(name: str, canvas: Image.Image) -> None:
         raise ValueError(name)
 
 
+def paint_shooshy(name: str, canvas: Image.Image) -> None:
+    """Place Shooshy's accessories on the head of run frame zero."""
+    pen = ImageDraw.Draw(canvas)
+    ink = SHOOSHY_INK
+    if name == "shooshy-black-sunglasses":
+        # Two dark square lenses cover the two yellow eyes; the little arms
+        # terminate on the dark cheek without obscuring the nose.
+        pen.polygon([(40, 20), (43, 19), (46, 19), (47, 20),
+                     (48, 19), (51, 19), (53, 20), (52, 25),
+                     (49, 26), (47, 24), (45, 26), (42, 26),
+                     (40, 24)], fill=ink)
+        pen.rectangle((42, 20, 45, 24), fill=GLASS)
+        pen.rectangle((48, 20, 51, 24), fill=GLASS)
+        pen.rectangle((42, 21, 43, 21), fill=GLASS_LIGHT)
+        pen.rectangle((48, 21, 49, 21), fill=GLASS_LIGHT)
+        pen.point((42, 21), fill=GLINT)
+        pen.point((48, 21), fill=GLINT)
+    elif name == "shooshy-sushi-hat":
+        # A salmon nigiri rests between Shooshy's two pointed ears.
+        pen.polygon([(36, 12), (38, 9), (41, 8), (47, 8),
+                     (50, 10), (51, 13), (49, 17), (38, 17),
+                     (35, 14)], fill=ink)
+        pen.polygon([(37, 12), (39, 10), (42, 9), (47, 9),
+                     (49, 11), (49, 14), (47, 16), (38, 16)], fill=RICE)
+        pen.rectangle((39, 14, 48, 15), fill=RICE_SHADE)
+        pen.polygon([(36, 9), (39, 6), (43, 5), (48, 6),
+                     (51, 8), (50, 12), (47, 13), (39, 12),
+                     (35, 11)], fill=ink)
+        pen.polygon([(37, 9), (40, 7), (43, 6), (48, 7),
+                     (50, 8), (49, 11), (46, 12), (39, 11)], fill=SALMON)
+        pen.polygon([(40, 7), (44, 6), (48, 7), (49, 8),
+                     (44, 8)], fill=SALMON_LIGHT)
+        pen.rectangle((38, 10, 41, 10), fill=SALMON_DARK)
+        pen.rectangle((44, 9, 47, 9), fill=SALMON_LIGHT)
+        pen.rectangle((43, 7, 45, 15), fill=ink)
+        pen.rectangle((44, 8, 44, 14), fill=NORI)
+        pen.point((44, 9), fill=NORI_LIGHT)
+    else:
+        raise ValueError(name)
+
+
 def render(name: str) -> None:
-    # The logical canvas is 224px tall, with two transparent pixels cropped
-    # below Chase's 222px frame. No resize or drawing introduces soft alpha.
-    canvas = Image.new("RGBA", (SIZE[0] // GRID, (SIZE[1] + GRID - 1) // GRID))
-    paint(name, canvas)
+    character = name.split("-", 1)[0]
+    size = SIZES[character]
+    # Chase's logical canvas is 224px tall; the last two pixels are cropped.
+    canvas = Image.new("RGBA", (size[0] // GRID, (size[1] + GRID - 1) // GRID))
+    if character == "shooshy":
+        paint_shooshy(name, canvas)
+    else:
+        paint(name, canvas)
     image = canvas.resize((canvas.width * GRID, canvas.height * GRID), Image.Resampling.NEAREST)
-    image.crop((0, 0, *SIZE)).save(OUT / f"{name}.png", optimize=True)
+    image.crop((0, 0, *size)).save(OUT / f"{name}.png", optimize=True)
 
     # Icons have a separate 12x12 composition, still on the same 4px grid.
     # A thumbnail of a full torso would lose the mustard and nori details.
     icon = Image.new("RGBA", (12, 12))
     pen = ImageDraw.Draw(icon)
-    if name == "chase-black-sunglasses":
-        pen.rectangle((0, 4, 11, 7), fill=INK)
+    ink = SHOOSHY_INK if character == "shooshy" else INK
+    if name.endswith("black-sunglasses"):
+        pen.rectangle((0, 4, 11, 7), fill=ink)
         pen.rectangle((1, 5, 4, 7), fill=GLASS)
         pen.rectangle((7, 5, 10, 7), fill=GLASS)
         pen.point((1, 5), fill=GLINT)
         pen.point((7, 5), fill=GLINT)
         pen.rectangle((5, 4, 6, 4), fill=GLASS_LIGHT)
-    elif name == "chase-hotdog":
-        pen.polygon([(1, 2), (9, 2), (11, 4), (11, 8), (9, 10),
-                     (2, 10), (0, 8), (0, 4)], fill=INK)
-        pen.rectangle((1, 3, 10, 9), fill=BUN)
-        pen.rectangle((2, 3, 9, 4), fill=BUN_LIGHT)
-        pen.rectangle((1, 5, 10, 7), fill=SAUSAGE)
-        pen.line([(2, 6), (4, 5), (6, 6), (8, 5), (9, 6)], fill=MUSTARD)
     else:
         pen.polygon([(1, 4), (3, 2), (9, 2), (11, 4), (11, 9),
-                     (9, 10), (2, 10), (0, 8)], fill=INK)
+                     (9, 10), (2, 10), (0, 8)], fill=ink)
         pen.rectangle((1, 5, 10, 8), fill=RICE)
         pen.rectangle((2, 3, 9, 5), fill=SALMON)
         pen.rectangle((3, 3, 5, 3), fill=SALMON_LIGHT)
@@ -144,19 +160,21 @@ def render(name: str) -> None:
 
 
 def preview() -> None:
-    sheet = Image.new("RGB", (720, 190), "#103124")
+    sheet = Image.new("RGB", (720, 380), "#103124")
     pen = ImageDraw.Draw(sheet)
-    sprite = ROOT / "public" / "sprites" / "shiba-run.png"
-    with Image.open(sprite) as run:
-        still = run.convert("RGBA").crop((0, 0, *SIZE))
     for index, name in enumerate(IDS):
-        x, y = 22 + index * 238, 18
-        frame = still.copy()
+        character = name.split("-", 1)[0]
+        size = SIZES[character]
+        column = index if character == "chase" else index - 2
+        x, y = 22 + column * 238, 18 + (190 if character == "shooshy" else 0)
+        sprite = ROOT / "public" / "sprites" / ("shiba-run.png" if character == "chase" else "shooshy-run.png")
+        with Image.open(sprite) as run:
+            frame = run.convert("RGBA").crop((0, 0, *size))
         with Image.open(OUT / f"{name}.png") as overlay:
             frame.alpha_composite(overlay.convert("RGBA"))
-        stage = Image.new("RGBA", SIZE, "#1a3d2e")
+        stage = Image.new("RGBA", size, "#1a3d2e")
         stage.alpha_composite(frame)
-        half = stage.resize((SIZE[0] // 2, SIZE[1] // 2), Image.Resampling.NEAREST)
+        half = stage.resize((size[0] // 2, size[1] // 2), Image.Resampling.NEAREST)
         sheet.paste(half.convert("RGB"), (x, y))
         with Image.open(OUT / "icons" / f"{name}.png") as icon:
             sheet.paste(icon, (x + 165, y + 34), icon)
