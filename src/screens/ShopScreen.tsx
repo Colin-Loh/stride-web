@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import type { Character } from '../domain/preferences'
 import type { Progression } from '../domain/types'
 import { itemsFor, type Cosmetic, type CosmeticId } from '../cosmetics/catalog'
@@ -129,10 +129,37 @@ function Lamp() {
     )
 }
 
+const FITTING_PANEL_ID = 'shop-fitting-panel'
+
 export function ShopScreen({ character, progression, onBuy, onEquip, onUnequip, onBack }: Props) {
     const count = progression.wallets[character]
     const equippedId = progression.equipped[character]
     const equippedItem = itemsFor(character).find((item) => item.id === equippedId)
+
+    const [fittingOpen, setFittingOpen] = useState(false)
+    const toggleRef = useRef<HTMLButtonElement>(null)
+    const closeRef = useRef<HTMLButtonElement>(null)
+
+    /** Hides the panel and hands focus back to the button that opened it. Nothing is stored. */
+    const closeFitting = useCallback(() => {
+        setFittingOpen(false)
+        toggleRef.current?.focus()
+    }, [])
+
+    // Opening moves focus to the panel's Close button, so keyboard users land inside it.
+    useEffect(() => {
+        if (fittingOpen) closeRef.current?.focus()
+    }, [fittingOpen])
+
+    // Escape closes the panel from anywhere on the page while it is open.
+    useEffect(() => {
+        if (!fittingOpen) return
+        const onKeyDown = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') closeFitting()
+        }
+        document.addEventListener('keydown', onKeyDown)
+        return () => document.removeEventListener('keydown', onKeyDown)
+    }, [fittingOpen, closeFitting])
 
     return (
         <section className="card shop">
@@ -150,10 +177,27 @@ export function ShopScreen({ character, progression, onBuy, onEquip, onUnequip, 
             <div className="shop-strip">
                 <h2>Accessories</h2>
             </div>
-            <section className="shop-fitting" aria-label="Fitting room">
-                <CharacterStill character={character} status="healthy" equipped={equippedId} />
-                <p className="shop-wearing">{equippedItem ? `Wearing: ${equippedItem.name}` : 'Nothing equipped'}</p>
-            </section>
+            <div className="shop-fitting-bar">
+                <button
+                    ref={toggleRef}
+                    type="button"
+                    className="ghost shop-fitting-button"
+                    aria-expanded={fittingOpen}
+                    aria-controls={fittingOpen ? FITTING_PANEL_ID : undefined}
+                    onClick={() => (fittingOpen ? closeFitting() : setFittingOpen(true))}
+                >
+                    Fitting Room
+                </button>
+            </div>
+            {fittingOpen && (
+                <section id={FITTING_PANEL_ID} className="shop-fitting" aria-label="Fitting room">
+                    <CharacterStill character={character} status="healthy" equipped={equippedId} />
+                    <p className="shop-wearing">{equippedItem ? `Wearing: ${equippedItem.name}` : 'Nothing equipped'}</p>
+                    <button ref={closeRef} type="button" className="ghost shop-fitting-close" onClick={closeFitting}>
+                        Close
+                    </button>
+                </section>
+            )}
             <ul className="shop-grid">
                 {itemsFor(character).map((item) => (
                     <ShopItem key={item.id} item={item} progression={progression} onBuy={onBuy} onEquip={onEquip} onUnequip={onUnequip} />
