@@ -92,6 +92,8 @@ export interface RunSession extends Stamped {
     characterId?: Character
     /** The plan session this run was for, or null for a free run. Absent on older runs. */
     planSessionId?: string | null
+    /** The character's health when the run started. Later health changes do not affect it. Absent until set. */
+    healthAtStart?: 'healthy' | 'obese'
 }
 
 /** A finished run, kept for the run log. The id is the RunSession id. */

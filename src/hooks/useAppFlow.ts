@@ -10,7 +10,8 @@ import { runnablePlan } from '../plan/runnable'
 import { generateTrainingPlan, sessionWorkout, withSessionSections } from '../plan/trainingPlan'
 import type { PersonalizedWorkout } from '../plan/types'
 import type { RunProgress } from '../run/engine'
-import { newRunSession } from '../run/session'
+import { newRunSession, withHealthSnapshot } from '../run/session'
+import { deriveHealth } from '../progression/health'
 import { clearStorageNotice, storageNotice, UNSAVED_NOTICE, warn } from '../storage/notice'
 import type { Repositories } from '../storage/repository'
 import type { PickableWorkoutId } from '../workouts'
@@ -57,16 +58,23 @@ export function useAppFlow(repositories: Repositories) {
         let cancelled = false
         void Promise.all([
             repositories.preferences.load(), repositories.plans.list(), repositories.runSessions.list(), repositories.answers.list(),
-        ]).then(([loadedPreferences, plans, runs, savedAnswers]) => {
+            repositories.completedRuns.list(),
+        ]).then(([loadedPreferences, plans, runs, savedAnswers, loadedRunLog]) => {
             if (cancelled) return
             const candidate = runs[0] ?? null
             const resumed = candidate && runnablePlan(candidate.plan) && loadedPreferences.name ? candidate : null
-            sessionRef.current = resumed
+            // A session saved before the health snapshot existed gets today's health, once, and is saved with it.
+            const resumedWithHealth = resumed && resumed.healthAtStart === undefined
+                ? withHealthSnapshot(resumed, deriveHealth(loadedRunLog, new Date())[loadedPreferences.character].status)
+                : resumed
+            if (resumedWithHealth && resumedWithHealth !== resumed) remember(repositories.runSessions.save(resumedWithHealth))
+            sessionRef.current = resumedWithHealth
             setPreferences(loadedPreferences)
             setPlan(plans[0] ?? null)
             setAnswers(savedAnswers[0] ?? null)
-            setSession(resumed)
-            setView(!loadedPreferences.name ? 'name' : resumed ? (resumed.completed ? 'complete' : 'run') : 'category')
+            setRunLog(loadedRunLog)
+            setSession(resumedWithHealth)
+            setView(!loadedPreferences.name ? 'name' : resumedWithHealth ? (resumedWithHealth.completed ? 'complete' : 'run') : 'category')
             setNotice(storageNotice())
             setReady(true)
         })
@@ -101,11 +109,10 @@ export function useAppFlow(repositories: Repositories) {
         if (previous && previous.id !== next.id) remember(repositories.plans.delete(previous.id))
     }
 
-    /** Loads the wallets and run log fresh each time the status screen opens. */
+    /** Loads the wallets fresh each time the status screen opens. The run log is already in memory. */
     function openStatus() {
-        void Promise.all([repositories.progression.load(), repositories.completedRuns.list()]).then(([loaded, runs]) => {
+        void repositories.progression.load().then((loaded) => {
             setProgression(loaded)
-            setRunLog(runs)
             setView('status')
         })
     }
@@ -216,7 +223,7 @@ export function useAppFlow(repositories: Repositories) {
         completing.current = true
         const finished: RunSession = { ...session, completed: true, paused: true, result: { elapsedMs: result.elapsedMs, distanceKm: result.distanceKm } }
         persistSession(finished)
-        remember(recordCompletedRun(repositories, finished).then(() => undefined))
+        remember(recordCompletedRun(repositories, finished).then(() => repositories.completedRuns.list()).then(setRunLog))
         void releaseWakeLock(); stopCue()
         if (!preferences.muted) void playCelebration()
         setView('complete')
@@ -229,7 +236,10 @@ export function useAppFlow(repositories: Repositories) {
 
     function startWorkout() {
         if (!open || !runnablePlan(open.workout)) return
-        completing.current = false; persistSession(newRunSession(open.workout, newId(), new Date(), preferences.character)); setView('run')
+        // The health at this moment is the run's snapshot; later changes to health do not touch it.
+        const health = deriveHealth(runLog, new Date())[preferences.character].status
+        completing.current = false
+        persistSession(newRunSession(open.workout, newId(), new Date(), preferences.character, health)); setView('run')
     }
 
     function toggleMute() {
