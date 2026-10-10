@@ -12,11 +12,10 @@ interface Props {
     progression: Progression
     runs: readonly CompletedRun[]
     now: Date
-    onShop: () => void
     onBack: () => void
 }
 
-export function StatusScreen({ progression, runs, now, onShop, onBack }: Props) {
+export function StatusScreen({ progression, runs, now, onBack }: Props) {
     const health = deriveHealth(runs, now)
     return (
         <section className="card status">
@@ -39,9 +38,6 @@ export function StatusScreen({ progression, runs, now, onShop, onBack }: Props) 
                     )
                 })}
             </div>
-            <button type="button" className="ghost" onClick={onShop}>
-                Shop
-            </button>
             <button type="button" className="link" onClick={onBack}>
                 Back
             </button>

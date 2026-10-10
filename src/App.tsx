@@ -30,10 +30,10 @@ export default function App({ repositories }: { repositories: Repositories }) {
       onShowStatus={flow.openStatus} />}
     {view === 'category' && <HomeNav current="workouts" onPlan={flow.showPlan} onWorkouts={() => flow.setView('category')} onShop={flow.openShop} onStatus={flow.openStatus} />}
     {view === 'status' && flow.progression && <StatusScreen progression={flow.progression} runs={flow.runLog} now={new Date()}
-      onShop={flow.openShop} onBack={() => flow.setView('category')} />}
+      onBack={() => flow.setView('category')} />}
     {view === 'status' && flow.progression && <HomeNav current="status" onPlan={flow.showPlan} onWorkouts={() => flow.setView('category')} onShop={flow.openShop} onStatus={flow.openStatus} />}
-    {view === 'shop' && flow.progression && <ShopScreen progression={flow.progression} onBuy={flow.buyCosmetic}
-      onEquip={flow.equipCosmetic} onUnequip={flow.unequipCosmetic} onBack={flow.openStatus} />}
+    {view === 'shop' && flow.progression && <ShopScreen character={preferences.character} progression={flow.progression}
+      onBuy={flow.buyCosmetic} onEquip={flow.equipCosmetic} onUnequip={flow.unequipCosmetic} onBack={() => flow.setView('home')} />}
     {view === 'baseline' && <BaselineScreen initial={flow.answers?.values ?? {}} submitAction={flow.submitAction} onBack={() => flow.setView('category')} onDone={flow.finishAnswers} />}
     {view === 'plan' && plan && <PlanScreen plan={plan} onOpenSession={flow.openSession} onBack={() => flow.setView('category')} />}
     {view === 'workout' && open && <WorkoutScreen workout={open.workout} onChange={flow.changeWorkout} onStart={flow.startWorkout}

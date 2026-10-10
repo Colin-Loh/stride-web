@@ -26,7 +26,7 @@ const run = (id: string, characterId: CompletedRun['characterId'], planSessionId
 })
 
 const render = (props: Partial<Parameters<typeof StatusScreen>[0]> = {}) =>
-    renderToStaticMarkup(<StatusScreen progression={progression()} runs={[]} now={NOW} onShop={noop} onBack={noop} {...props} />)
+    renderToStaticMarkup(<StatusScreen progression={progression()} runs={[]} now={NOW} onBack={noop} {...props} />)
 
 /** The markup of one character's card, from its heading to the next card. */
 const cardFor = (html: string, name: string) => {
@@ -105,9 +105,10 @@ describe('StatusScreen cosmetic overlay', () => {
         expect(cardFor(html, 'Chase')).not.toContain('cosmetic-overlay')
     })
 
-    it('has a Shop button that opens the shop', () => {
+    it('has no Shop button: the shop is reached from home only', () => {
         const html = render()
-        expect(html).toContain('>Shop<')
+        expect(html).not.toContain('>Shop<')
+        expect(html).toContain('>Back<')
     })
 })
 
