@@ -221,6 +221,78 @@ describe('ShopScreen lays out the item grid as a centred row', () => {
     })
 })
 
+describe('ShopScreen header, sign and section label', () => {
+    it('puts the welcome sign in the h1', () => {
+        const html = render()
+        expect(html).toMatch(/<h1>Welcome to the Stride Shop!<\/h1>/)
+        expect(html.match(/<h1>/g)).toHaveLength(1)
+    })
+
+    it('labels the item section Accessories on a brick strip', () => {
+        const html = render()
+        expect(html).toContain('class="shop-strip"')
+        expect(html).toMatch(/<h2>Accessories<\/h2>/)
+        expect(html.indexOf('Accessories')).toBeLessThan(html.indexOf('class="shop-grid"'))
+    })
+
+    it('draws the header art as decorative SVG with no text', () => {
+        const html = render()
+        const header = html.slice(html.indexOf('class="shop-header"'), html.indexOf('class="shop-strip"'))
+        expect(header).toContain('class="shop-wall"')
+        expect(header).toContain('class="shop-lamp"')
+        expect(header.match(/<svg[^>]*>/g)?.every((svg) => svg.includes('aria-hidden="true"'))).toBe(true)
+    })
+})
+
+describe('ShopScreen currency pill', () => {
+    it('shows only the selected character wallet in the header pill', () => {
+        const html = render({ character: 'shooshy', progression: progression({ wallets: { shiba: 7, shooshy: 3 } }) })
+        const pill = html.slice(html.indexOf('class="shop-balance"'), html.indexOf('</p>', html.indexOf('class="shop-balance"')))
+        expect(pill).toContain('3 fish')
+        expect(pill).not.toContain('7 bones')
+        expect(pill).toContain('<svg')
+        expect(html.match(/class="shop-balance"/g)).toHaveLength(1)
+    })
+
+    it('uses the singular word in the pill for a balance of one', () => {
+        const html = render({ progression: progression({ wallets: { shiba: 1, shooshy: 5 } }) })
+        expect(html).toContain('<span>1 bone</span>')
+    })
+})
+
+describe('ShopScreen item states have distinct classes and text', () => {
+    const cases: [string, string, string][] = [
+        ['equipped', 'shop-card-equipped', 'Equipped'],
+        ['owned', 'shop-card-owned', 'Owned'],
+        ['affordable', 'shop-card-affordable', 'Costs 1 bone'],
+        ['unaffordable', 'shop-card-unaffordable', 'Not enough (3 needed)'],
+    ]
+    const states = {
+        equipped: progression({ wallets: { shiba: 9, shooshy: 0 }, inventory: { shiba: ['chase-bandana'], shooshy: [] }, equipped: { shiba: 'chase-bandana', shooshy: null } }),
+        owned: progression({ wallets: { shiba: 9, shooshy: 0 }, inventory: { shiba: ['chase-bandana'], shooshy: [] } }),
+        affordable: progression({ wallets: { shiba: 1, shooshy: 0 } }),
+        unaffordable: progression({ wallets: { shiba: 2, shooshy: 0 } }),
+    } as const
+
+    it.each(cases)('%s card has class %s and the text %s', (state, className, text) => {
+        const html = render({ progression: states[state as keyof typeof states] })
+        const card = itemFor(html, state === 'unaffordable' ? "Runner's medal" : 'Bandana')
+        expect(card).toContain(className)
+        expect(card).toContain(text)
+    })
+
+    it('gives every state a class no other state uses, read from the rendered card', () => {
+        const rendered = cases.map(([state, , text]) => {
+            const html = render({ progression: states[state as keyof typeof states] })
+            const card = itemFor(html, state === 'unaffordable' ? "Runner's medal" : 'Bandana')
+            return { state, className: card.match(/shop-card-\w+/)?.[0], text: text as string }
+        })
+        expect(new Set(rendered.map((r) => r.className)).size).toBe(4)
+        expect(new Set(rendered.map((r) => r.text)).size).toBe(4)
+        for (const r of rendered) expect(r.className).toBe(`shop-card-${r.state}`)
+    })
+})
+
 describe('cosmetic art urls', () => {
     it('points each item at its own still-frame art', () => {
         for (const item of COSMETICS) {
