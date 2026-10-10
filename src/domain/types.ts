@@ -3,6 +3,7 @@ import type { AnswerValues } from '../plan/questions'
 import type { PersonalBaseline, PersonalizedWorkout, PlanSection } from '../plan/types'
 import type { SpeedChange } from '../run/engine'
 import type { Zone } from '../plan/vdot'
+import type { Character } from './preferences'
 
 /**
  * The stored domain model. Everything here is plain JSON: strings, numbers, booleans, arrays and
@@ -87,4 +88,38 @@ export interface RunSession extends Stamped {
     pauseStartedAt?: number
     completed: boolean
     result?: { elapsedMs: number; distanceKm: number | null }
+    /** The character that ran. Absent on runs saved before progression existed. */
+    characterId?: Character
+    /** The plan session this run was for, or null for a free run. Absent on older runs. */
+    planSessionId?: string | null
+}
+
+/** A finished run, kept for the run log. The id is the RunSession id. */
+export interface CompletedRun extends Stamped {
+    characterId: Character
+    workoutId: WorkoutId
+    planSessionId: string | null
+    /** ISO 8601 date-time the run finished. */
+    completedAt: string
+    elapsedMs: number
+    distanceKm: number | null
+}
+
+/** Per-character values, keyed by character id. */
+export type PerCharacter<T> = Record<Character, T>
+
+/**
+ * The single progression record (id 'progression'): currency, the runs already rewarded and
+ * cosmetic ownership. Dates are local ISO dates (YYYY-MM-DD).
+ */
+export interface Progression extends Stamped {
+    id: 'progression'
+    /** Local date the progression was first created. */
+    startDate: string
+    wallets: PerCharacter<number>
+    lastClaimedDate: PerCharacter<string>
+    /** Ids of CompletedRun records already rewarded. */
+    rewardedRunIds: string[]
+    inventory: PerCharacter<string[]>
+    equipped: PerCharacter<string | null>
 }
