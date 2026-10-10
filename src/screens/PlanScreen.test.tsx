@@ -1,4 +1,3 @@
-import { Children, isValidElement, type ReactElement, type ReactNode } from 'react'
 import { describe, expect, it } from 'vitest'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { PlanScreen } from './PlanScreen'
@@ -7,6 +6,7 @@ import { formatPaceSeconds, roundSpeedUp } from '../plan/convert'
 import { trainingSpeedsKmh, vdotFromRace, ZONES } from '../plan/vdot'
 import type { AnswerValues } from '../plan/questions'
 import { generateTrainingPlan } from '../plan/trainingPlan'
+import { addDays } from '../plan/dates'
 
 const noop = () => { }
 const NOW = new Date(2026, 9, 8)
@@ -47,7 +47,7 @@ describe('week by week', () => {
         const html = render(RACE, new Date(2026, 10, 12))
         expect(html.match(/<li class="week/g)).toHaveLength(12)
         expect(html.match(/aria-current="date"/g)).toHaveLength(1)
-        expect(html).toMatch(/class="week current"[^>]*aria-current="date"><h3>Week 6 /)
+        expect(html).toMatch(/class="week current"[^>]*aria-current="date"><h3><button[^>]*>Week 6 /)
     })
 
     it('shows the current Easy run label even when a saved session has the old name', () => {
@@ -61,21 +61,10 @@ describe('week by week', () => {
         expect(html).not.toContain('<strong>Long run</strong>')
     })
 
-    it('opens the picked session of a week', () => {
+    it('renders the sessions of the expanded week only', () => {
         const plan = generateTrainingPlan({ baseline: derivePersonalBaseline({ ...BASE, ...RACE }), now: NOW })!
-        const opened: string[] = []
-        const buttons: ReactElement<{ onClick?: () => void }>[] = []
-        const collect = (node: ReactNode) => {
-            if (!isValidElement<{ children?: ReactNode; onClick?: () => void }>(node)) return
-            if (node.type === 'button' && node.props.onClick) buttons.push(node as ReactElement<{ onClick?: () => void }>)
-            Children.forEach(node.props.children, collect)
-        }
-        collect(PlanScreen({ plan, today: NOW, onOpenSession: (id) => opened.push(id), onBack: noop }))
-        // The first buttons are the sessions of week 1; the last is "Pick a single session".
-        const sessionButtons = buttons.slice(0, -1)
-        expect(sessionButtons).toHaveLength(plan.weeks.reduce((count, week) => count + week.sessions.length, 0))
-        sessionButtons[2].props.onClick!()
-        expect(opened).toEqual([plan.weeks[0].sessions[2].id])
+        const html = renderToStaticMarkup(<PlanScreen plan={plan} today={NOW} onOpenSession={noop} onBack={noop} />)
+        expect(html.match(/class="choice workout"/g)).toHaveLength(plan.weeks[0].sessions.length)
     })
 
     it('marks the taper weeks before a goal race', () => {
@@ -84,5 +73,46 @@ describe('week by week', () => {
         expect(weeks.map((week) => week.includes('>Taper<'))).toEqual([...Array(9).fill(false), true, true])
         expect(weeks.at(-1)).toContain('Taper')
         expect(render(RACE)).not.toContain('>Taper<')
+    })
+})
+
+describe('collapsible weeks', () => {
+    const planFor = (answers: AnswerValues = RACE) => generateTrainingPlan({ baseline: derivePersonalBaseline({ ...BASE, ...answers }), now: NOW })!
+    const at = (isoDate: string) => new Date(`${isoDate}T12:00:00`)
+    const expandedWeeks = (html: string) => [...html.matchAll(/aria-expanded="true"[^>]*aria-label="Week (\d+),/g)].map((match) => Number(match[1]))
+    const toggleLabels = (html: string) => [...html.matchAll(/aria-label="(Week [^"]*)"/g)].map((match) => match[1])
+
+    it('expands only the current week, and the others keep their headings', () => {
+        const plan = planFor()
+        expect(plan.weeks).toHaveLength(12)
+        const html = render(RACE, at(addDays(plan.startDate, 4 * 7 + 2))) // a day in week 5
+        expect(expandedWeeks(html)).toEqual([5])
+        expect(html.match(/aria-expanded="false"/g)).toHaveLength(11)
+        expect(html.match(/class="week[^"]*is-collapsed"/g)).toHaveLength(11)
+        for (const week of plan.weeks) expect(html).toContain(`Week ${week.number} · ${week.targetKm.toFixed(1)} km`)
+    })
+
+    it('expands week 1 when today is before the plan starts', () => {
+        const plan = planFor()
+        expect(expandedWeeks(render(RACE, at(addDays(plan.startDate, -20))))).toEqual([1])
+    })
+
+    it('expands the last week when today is after the plan ends', () => {
+        const plan = planFor()
+        expect(expandedWeeks(render(RACE, at(addDays(plan.startDate, 12 * 7 + 30))))).toEqual([12])
+    })
+
+    it('gives every toggle an accessible name with the week number and state', () => {
+        const plan = planFor()
+        const labels = toggleLabels(render(RACE, at(addDays(plan.startDate, 4 * 7))))
+        expect(labels).toHaveLength(12)
+        expect(labels[0]).toMatch(/^Week 1, \d+\.\d km, collapsed$/)
+        expect(labels[4]).toMatch(/^Week 5, \d+\.\d km, expanded$/)
+    })
+
+    it('renders session buttons only for the expanded week', () => {
+        const plan = planFor()
+        const html = render(RACE, at(addDays(plan.startDate, 4 * 7)))
+        expect(html.match(/class="choice workout"/g)).toHaveLength(plan.weeks[4].sessions.length)
     })
 })
