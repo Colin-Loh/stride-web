@@ -102,6 +102,7 @@ export function isAnswersRecord(v: unknown): v is Answers {
 
 const CHARACTERS: Character[] = ['shiba', 'shooshy']
 const isCharacter = (v: unknown): v is Character => CHARACTERS.some((c) => c === v)
+const HEALTH_STATUSES: RunSession['healthAtStart'][] = ['healthy', 'obese']
 const nonnegativeInteger = (v: unknown): v is number => Number.isInteger(v) && (v as number) >= 0
 /** A record with one value per character, each passing `check`. */
 const perCharacter = (check: (v: unknown) => boolean) => (v: unknown): boolean =>
@@ -113,6 +114,7 @@ export function isRunSession(v: unknown): v is RunSession {
     if (!isWorkout(run.plan) || run.workoutId !== run.plan.category) return false
     if (run.characterId !== undefined && !isCharacter(run.characterId)) return false
     if (run.planSessionId !== undefined && !nullOr(text)(run.planSessionId)) return false
+    if (run.healthAtStart !== undefined && !HEALTH_STATUSES.some((status) => status === run.healthAtStart)) return false
     if (!nonnegative(run.startedAt) || !nonnegative(run.pausedMs) || typeof run.paused !== 'boolean' || typeof run.completed !== 'boolean') return false
     if (run.pauseStartedAt !== undefined && (!nonnegative(run.pauseStartedAt) || run.pauseStartedAt < run.startedAt)) return false
     if (run.paused && !run.completed && run.startedAt > 0 && run.pauseStartedAt === undefined) return false

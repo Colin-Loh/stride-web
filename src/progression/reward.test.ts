@@ -87,6 +87,18 @@ describe('awardRunReward', () => {
 })
 
 describe('recordCompletedRun', () => {
+    it('keeps an obese-start snapshot through a qualifying completion, and the next run can start healthy', async () => {
+        const repos = createLocalStorageRepositories()
+        const obeseStart = finished(1_500_000, { characterId: 'shiba', id: 'obese-start', healthAtStart: 'obese' })
+        expect((await recordCompletedRun(repos, obeseStart)).awarded).toBe(true)
+        expect((await repos.completedRuns.load('obese-start'))?.characterId).toBe('shiba')
+        // The run log entry has no health field: the snapshot lives on the session only.
+        expect(await repos.runSessions.load('obese-start')).toBeNull()
+        expect((await repos.progression.load()).wallets.shiba).toBe(1)
+        const next = newRunSession(workout, 'next-run', new Date(STAMP), 'shiba', 'healthy')
+        expect(next.healthAtStart).toBe('healthy')
+    })
+
     it('pays Chase for a qualifying run started as Chase and writes the run log', async () => {
         const repos = createLocalStorageRepositories()
         const run = finished(1_500_000, { characterId: 'shiba', id: 'chase-run' })

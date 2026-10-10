@@ -87,6 +87,30 @@ describe('run session additions', () => {
         expect(isRunSession({ ...run(), characterId: null })).toBe(false)
         expect(isRunSession({ ...run(), planSessionId: 7 })).toBe(false)
     })
+
+    it('round-trips the health snapshot through storage and keeps it after a reload', async () => {
+        const first = createLocalStorageRepositories()
+        const started = { ...run(), characterId: 'shiba' as const, healthAtStart: 'obese' as const }
+        await first.runSessions.save(started)
+        const reloaded = await createLocalStorageRepositories().runSessions.list()
+        expect(reloaded).toEqual([started])
+        expect(reloaded[0].healthAtStart).toBe('obese')
+        expect(storageNotice()).toBe('')
+    })
+
+    it('discards a session with an unknown health value and reports it as outdated', async () => {
+        values.set('stride.session', JSON.stringify([{ ...run(), healthAtStart: 'sick' }]))
+        expect(await createLocalStorageRepositories().runSessions.list()).toEqual([])
+        expect(storageNotice()).toContain('outdated')
+        expect(values.has('stride.session')).toBe(false)
+    })
+
+    it('loads a session saved before the field existed with no snapshot', async () => {
+        values.set('stride.session', JSON.stringify([run()]))
+        const [loaded] = await createLocalStorageRepositories().runSessions.list()
+        expect(loaded.healthAtStart).toBeUndefined()
+        expect(storageNotice()).toBe('')
+    })
 })
 
 describe('progression repository', () => {
