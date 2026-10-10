@@ -34,7 +34,7 @@ export function RunScreen({ session, muted, character, onSession, onComplete, on
       <div className="stat"><span className="stat-label">Speed km/h</span><strong className="stat-value">{progress.speed?.toFixed(1) ?? 'By effort'}</strong></div>
     </div>
     <div className="stat-line" role="progressbar" aria-label="Overall section progress" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(progress.overall * 100)}><span style={{ width: `${progress.overall * 100}%` }} /></div>
-    <RunnerSprite character={character} state={running ? 'running' : 'idle'} speedKmh={progress.speed ?? undefined} />
+    <RunnerSprite character={character} state={running ? 'running' : 'idle'} speedKmh={progress.speed ?? undefined} health={session.healthAtStart ?? 'healthy'} />
     <p className="muted">{!session.startedAt ? 'Ready' : session.paused ? 'Paused' : `${formatDurationMs(progress.elapsedMs)} active time`}</p>
     {repLabel && <p className="muted">{repLabel}</p>}
     <label className="progress-label">{current.label} · {formatDurationMs(sectionRemaining)} left</label>

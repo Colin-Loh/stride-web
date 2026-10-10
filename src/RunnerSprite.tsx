@@ -1,8 +1,9 @@
 import type { CSSProperties } from 'react'
-import { CHARACTER_SPRITES } from './sprites'
+import { CHARACTER_SPRITES, OBESE_RUN_SHEETS } from './sprites'
 import { CHARACTER_NAMES, type Character } from './domain/preferences'
 
 export type RunnerState = 'running' | 'idle'
+export type RunnerHealth = 'healthy' | 'obese'
 
 /** The speed at which a sheet's own cycleSeconds applies. */
 const BASE_KMH = 7
@@ -18,6 +19,8 @@ interface Props {
     speedKmh?: number
     /** Overrides the computed cadence outright. */
     cycleSeconds?: number
+    /** Selects the obese run sheet. Healthy is the default. */
+    health?: RunnerHealth
     className?: string
 }
 
@@ -27,9 +30,10 @@ export function RunnerSprite({
     scale = 0.5,
     speedKmh,
     cycleSeconds,
+    health = 'healthy',
     className,
 }: Props) {
-    const sheet = CHARACTER_SPRITES[character]
+    const sheet = health === 'obese' ? OBESE_RUN_SHEETS[character] : CHARACTER_SPRITES[character]
     // Stride frequency scales with speed, so the cycle is inversely proportional.
     const paced = sheet.cycleSeconds * (BASE_KMH / (speedKmh ?? BASE_KMH))
     const duration =
