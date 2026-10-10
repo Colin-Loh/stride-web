@@ -1,4 +1,4 @@
-import type { Answers, RunSession, Stamped, TrainingPlan } from '../domain/types'
+import type { Answers, CompletedRun, Progression, RunSession, Stamped, TrainingPlan } from '../domain/types'
 import type { Preferences } from '../domain/preferences'
 
 /**
@@ -19,6 +19,13 @@ export interface Repository<T extends Stamped> {
 export type PlanRepository = Repository<TrainingPlan>
 export type AnswersRepository = Repository<Answers>
 export type RunSessionRepository = Repository<RunSession>
+export type CompletedRunRepository = Repository<CompletedRun>
+
+/** The single progression record. `load` always returns one: it creates it on first use. */
+export interface ProgressionRepository {
+    load(): Promise<Progression>
+    save(progression: Progression): Promise<void>
+}
 
 export interface PreferencesRepository {
     load(): Promise<Preferences>
@@ -30,5 +37,7 @@ export interface Repositories {
     plans: PlanRepository
     answers: AnswersRepository
     runSessions: RunSessionRepository
+    completedRuns: CompletedRunRepository
+    progression: ProgressionRepository
     preferences: PreferencesRepository
 }

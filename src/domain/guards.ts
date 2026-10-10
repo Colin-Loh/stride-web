@@ -3,7 +3,8 @@ import { ZONES } from '../plan/vdot'
 import { isAnswers as isAnswerValues } from '../plan/questions'
 import type { PersonalBaseline, PersonalizedWorkout, PlanSection } from '../plan/types'
 import { WORKOUT_NAMES } from '../workouts'
-import { SCHEMA_VERSION, type Answers, type PaceSet, type RunSession, type Session, type Stamped, type TrainingPlan, type Week } from './types'
+import type { Character } from './preferences'
+import { SCHEMA_VERSION, type Answers, type CompletedRun, type PaceSet, type Progression, type RunSession, type Session, type Stamped, type TrainingPlan, type Week } from './types'
 
 /**
  * Runtime checks for stored data. Anything that does not pass is discarded, never repaired:
@@ -99,10 +100,19 @@ export function isAnswersRecord(v: unknown): v is Answers {
     return isStamped(v) && isAnswerValues((v as { values?: unknown }).values)
 }
 
+const CHARACTERS: Character[] = ['shiba', 'shooshy']
+const isCharacter = (v: unknown): v is Character => CHARACTERS.some((c) => c === v)
+const nonnegativeInteger = (v: unknown): v is number => Number.isInteger(v) && (v as number) >= 0
+/** A record with one value per character, each passing `check`. */
+const perCharacter = (check: (v: unknown) => boolean) => (v: unknown): boolean =>
+    record(v) && CHARACTERS.every((character) => check(v[character]))
+
 export function isRunSession(v: unknown): v is RunSession {
     if (!isStamped(v)) return false
     const run = v as unknown as Record<string, unknown>
     if (!isWorkout(run.plan) || run.workoutId !== run.plan.category) return false
+    if (run.characterId !== undefined && !isCharacter(run.characterId)) return false
+    if (run.planSessionId !== undefined && !nullOr(text)(run.planSessionId)) return false
     if (!nonnegative(run.startedAt) || !nonnegative(run.pausedMs) || typeof run.paused !== 'boolean' || typeof run.completed !== 'boolean') return false
     if (run.pauseStartedAt !== undefined && (!nonnegative(run.pauseStartedAt) || run.pauseStartedAt < run.startedAt)) return false
     if (run.paused && !run.completed && run.startedAt > 0 && run.pauseStartedAt === undefined) return false
@@ -110,4 +120,19 @@ export function isRunSession(v: unknown): v is RunSession {
         && finite(e.offset) && Math.abs(e.offset) <= MAX_SPEED && (i === 0 || e.atMs >= all[i - 1].atMs))) return false
     return !run.completed || (record(run.result) && nonnegative(run.result.elapsedMs)
         && (run.result.distanceKm === null || nonnegative(run.result.distanceKm)))
+}
+
+export function isCompletedRun(v: unknown): v is CompletedRun {
+    if (!isStamped(v)) return false
+    const run = v as unknown as Record<string, unknown>
+    return isCharacter(run.characterId) && WORKOUT_IDS.includes(String(run.workoutId)) && nullOr(text)(run.planSessionId)
+        && isoDateTime(run.completedAt) && nonnegative(run.elapsedMs) && nullOr(nonnegative)(run.distanceKm)
+}
+
+export function isProgression(v: unknown): v is Progression {
+    if (!isStamped(v) || v.id !== 'progression') return false
+    const progression = v as unknown as Record<string, unknown>
+    return isoDate(progression.startDate) && perCharacter(nonnegativeInteger)(progression.wallets)
+        && perCharacter(isoDate)(progression.lastClaimedDate) && strings(progression.rewardedRunIds)
+        && perCharacter(strings)(progression.inventory) && perCharacter(nullOr(text))(progression.equipped)
 }
