@@ -2,6 +2,7 @@ import { DEFAULT_PREFERENCES, toCharacter, toWeightKg, type Preferences } from '
 import { isAnswersRecord, isCompletedRun, isProgression, isRunSession, isTrainingPlan } from '../domain/guards'
 import { SCHEMA_VERSION, type Answers, type CompletedRun, type Progression, type RunSession, type Stamped, type TrainingPlan } from '../domain/types'
 import { localDateOf } from '../progression/localDate'
+import { normalizeEquipped } from '../cosmetics/shop'
 import { OUTDATED_NOTICE, UNREADABLE_NOTICE, UNSAVED_NOTICE, warn } from './notice'
 import type { AnswersRepository, CompletedRunRepository, PlanRepository, PreferencesRepository, ProgressionRepository, Repositories, Repository, RunSessionRepository } from './repository'
 
@@ -135,7 +136,7 @@ export class LocalStorageProgressionRepository implements ProgressionRepository 
         }
         try {
             const value: unknown = JSON.parse(raw)
-            if (isProgression(value)) return value
+            if (isProgression(value)) return normalizeEquipped(value)
         } catch {
             // Fall through: unparseable text is preserved like any other invalid record.
         }
