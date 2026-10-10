@@ -893,17 +893,40 @@ select {
   color: var(--text-h);
 }
 
-.shop-fitting {
+.shop-fitting-bar {
   width: 100%;
   display: grid;
   justify-items: center;
+  padding-top: 8px;
+}
+
+.shop-fitting-button {
+  min-height: 44px;
+  min-width: 160px;
+}
+
+/* An inline panel, not an overlay, so it never covers the bottom nav. Centred, and capped in width on wide screens. */
+.shop-fitting {
+  width: 100%;
+  max-width: 320px;
+  display: grid;
+  justify-items: center;
   gap: 8px;
-  padding: 16px 0 4px;
+  padding: 16px;
+  border-radius: 16px;
+  border: 1px solid var(--accent-dim);
+  background: #0c241c;
+  box-sizing: border-box;
 }
 
 .shop-wearing {
   margin: 0;
   color: var(--muted);
+}
+
+.shop-fitting-close {
+  min-height: 44px;
+  min-width: 120px;
 }
 
 /* The grid reaches into the card's own 20px padding, so three cards fit a row at 375 px with room for their text. */

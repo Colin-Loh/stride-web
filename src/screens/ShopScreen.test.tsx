@@ -1,5 +1,7 @@
-import { describe, expect, it } from 'vitest'
+// @vitest-environment jsdom
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { renderToStaticMarkup } from 'react-dom/server'
+import { cleanup, fireEvent, render as rtl, screen } from '@testing-library/react'
 import { ShopScreen } from './ShopScreen'
 import { SCHEMA_VERSION, type Progression } from '../domain/types'
 import { cosmeticUrl } from '../cosmetics/art'
@@ -32,12 +34,15 @@ const itemFor = (html: string, name: string) => {
     return html.slice(start, next === -1 ? undefined : next)
 }
 
-/** The markup of the fitting room section. */
-const fittingRoomFor = (html: string) => {
-    const start = html.indexOf('class="shop-fitting"')
-    const end = html.indexOf('class="shop-grid"', start)
-    return html.slice(start, end)
-}
+const interactive = (props: Partial<Parameters<typeof ShopScreen>[0]> = {}) =>
+    rtl(<ShopScreen character="shiba" progression={progression()} onBuy={noop} onEquip={noop} onUnequip={noop} onBack={noop} {...props} />)
+
+const fittingButton = () => screen.getByRole('button', { name: 'Fitting Room' })
+
+afterEach(() => {
+    cleanup()
+    vi.restoreAllMocks()
+})
 
 const cardsIn = (html: string) => html.match(/<li class="shop-card[^"]*"/g) ?? []
 
@@ -157,29 +162,83 @@ describe('ShopScreen card actions', () => {
     })
 })
 
-describe('ShopScreen fitting room', () => {
-    it('shows Nothing equipped and no overlay when nothing is worn', () => {
-        const room = fittingRoomFor(render())
-        expect(room).toContain('Nothing equipped')
-        expect(room).not.toContain('cosmetic-overlay')
+describe('ShopScreen fitting room button and panel', () => {
+    it('renders a Fitting Room button that starts collapsed with no panel', () => {
+        interactive()
+        const button = fittingButton()
+        expect(button.getAttribute('aria-expanded')).toBe('false')
+        expect(screen.queryByRole('region', { name: 'Fitting room' })).toBeNull()
+        expect(screen.queryByText(/Nothing equipped|Wearing:/)).toBeNull()
     })
 
-    it('draws the equipped overlay and names the item when one is worn', () => {
-        const room = fittingRoomFor(
-            render({ progression: progression({ inventory: { shiba: ['chase-medal'], shooshy: [] }, equipped: { shiba: 'chase-medal', shooshy: null } }) }),
-        )
-        expect(room).toContain('Wearing: Runner&#x27;s medal')
-        expect(room).toContain('class="cosmetic-overlay"')
-        expect(room).toContain(cosmeticUrl('chase-medal'))
-        expect(room).not.toContain('Nothing equipped')
+    it('opens the panel on click and shows Nothing equipped with no overlay', () => {
+        const { container } = interactive()
+        fireEvent.click(fittingButton())
+        expect(fittingButton().getAttribute('aria-expanded')).toBe('true')
+        expect(screen.getByRole('region', { name: 'Fitting room' })).toBeTruthy()
+        expect(screen.getByText('Nothing equipped')).toBeTruthy()
+        expect(container.querySelector('.cosmetic-overlay')).toBeNull()
+    })
+
+    it('names the equipped item and draws its overlay when one is worn', () => {
+        const { container } = interactive({
+            progression: progression({ inventory: { shiba: ['chase-medal'], shooshy: [] }, equipped: { shiba: 'chase-medal', shooshy: null } }),
+        })
+        fireEvent.click(fittingButton())
+        expect(screen.getByText("Wearing: Runner's medal")).toBeTruthy()
+        expect(screen.queryByText('Nothing equipped')).toBeNull()
+        expect(container.querySelector('.shop-fitting .cosmetic-overlay')?.getAttribute('src')).toBe(cosmeticUrl('chase-medal'))
     })
 
     it('draws the overlay that matches the equipped id, not another item', () => {
-        const room = fittingRoomFor(
-            render({ progression: progression({ inventory: { shiba: ['chase-medal', 'chase-bandana'], shooshy: [] }, equipped: { shiba: 'chase-bandana', shooshy: null } }) }),
-        )
-        expect(room).toContain(cosmeticUrl('chase-bandana'))
-        expect(room).not.toContain(cosmeticUrl('chase-medal'))
+        const { container } = interactive({
+            progression: progression({ inventory: { shiba: ['chase-medal', 'chase-bandana'], shooshy: [] }, equipped: { shiba: 'chase-bandana', shooshy: null } }),
+        })
+        fireEvent.click(fittingButton())
+        const overlays = [...container.querySelectorAll('.shop-fitting .cosmetic-overlay')].map((img) => img.getAttribute('src'))
+        expect(overlays).toEqual([cosmeticUrl('chase-bandana')])
+    })
+
+    it('closes with the Close button and returns focus to the Fitting Room button', () => {
+        interactive()
+        fireEvent.click(fittingButton())
+        fireEvent.click(screen.getByRole('button', { name: 'Close' }))
+        expect(screen.queryByRole('region', { name: 'Fitting room' })).toBeNull()
+        expect(fittingButton().getAttribute('aria-expanded')).toBe('false')
+        expect(document.activeElement).toBe(fittingButton())
+    })
+
+    it('closes on Escape and returns focus to the Fitting Room button', () => {
+        interactive()
+        fireEvent.click(fittingButton())
+        fireEvent.keyDown(document, { key: 'Escape' })
+        expect(screen.queryByRole('region', { name: 'Fitting room' })).toBeNull()
+        expect(document.activeElement).toBe(fittingButton())
+    })
+
+    it('ignores keys other than Escape while open', () => {
+        interactive()
+        fireEvent.click(fittingButton())
+        fireEvent.keyDown(document, { key: 'Enter' })
+        expect(screen.getByRole('region', { name: 'Fitting room' })).toBeTruthy()
+    })
+
+    it('toggles closed when the Fitting Room button is pressed again', () => {
+        interactive()
+        fireEvent.click(fittingButton())
+        fireEvent.click(fittingButton())
+        expect(screen.queryByRole('region', { name: 'Fitting room' })).toBeNull()
+        expect(fittingButton().getAttribute('aria-expanded')).toBe('false')
+    })
+
+    it('writes nothing to storage when the panel opens or closes', () => {
+        const setItem = vi.spyOn(Storage.prototype, 'setItem')
+        interactive()
+        fireEvent.click(fittingButton())
+        fireEvent.click(screen.getByRole('button', { name: 'Close' }))
+        fireEvent.click(fittingButton())
+        fireEvent.keyDown(document, { key: 'Escape' })
+        expect(setItem).not.toHaveBeenCalled()
     })
 })
 
@@ -203,7 +262,7 @@ describe('ShopScreen grid and accessibility', () => {
     it('labels every button and gives the back action text', () => {
         const html = render({ progression: progression({ wallets: { shiba: 9, shooshy: 9 } }) })
         const buttons = html.match(/<button[^>]*>[^<]*<\/button>/g) ?? []
-        expect(buttons).toHaveLength(4)
+        expect(buttons).toHaveLength(5)
         for (const button of buttons) {
             expect(button).toMatch(/aria-label="|>[^<]+</)
         }
