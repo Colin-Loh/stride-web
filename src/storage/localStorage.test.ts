@@ -194,7 +194,7 @@ describe('preferences', () => {
         expect(storageNotice()).toBe('')
     })
 
-    it('treats an unknown character as Shiba and a profile saved before weights as having none', async () => {
+    it('treats an unknown character as Chase and a profile saved before weights as having none', async () => {
         values.set('stride.profile', JSON.stringify({ name: 'Alex', character: 'dragon' }))
         expect(await new LocalStoragePreferencesRepository().load()).toMatchObject({ character: 'shiba', weightKg: null })
     })

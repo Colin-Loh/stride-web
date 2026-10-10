@@ -7,12 +7,12 @@ describe('toCharacter', () => {
         expect(toCharacter('shiba')).toBe('shiba')
     })
 
-    it('falls back to Shiba for anything else', () => {
+    it('falls back to Chase for anything else', () => {
         expect([undefined, null, 3, '', 'dog'].map(toCharacter)).toEqual(Array(5).fill('shiba'))
     })
 
     it('names Shooshy, never Cat, for the runner', () => {
-        expect(CHARACTER_NAMES).toEqual({ shiba: 'Shiba', shooshy: 'Shooshy' })
+        expect(CHARACTER_NAMES).toEqual({ shiba: 'Chase', shooshy: 'Shooshy' })
     })
 })
 

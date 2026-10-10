@@ -5,9 +5,10 @@ import { NameScreen } from './NameScreen'
 const noop = () => { }
 
 describe('NameScreen', () => {
-    it('offers Shiba and Shooshy, with no Cat', () => {
+    it('offers Chase and Shooshy, with no Cat', () => {
         const html = renderToStaticMarkup(<NameScreen onContinue={noop} />)
-        expect(html).toContain('Shiba')
+        expect(html).toContain('Chase')
+        expect(html).not.toContain('Shiba')
         expect(html).toContain('Shooshy')
         expect(html).not.toMatch(/\bCat\b/)
         expect(html).toContain('aria-label="Shooshy idle"')

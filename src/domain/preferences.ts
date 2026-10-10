@@ -1,7 +1,7 @@
 export type Character = 'shiba' | 'shooshy'
 
 /** What the runner sees for each character. */
-export const CHARACTER_NAMES: Record<Character, string> = { shiba: 'Shiba', shooshy: 'Shooshy' }
+export const CHARACTER_NAMES: Record<Character, string> = { shiba: 'Chase', shooshy: 'Shooshy' }
 
 /** Saves from before the rename stored the second character as 'cat', and older ones as 'girl'. */
 export const toCharacter = (value: unknown): Character => (value === 'shooshy' || value === 'cat' || value === 'girl' ? 'shooshy' : 'shiba')
