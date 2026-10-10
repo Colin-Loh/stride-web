@@ -36,6 +36,7 @@ const render = (props: Partial<Parameters<typeof HomeScreen>[0]> = {}) =>
             onWorkouts={noop}
             onShop={noop}
             onStatus={noop}
+            onCollect={async () => 0}
             {...props}
         />,
     )

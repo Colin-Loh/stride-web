@@ -149,14 +149,17 @@ export function useAppFlow(repositories: Repositories) {
         changeShop((current) => unequip(current, character))
     }
 
-    /** Claims one character's pending income and saves the progression once. Nothing is written when nothing is pending. */
-    function collectIncome(character: Character) {
-        remember(repositories.progression.load().then(async (current) => {
+    /** Claims one character's pending income and saves the progression once. Nothing is written when nothing is pending. Resolves with the number claimed. */
+    function collectIncome(character: Character): Promise<number> {
+        const claim = repositories.progression.load().then(async (current) => {
             const { progression: next, claimed } = claimIncome(current, character, new Date())
-            if (claimed === 0) return
+            if (claimed === 0) return 0
             await repositories.progression.save(next)
             setProgression(next)
-        }))
+            return claimed
+        })
+        remember(claim.then(() => undefined))
+        return claim
     }
 
     function openWorkout(category: PickableWorkoutId, values: AnswerValues) {

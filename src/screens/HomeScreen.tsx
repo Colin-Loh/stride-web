@@ -2,6 +2,8 @@ import type { Character } from '../domain/preferences'
 import type { CompletedRun, Progression } from '../domain/types'
 import { deriveHealth } from '../progression/health'
 import { CharacterStill } from '../components/CharacterStill'
+import { QuestBadge } from '../components/QuestBadge'
+import { CURRENCY } from '../progression/questState'
 
 /** The bottom bar's destinations. Each one is a view the runner can open from here. */
 export type HomeDestination = 'workouts' | 'plan' | 'shop' | 'status'
@@ -17,12 +19,8 @@ interface Props {
     onWorkouts: () => void
     onShop: () => void
     onStatus: () => void
-}
-
-/** The wallet name for each character, singular and plural. Only the selected character's currency is shown. */
-const CURRENCY: Record<Character, { singular: string; plural: string }> = {
-    shiba: { singular: 'bone', plural: 'bones' },
-    shooshy: { singular: 'fish', plural: 'fish' },
+    /** Claims the character's pending daily currency through the quest. Resolves with the number claimed. */
+    onCollect: (character: Character) => Promise<number>
 }
 
 /** Small glyph for each currency, drawn in code. Decorative: the word beside it names it. */
@@ -76,7 +74,7 @@ export function HomeNav({ current, onPlan, onWorkouts, onShop, onStatus }: Pick<
     )
 }
 
-export function HomeScreen({ character, progression, runs, now, current, onPlan, onWorkouts, onShop, onStatus }: Props) {
+export function HomeScreen({ character, progression, runs, now, current, onPlan, onWorkouts, onShop, onStatus, onCollect }: Props) {
     const health = deriveHealth(runs, now)[character]
     const count = progression.wallets[character]
     const currency = CURRENCY[character]
@@ -85,6 +83,7 @@ export function HomeScreen({ character, progression, runs, now, current, onPlan,
         <section className="home" aria-label="Home">
             <div className="home-stage">
                 <CharacterStill character={character} status={health.status} equipped={progression.equipped[character]} />
+                <QuestBadge progression={progression} character={character} now={now} onCollect={onCollect} />
             </div>
             <p className="home-health">{health.label}</p>
             <p className="home-balance">

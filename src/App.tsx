@@ -23,13 +23,14 @@ export default function App({ repositories }: { repositories: Repositories }) {
       storedCharacter={preferences.name ? preferences.character : undefined}
       onContinue={(next, character, weightKg) => { flow.persistName(next, character, weightKg); flow.setView('home') }} />}
     {view === 'home' && flow.progression && <HomeScreen character={preferences.character} progression={flow.progression} runs={flow.runLog} now={new Date()}
-      onPlan={flow.showPlan} onWorkouts={() => flow.setView('category')} onShop={flow.openShop} onStatus={flow.openStatus} />}
+      onPlan={flow.showPlan} onWorkouts={() => flow.setView('category')} onShop={flow.openShop} onStatus={flow.openStatus}
+      onCollect={flow.collectIncome} />}
     {view === 'category' && <CategoryScreen name={name} selected={open?.workout.category}
       onChangeName={() => flow.setView('name')} onEditAnswers={flow.editAnswers} onPick={flow.pickCategory} onShowPlan={flow.showPlan}
       onShowStatus={flow.openStatus} />}
     {view === 'category' && <HomeNav current="workouts" onPlan={flow.showPlan} onWorkouts={() => flow.setView('category')} onShop={flow.openShop} onStatus={flow.openStatus} />}
     {view === 'status' && flow.progression && <StatusScreen progression={flow.progression} runs={flow.runLog} now={new Date()}
-      onCollect={flow.collectIncome} onShop={flow.openShop} onBack={() => flow.setView('category')} />}
+      onShop={flow.openShop} onBack={() => flow.setView('category')} />}
     {view === 'status' && flow.progression && <HomeNav current="status" onPlan={flow.showPlan} onWorkouts={() => flow.setView('category')} onShop={flow.openShop} onStatus={flow.openStatus} />}
     {view === 'shop' && flow.progression && <ShopScreen progression={flow.progression} onBuy={flow.buyCosmetic}
       onEquip={flow.equipCosmetic} onUnequip={flow.unequipCosmetic} onBack={flow.openStatus} />}
