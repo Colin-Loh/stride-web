@@ -7,6 +7,7 @@ interface Props {
     onShowPlan: () => void
     onChangeName: () => void
     onEditAnswers: () => void
+    onShowStatus: () => void
 }
 
 const INTENSITY_LABELS: Record<PickableWorkoutId, string> = {
@@ -23,6 +24,7 @@ export function CategoryScreen({
     onShowPlan,
     onChangeName,
     onEditAnswers,
+    onShowStatus,
 }: Props) {
     return (
         <section className="card">
@@ -52,6 +54,9 @@ export function CategoryScreen({
             </div>
             <button type="button" className="link" onClick={onChangeName}>
                 Change name, character or weight
+            </button>
+            <button type="button" className="link" onClick={onShowStatus}>
+                My status
             </button>
             <button type="button" className="link" onClick={onEditAnswers}>
                 Change my running answers

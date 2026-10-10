@@ -7,6 +7,7 @@ import { PlanScreen } from './screens/PlanScreen'
 import { WorkoutScreen } from './screens/WorkoutScreen'
 import { RunScreen } from './screens/RunScreen'
 import { CompleteScreen } from './screens/CompleteScreen'
+import { StatusScreen } from './screens/StatusScreen'
 
 /** The app depends on repository interfaces only; main.tsx chooses the implementation. */
 export default function App({ repositories }: { repositories: Repositories }) {
@@ -19,7 +20,10 @@ export default function App({ repositories }: { repositories: Repositories }) {
     {view === 'name' && <NameScreen initialName={name} initialCharacter={preferences.character} initialWeightKg={preferences.weightKg}
       onContinue={(next, character, weightKg) => { flow.persistName(next, character, weightKg); flow.setView('category') }} />}
     {view === 'category' && <CategoryScreen name={name} selected={open?.workout.category}
-      onChangeName={() => flow.setView('name')} onEditAnswers={flow.editAnswers} onPick={flow.pickCategory} onShowPlan={flow.showPlan} />}
+      onChangeName={() => flow.setView('name')} onEditAnswers={flow.editAnswers} onPick={flow.pickCategory} onShowPlan={flow.showPlan}
+      onShowStatus={flow.openStatus} />}
+    {view === 'status' && flow.progression && <StatusScreen progression={flow.progression} runs={flow.runLog} now={new Date()}
+      onCollect={flow.collectIncome} onBack={() => flow.setView('category')} />}
     {view === 'baseline' && <BaselineScreen initial={flow.answers?.values ?? {}} submitAction={flow.submitAction} onBack={() => flow.setView('category')} onDone={flow.finishAnswers} />}
     {view === 'plan' && plan && <PlanScreen plan={plan} onOpenSession={flow.openSession} onBack={() => flow.setView('category')} />}
     {view === 'workout' && open && <WorkoutScreen workout={open.workout} onChange={flow.changeWorkout} onStart={flow.startWorkout}

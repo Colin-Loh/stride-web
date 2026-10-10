@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { playCelebration, prepareRunAudio, stopCelebration, stopCue } from '../audio'
 import { DEFAULT_PREFERENCES, type Character, type Preferences } from '../domain/preferences'
-import { SCHEMA_VERSION, type Answers, type RunSession, type TrainingPlan } from '../domain/types'
+import { SCHEMA_VERSION, type Answers, type CompletedRun, type Progression, type RunSession, type TrainingPlan } from '../domain/types'
 import { derivePersonalBaseline } from '../plan/baseline'
 import type { AnswersSubmitAction } from '../plan/copy'
 import { generatePersonalizedWorkout } from '../plan/generate'
@@ -14,10 +14,11 @@ import { newRunSession } from '../run/session'
 import { clearStorageNotice, storageNotice, UNSAVED_NOTICE, warn } from '../storage/notice'
 import type { Repositories } from '../storage/repository'
 import type { PickableWorkoutId } from '../workouts'
+import { claimIncome } from '../progression/income'
 import { recordCompletedRun } from '../progression/reward'
 import { releaseWakeLock } from '../wakeLock'
 
-type View = 'name' | 'category' | 'baseline' | 'plan' | 'workout' | 'run' | 'complete'
+type View = 'name' | 'category' | 'baseline' | 'plan' | 'workout' | 'run' | 'complete' | 'status'
 
 /** What the runner was doing when we had to ask for answers first. */
 type Pending = { kind: 'plan' } | { kind: 'workout'; category: PickableWorkoutId }
@@ -45,6 +46,8 @@ export function useAppFlow(repositories: Repositories) {
     const [view, setView] = useState<View>('name')
     const [open, setOpen] = useState<OpenWorkout | null>(null)
     const [pending, setPending] = useState<Pending | null>(null)
+    const [progression, setProgression] = useState<Progression | null>(null)
+    const [runLog, setRunLog] = useState<CompletedRun[]>([])
     const completing = useRef(false)
     const sessionRef = useRef<RunSession | null>(null)
 
@@ -94,6 +97,25 @@ export function useAppFlow(repositories: Repositories) {
         setPlan(next)
         remember(repositories.plans.save(next))
         if (previous && previous.id !== next.id) remember(repositories.plans.delete(previous.id))
+    }
+
+    /** Loads the wallets and run log fresh each time the status screen opens. */
+    function openStatus() {
+        void Promise.all([repositories.progression.load(), repositories.completedRuns.list()]).then(([loaded, runs]) => {
+            setProgression(loaded)
+            setRunLog(runs)
+            setView('status')
+        })
+    }
+
+    /** Claims one character's pending income and saves the progression once. Nothing is written when nothing is pending. */
+    function collectIncome(character: Character) {
+        remember(repositories.progression.load().then(async (current) => {
+            const { progression: next, claimed } = claimIncome(current, character, new Date())
+            if (claimed === 0) return
+            await repositories.progression.save(next)
+            setProgression(next)
+        }))
     }
 
     function openWorkout(category: PickableWorkoutId, values: AnswerValues) {
@@ -187,6 +209,7 @@ export function useAppFlow(repositories: Repositories) {
     return {
         ready, preferences, plan, session, answers, open, notice, view, setView, pickCategory, showPlan,
         finishAnswers, persistSession, changeWorkout, openSession, startWorkout, handleComplete, quitRun, toggleMute,
+        progression, runLog, openStatus, collectIncome,
         persistName: (name: string, character: Character, weightKg: number | null) => persistPreferences({ ...preferences, name, character, weightKg }),
         dismissNotice: () => { clearStorageNotice(); setNotice('') },
         submitAction: (pending?.kind ?? 'edit') as AnswersSubmitAction,
