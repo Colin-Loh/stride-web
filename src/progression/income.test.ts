@@ -12,7 +12,7 @@ const base = (overrides: Partial<Progression> = {}): Progression => ({
     lastClaimedDate: { shiba: '2026-01-01', shooshy: '2026-01-01' },
     rewardedRunIds: [], grantsApplied: [],
     inventory: { shiba: [], shooshy: [] },
-    equipped: { shiba: null, shooshy: null },
+    equipped: { shiba: { face: null, head: null, body: null }, shooshy: { face: null, head: null, body: null } },
     ...overrides,
 })
 

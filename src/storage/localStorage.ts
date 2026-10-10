@@ -3,7 +3,9 @@ import { isAnswersRecord, isCompletedRun, isProgression, isRunSession, isTrainin
 import { SCHEMA_VERSION, type Answers, type CompletedRun, type Progression, type RunSession, type Stamped, type TrainingPlan } from '../domain/types'
 import { localDateOf } from '../progression/localDate'
 import { STARTING_CURRENCY, TEST_CURRENCY_GRANT_ID } from '../progression/startingCurrency'
-import { normalizeEquipped } from '../cosmetics/shop'
+import { normalizeEquipped, dropUnknownItems } from '../cosmetics/shop'
+import { migrateLegacyAccessories, LEGACY_MIGRATION_ID, toSlotEquipped } from '../cosmetics/legacy'
+import { nothingWorn } from '../cosmetics/catalog'
 import { OUTDATED_NOTICE, UNREADABLE_NOTICE, UNSAVED_NOTICE, warn } from './notice'
 import type { AnswersRepository, CompletedRunRepository, PlanRepository, PreferencesRepository, ProgressionRepository, Repositories, Repository, RunSessionRepository } from './repository'
 
@@ -125,9 +127,9 @@ const newProgression = (now: Date): Progression => {
         wallets: { shiba: STARTING_CURRENCY, shooshy: STARTING_CURRENCY },
         lastClaimedDate: { shiba: startDate, shooshy: startDate },
         rewardedRunIds: [],
-        grantsApplied: [TEST_CURRENCY_GRANT_ID],
+        grantsApplied: [TEST_CURRENCY_GRANT_ID, LEGACY_MIGRATION_ID],
         inventory: { shiba: [], shooshy: [] },
-        equipped: { shiba: null, shooshy: null },
+        equipped: { shiba: nothingWorn(), shooshy: nothingWorn() },
     }
 }
 
@@ -156,9 +158,18 @@ export class LocalStorageProgressionRepository implements ProgressionRepository 
         try {
             const value: unknown = JSON.parse(raw)
             if (isProgression(value)) {
-                const loaded = normalizeEquipped({ ...value, grantsApplied: value.grantsApplied ?? [] })
+                // Order matters: convert the stored shape, refund legacy items once, drop unknown
+                // ids with no refund, clear invalid slots, then add the one-time test currency.
+                const converted: Progression = {
+                    ...value,
+                    grantsApplied: value.grantsApplied ?? [],
+                    equipped: toSlotEquipped(value.equipped),
+                }
+                const migrated = migrateLegacyAccessories(converted, new Date())
+                const loaded = normalizeEquipped(dropUnknownItems(migrated))
                 const granted = withStartingGrant(loaded)
-                if (granted !== loaded) await this.save(granted)
+                // Always saved: a load may have changed the stored shape, not only the values.
+                await this.save(granted)
                 return granted
             }
         } catch {

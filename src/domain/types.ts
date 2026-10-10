@@ -4,6 +4,7 @@ import type { PersonalBaseline, PersonalizedWorkout, PlanSection } from '../plan
 import type { SpeedChange } from '../run/engine'
 import type { Zone } from '../plan/vdot'
 import type { Character } from './preferences'
+import type { WornSlots } from '../cosmetics/catalog'
 
 /**
  * The stored domain model. Everything here is plain JSON: strings, numbers, booleans, arrays and
@@ -125,5 +126,20 @@ export interface Progression extends Stamped {
     /** Ids of one-time grants already applied to this profile. */
     grantsApplied: string[]
     inventory: PerCharacter<string[]>
-    equipped: PerCharacter<string | null>
+    /** The item worn in each slot, per character. Null means the slot is empty. */
+    equipped: PerCharacter<WornSlots>
+}
+
+/**
+ * A progression as read from storage before migration. Saves written before the slot model hold
+ * one id (or null) per character in equipped. Load converts that to the slot shape.
+ */
+export interface StoredEquipped {
+    face?: string | null
+    head?: string | null
+    body?: string | null
+}
+
+export type StoredProgression = Omit<Progression, 'equipped'> & {
+    equipped: PerCharacter<StoredEquipped | string | null>
 }

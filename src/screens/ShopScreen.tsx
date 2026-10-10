@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { Character } from '../domain/preferences'
 import type { Progression } from '../domain/types'
-import { itemsFor, type Cosmetic, type CosmeticId } from '../cosmetics/catalog'
+import { itemsFor, type Cosmetic, type CosmeticId, type Slot } from '../cosmetics/catalog'
 import { canAfford } from '../cosmetics/shop'
 import { CharacterStill } from '../components/CharacterStill'
 import { CurrencyIcon } from '../components/CurrencyIcon'
@@ -22,7 +22,7 @@ interface Props {
     progression: Progression
     onBuy: (itemId: CosmeticId) => void
     onEquip: (itemId: CosmeticId) => void
-    onUnequip: (character: Character) => void
+    onUnequip: (character: Character, slot: Slot) => void
     onBack: () => void
 }
 
@@ -30,7 +30,7 @@ type ItemState = 'equipped' | 'owned' | 'affordable' | 'unaffordable'
 
 /** Which state an item is in. Equipped wins over owned, and owned wins over affordability. */
 function stateOf(progression: Progression, item: Cosmetic): ItemState {
-    if (progression.equipped[item.character] === item.id) return 'equipped'
+    if (progression.equipped[item.character][item.slot] === item.id) return 'equipped'
     if (progression.inventory[item.character].includes(item.id)) return 'owned'
     return canAfford(progression, item.id) ? 'affordable' : 'unaffordable'
 }
@@ -44,7 +44,7 @@ function ShopItem({ item, progression, onBuy, onEquip, onUnequip }: Omit<Props, 
         : state === 'owned' ? `Equip ${name}`
             : state === 'affordable' ? `Buy ${name} for ${cost}`
                 : `Not enough ${CURRENCY[character].plural} for ${name}`
-    const action = state === 'equipped' ? () => onUnequip(character)
+    const action = state === 'equipped' ? () => onUnequip(character, item.slot)
         : state === 'owned' ? () => onEquip(item.id)
             : () => onBuy(item.id)
 
@@ -88,8 +88,7 @@ const FITTING_PANEL_ID = 'shop-fitting-panel'
 
 export function ShopScreen({ character, progression, onBuy, onEquip, onUnequip, onBack }: Props) {
     const count = progression.wallets[character]
-    const equippedId = progression.equipped[character]
-    const equippedItem = itemsFor(character).find((item) => item.id === equippedId)
+    const worn = itemsFor(character).filter((item) => progression.equipped[character][item.slot] === item.id)
 
     const [fittingOpen, setFittingOpen] = useState(false)
     const toggleRef = useRef<HTMLButtonElement>(null)
@@ -150,8 +149,8 @@ export function ShopScreen({ character, progression, onBuy, onEquip, onUnequip, 
             </div>
             {fittingOpen && (
                 <section id={FITTING_PANEL_ID} className="shop-fitting" aria-label="Fitting room">
-                    <CharacterStill character={character} status="healthy" equipped={equippedId} />
-                    <p className="shop-wearing">{equippedItem ? `Wearing: ${equippedItem.name}` : 'Nothing equipped'}</p>
+                    <CharacterStill character={character} status="healthy" equipped={progression.equipped[character]} />
+                    <p className="shop-wearing">{worn.length > 0 ? `Wearing: ${worn.map((item) => item.name).join(', ')}` : 'Nothing equipped'}</p>
                     <button ref={closeRef} type="button" className="ghost shop-fitting-close" onClick={closeFitting}>
                         Close
                     </button>
