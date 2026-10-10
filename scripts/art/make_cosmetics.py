@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Render the six still-frame pixel accessories and their shop icons.
+"""Draw Chase's still-frame accessories and their shop icons.
 
-Run from the repository root: python3 scripts/art/make_cosmetics.py
-Requires Pillow. All shapes use one four-pixel grid, opaque palette colours,
-and nearest-neighbour resizing. Output is deterministic PNG with no metadata.
-Also renders docs/art/cosmetics-preview.png at the app's 0.5 still scale.
+Run from any directory with Pillow installed. Shapes are drawn on a single 4px
+grid and enlarged with nearest-neighbour sampling. PNGs have binary alpha and
+no metadata. The review sheet composites each accessory over the first frame
+of Chase's run sheet at the app's 0.5x still scale.
 """
 from pathlib import Path
 
@@ -13,135 +13,155 @@ from PIL import Image, ImageDraw
 ROOT = Path(__file__).resolve().parents[2]
 OUT = ROOT / "public" / "cosmetics"
 GRID = 4
-INK = "#221710"
-CAT_INK = "#171717"
-RED = "#d63d49"
-RED_DARK = "#922a35"
-RED_LIGHT = "#f27370"
-GOLD = "#e9ac31"
-GOLD_LIGHT = "#ffe382"
-GOLD_DARK = "#9e641d"
-TEAL = "#49c1b7"
-TEAL_DARK = "#237c82"
-TEAL_LIGHT = "#91e5cb"
-BLUE = "#3273cc"
-BLUE_LIGHT = "#78b8f8"
-PINK = "#ed76af"
-PINK_LIGHT = "#ffb1d2"
-PINK_DARK = "#a84479"
-LENS = "#243f57"
-LENS_LIGHT = "#91d4e9"
+SIZE = (296, 222)
+IDS = ("chase-black-sunglasses", "chase-hotdog", "chase-sushi-hat")
+
+# The outline is sampled from the opaque edge of public/sprites/shiba-run.png,
+# frame zero, at (96, 84): RGB (34, 17, 5). Other colours belong to the items.
+INK = "#221105"
+GLASS = "#101821"
+GLASS_LIGHT = "#34495a"
+GLINT = "#a5d1d5"
+BUN = "#e5a658"
+BUN_LIGHT = "#f8cb82"
+BUN_DARK = "#ad612f"
+SAUSAGE = "#ab3d30"
+SAUSAGE_LIGHT = "#df6950"
+MUSTARD = "#ffd34b"
+RICE = "#fff1d8"
+RICE_SHADE = "#dccdb1"
+SALMON = "#f28a68"
+SALMON_LIGHT = "#ffc09b"
+SALMON_DARK = "#c85e48"
+NORI = "#273e36"
+NORI_LIGHT = "#568376"
 
 
-def render(name: str, size: tuple[int, int]) -> None:
-    # Chase's frame is 222px high: render 224px and crop two empty bottom pixels.
-    canvas = Image.new("RGBA", (size[0] // GRID, (size[1] + 3) // GRID))
-    draw = ImageDraw.Draw(canvas)
+def paint(name: str, canvas: Image.Image) -> None:
+    """Use one logical-pixel grid for all item shapes, including their outline."""
+    pen = ImageDraw.Draw(canvas)
 
-    def poly(points: list[tuple[int, int]], fill: str) -> None:
-        draw.polygon(points, fill=fill)
+    def poly(points: list[tuple[int, int]], colour: str) -> None:
+        pen.polygon(points, fill=colour)
 
-    def box(x0: int, y0: int, x1: int, y1: int, fill: str) -> None:
-        draw.rectangle((x0, y0, x1, y1), fill=fill)
+    def box(x0: int, y0: int, x1: int, y1: int, colour: str) -> None:
+        pen.rectangle((x0, y0, x1, y1), fill=colour)
 
-    if name == "chase-bandana":
-        # Fold at the front of the neck, two hanging triangular tails.
-        poly([(44, 23), (48, 22), (51, 24), (53, 28), (50, 30), (46, 29)], INK)
-        poly([(45, 24), (48, 23), (51, 25), (52, 27), (50, 29), (47, 28)], RED)
-        box(46, 24, 49, 24, RED_LIGHT)
-        poly([(49, 29), (52, 28), (55, 33), (52, 32), (51, 35), (49, 35), (49, 32), (47, 33), (46, 31)], INK)
-        poly([(49, 30), (51, 29), (53, 32), (51, 32), (51, 34), (50, 34), (50, 31), (48, 32), (47, 31)], RED_DARK)
-        box(49, 29, 50, 30, RED_LIGHT)
-    elif name == "chase-sunglasses":
-        # A bridge and two squared, slightly tilted aviator lenses across both eyes.
-        poly([(52, 16), (56, 16), (57, 17), (59, 16), (63, 16), (64, 18), (62, 22), (59, 23), (57, 20), (55, 23), (53, 22), (51, 18)], INK)
-        poly([(53, 17), (56, 17), (57, 19), (56, 21), (54, 21), (52, 18)], GOLD)
-        poly([(59, 17), (62, 17), (63, 18), (61, 21), (59, 21), (58, 19)], GOLD)
-        poly([(53, 18), (55, 18), (56, 19), (55, 20), (54, 20)], LENS)
-        poly([(59, 18), (61, 18), (61, 20), (59, 20)], LENS)
-        box(53, 18, 54, 18, LENS_LIGHT)
-        box(59, 18, 60, 18, LENS_LIGHT)
-        box(57, 18, 58, 18, GOLD_LIGHT)
-    elif name == "chase-medal":
-        # Wide neck ribbon with a distinct circular gold medallion.
-        poly([(49, 22), (52, 22), (53, 26), (56, 28), (55, 31), (52, 30), (49, 27), (48, 25)], INK)
-        poly([(49, 23), (51, 23), (52, 27), (54, 29), (53, 30), (50, 27)], BLUE)
-        poly([(52, 23), (53, 25), (55, 28), (54, 29), (52, 27)], RED)
-        box(50, 23, 50, 25, BLUE_LIGHT)
-        poly([(52, 29), (54, 27), (57, 28), (59, 31), (58, 34), (56, 36), (53, 35), (51, 33)], INK)
-        poly([(53, 29), (55, 28), (57, 29), (58, 31), (57, 34), (55, 35), (53, 34), (52, 32)], GOLD)
-        box(54, 29, 55, 29, GOLD_LIGHT)
-        poly([(55, 30), (56, 32), (57, 32), (56, 33), (56, 34), (55, 33), (54, 34), (54, 32)], GOLD_LIGHT)
-        box(52, 31, 52, 32, GOLD_DARK)
-    elif name == "shooshy-ribbon":
-        # Symmetric bow between the ears, with a visible central knot.
-        poly([(40, 12), (44, 14), (45, 13), (48, 12), (49, 13), (49, 17), (46, 17), (44, 16), (41, 17), (40, 16)], CAT_INK)
-        poly([(41, 13), (44, 15), (41, 16)], PINK)
-        poly([(48, 13), (46, 15), (48, 16)], PINK)
-        box(41, 13, 42, 13, PINK_LIGHT)
-        box(47, 13, 48, 13, PINK_LIGHT)
-        box(44, 14, 46, 16, PINK_DARK)
-        box(45, 14, 45, 15, PINK_LIGHT)
-    elif name == "shooshy-scarf":
-        # Collar wraps behind the chin; the dangling end has a squared fringe.
-        poly([(34, 22), (43, 20), (44, 23), (42, 26), (39, 26), (40, 32), (38, 34), (36, 32), (35, 26)], CAT_INK)
-        poly([(35, 23), (42, 21), (43, 23), (41, 25), (36, 25)], TEAL)
-        poly([(37, 25), (40, 25), (39, 31), (38, 33), (36, 31)], TEAL_DARK)
-        box(36, 23, 40, 23, TEAL_LIGHT)
-        box(37, 27, 37, 29, TEAL)
-        box(39, 30, 39, 31, TEAL_LIGHT)
-    elif name == "shooshy-headband":
-        # Thick contrasting sports band over the eyes, from ear to ear.
-        poly([(36, 17), (50, 17), (52, 18), (52, 20), (37, 20), (36, 19)], CAT_INK)
-        box(37, 18, 50, 18, BLUE_LIGHT)
-        box(38, 19, 51, 19, BLUE)
-        box(37, 18, 38, 18, GOLD_LIGHT)
+    if name == "chase-black-sunglasses":
+        # Side view: two squared lenses follow the eye line, with a stepped
+        # bridge and a temple arm disappearing toward the far ear.
+        poly([(49, 17), (52, 16), (56, 16), (58, 17), (60, 16),
+              (64, 16), (67, 18), (66, 21), (64, 23), (60, 23),
+              (58, 21), (56, 23), (52, 23), (50, 21)], INK)
+        box(51, 17, 56, 21, GLASS)
+        box(59, 17, 64, 21, GLASS)
+        box(52, 18, 54, 18, GLASS_LIGHT)
+        box(60, 18, 62, 18, GLASS_LIGHT)
+        box(52, 18, 52, 18, GLINT)
+        box(60, 18, 60, 18, GLINT)
+        box(57, 18, 58, 18, INK)
+        box(49, 18, 50, 18, GLASS)
+    elif name == "chase-hotdog":
+        # The bun wraps Chase's torso, not his face, legs or fluffy tail.
+        # Its front tip curves upward at the neck. A sausage and mustard
+        # zigzag make the silhouette read as a costume rather than a coat.
+        poly([(24, 22), (40, 21), (48, 23), (52, 26), (53, 30),
+              (50, 34), (47, 37), (36, 40), (23, 39), (18, 36),
+              (16, 32), (18, 27)], INK)
+        poly([(23, 23), (40, 22), (47, 24), (51, 27), (51, 30),
+              (48, 32), (36, 35), (22, 35), (18, 33), (19, 28)], BUN)
+        poly([(24, 24), (38, 23), (45, 24), (49, 26), (47, 28),
+              (36, 27), (21, 28)], BUN_LIGHT)
+        poly([(22, 32), (36, 34), (48, 31), (47, 35), (36, 38),
+              (23, 37), (19, 34)], BUN_DARK)
+        poly([(21, 27), (40, 26), (49, 28), (49, 31), (39, 35),
+              (23, 34), (18, 32), (18, 29)], INK)
+        poly([(21, 28), (40, 27), (48, 29), (47, 31), (38, 34),
+              (23, 33), (19, 31)], SAUSAGE)
+        poly([(22, 28), (39, 28), (46, 29), (43, 30), (22, 30)], SAUSAGE_LIGHT)
+        poly([(21, 30), (25, 29), (29, 31), (34, 29), (38, 31),
+              (43, 29), (47, 30)], MUSTARD)
+    elif name == "chase-sushi-hat":
+        # Salmon nigiri: an outlined rice mound, salmon with white fat
+        # stripes, and a dark nori band. The lower edge sits on his ears.
+        poly([(44, 7), (47, 5), (58, 5), (62, 7), (63, 11),
+              (60, 14), (48, 14), (43, 11)], INK)
+        poly([(45, 8), (49, 6), (58, 6), (61, 8), (61, 11),
+              (58, 13), (48, 13), (45, 11)], RICE)
+        box(47, 11, 59, 12, RICE_SHADE)
+        poly([(46, 5), (48, 2), (54, 1), (60, 2), (62, 4),
+              (61, 8), (57, 9), (49, 8), (45, 7)], INK)
+        poly([(47, 5), (49, 3), (54, 2), (59, 3), (61, 4),
+              (60, 7), (56, 8), (49, 7), (46, 6)], SALMON)
+        poly([(49, 3), (54, 2), (59, 3), (60, 4), (53, 4)], SALMON_LIGHT)
+        box(49, 5, 52, 5, SALMON_LIGHT)
+        box(55, 6, 58, 6, SALMON_LIGHT)
+        box(47, 7, 50, 7, SALMON_DARK)
+        poly([(53, 3), (56, 3), (56, 12), (54, 13), (52, 12),
+              (52, 5)], INK)
+        box(53, 4, 55, 11, NORI)
+        box(53, 5, 53, 8, NORI_LIGHT)
     else:
         raise ValueError(name)
 
-    art = canvas.resize((canvas.width * GRID, canvas.height * GRID), Image.Resampling.NEAREST)
-    art = art.crop((0, 0, *size))
-    art.save(OUT / f"{name}.png", optimize=True)
 
-    bounds = canvas.getbbox()
-    assert bounds is not None
-    item = canvas.crop(bounds)
-    # The shop icon shares the same four-pixel grid and keeps a clear margin.
-    item.thumbnail((10, 10), Image.Resampling.NEAREST)
+def render(name: str) -> None:
+    # The logical canvas is 224px tall, with two transparent pixels cropped
+    # below Chase's 222px frame. No resize or drawing introduces soft alpha.
+    canvas = Image.new("RGBA", (SIZE[0] // GRID, (SIZE[1] + GRID - 1) // GRID))
+    paint(name, canvas)
+    image = canvas.resize((canvas.width * GRID, canvas.height * GRID), Image.Resampling.NEAREST)
+    image.crop((0, 0, *SIZE)).save(OUT / f"{name}.png", optimize=True)
+
+    # Icons have a separate 12x12 composition, still on the same 4px grid.
+    # A thumbnail of a full torso would lose the mustard and nori details.
     icon = Image.new("RGBA", (12, 12))
-    icon.alpha_composite(item, ((12 - item.width) // 2, (12 - item.height) // 2))
+    pen = ImageDraw.Draw(icon)
+    if name == "chase-black-sunglasses":
+        pen.rectangle((0, 4, 11, 7), fill=INK)
+        pen.rectangle((1, 5, 4, 7), fill=GLASS)
+        pen.rectangle((7, 5, 10, 7), fill=GLASS)
+        pen.point((1, 5), fill=GLINT)
+        pen.point((7, 5), fill=GLINT)
+        pen.rectangle((5, 4, 6, 4), fill=GLASS_LIGHT)
+    elif name == "chase-hotdog":
+        pen.polygon([(1, 2), (9, 2), (11, 4), (11, 8), (9, 10),
+                     (2, 10), (0, 8), (0, 4)], fill=INK)
+        pen.rectangle((1, 3, 10, 9), fill=BUN)
+        pen.rectangle((2, 3, 9, 4), fill=BUN_LIGHT)
+        pen.rectangle((1, 5, 10, 7), fill=SAUSAGE)
+        pen.line([(2, 6), (4, 5), (6, 6), (8, 5), (9, 6)], fill=MUSTARD)
+    else:
+        pen.polygon([(1, 4), (3, 2), (9, 2), (11, 4), (11, 9),
+                     (9, 10), (2, 10), (0, 8)], fill=INK)
+        pen.rectangle((1, 5, 10, 8), fill=RICE)
+        pen.rectangle((2, 3, 9, 5), fill=SALMON)
+        pen.rectangle((3, 3, 5, 3), fill=SALMON_LIGHT)
+        pen.rectangle((5, 3, 6, 9), fill=NORI)
     icon.resize((48, 48), Image.Resampling.NEAREST).save(
         OUT / "icons" / f"{name}.png", optimize=True
     )
 
 
 def preview() -> None:
-    """A review sheet showing all items on frame zero at real app scale."""
-    from PIL import ImageDraw
-
-    sheet = Image.new("RGB", (720, 520), "#103124")
+    sheet = Image.new("RGB", (720, 190), "#103124")
     pen = ImageDraw.Draw(sheet)
-    ids = (
-        "chase-bandana", "chase-sunglasses", "chase-medal",
-        "shooshy-ribbon", "shooshy-scarf", "shooshy-headband",
-    )
-    for index, name in enumerate(ids):
-        x, y = 22 + (index % 3) * 238, 22 + (index // 3) * 240
-        is_chase = index < 3
-        width, height = (296, 222) if is_chase else (236, 196)
-        sprite = ROOT / "public" / "sprites" / (
-            "shiba-run.png" if is_chase else "shooshy-run.png"
-        )
-        frame = Image.open(sprite).convert("RGBA").crop((0, 0, width, height))
-        frame.alpha_composite(Image.open(OUT / f"{name}.png").convert("RGBA"))
-        stage = Image.new("RGBA", (width, height), "#1a3d2e")
+    sprite = ROOT / "public" / "sprites" / "shiba-run.png"
+    with Image.open(sprite) as run:
+        still = run.convert("RGBA").crop((0, 0, *SIZE))
+    for index, name in enumerate(IDS):
+        x, y = 22 + index * 238, 18
+        frame = still.copy()
+        with Image.open(OUT / f"{name}.png") as overlay:
+            frame.alpha_composite(overlay.convert("RGBA"))
+        stage = Image.new("RGBA", SIZE, "#1a3d2e")
         stage.alpha_composite(frame)
-        still = stage.resize((width // 2, height // 2), Image.Resampling.NEAREST)
-        sheet.paste(still.convert("RGB"), (x, y))
-        icon = Image.open(OUT / "icons" / f"{name}.png").convert("RGBA")
-        sheet.paste(icon, (x + 165, y + 34), icon)
-        pen.text((x, y + 125), name, fill="#ffffff")
-        pen.text((x, y + 143), "0.5x still    48px icon", fill="#b7d9bd")
+        half = stage.resize((SIZE[0] // 2, SIZE[1] // 2), Image.Resampling.NEAREST)
+        sheet.paste(half.convert("RGB"), (x, y))
+        with Image.open(OUT / "icons" / f"{name}.png") as icon:
+            sheet.paste(icon, (x + 165, y + 34), icon)
+        pen.text((x, y + 116), name, fill="#ffffff")
+        pen.text((x, y + 134), "0.5x still    48px icon", fill="#b7d9bd")
     target = ROOT / "docs" / "art" / "cosmetics-preview.png"
     target.parent.mkdir(parents=True, exist_ok=True)
     sheet.save(target, optimize=True)
@@ -149,10 +169,8 @@ def preview() -> None:
 
 def main() -> None:
     (OUT / "icons").mkdir(parents=True, exist_ok=True)
-    for name in ("chase-bandana", "chase-sunglasses", "chase-medal"):
-        render(name, (296, 222))
-    for name in ("shooshy-ribbon", "shooshy-scarf", "shooshy-headband"):
-        render(name, (236, 196))
+    for name in IDS:
+        render(name)
     preview()
 
 
