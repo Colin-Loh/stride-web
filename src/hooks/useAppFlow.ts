@@ -16,9 +16,11 @@ import type { Repositories } from '../storage/repository'
 import type { PickableWorkoutId } from '../workouts'
 import { claimIncome } from '../progression/income'
 import { recordCompletedRun } from '../progression/reward'
+import { purchase, equip, unequip } from '../cosmetics/shop'
+import type { CosmeticId } from '../cosmetics/catalog'
 import { releaseWakeLock } from '../wakeLock'
 
-type View = 'name' | 'category' | 'baseline' | 'plan' | 'workout' | 'run' | 'complete' | 'status'
+type View = 'name' | 'category' | 'baseline' | 'plan' | 'workout' | 'run' | 'complete' | 'status' | 'shop'
 
 /** What the runner was doing when we had to ask for answers first. */
 type Pending = { kind: 'plan' } | { kind: 'workout'; category: PickableWorkoutId }
@@ -106,6 +108,36 @@ export function useAppFlow(repositories: Repositories) {
             setRunLog(runs)
             setView('status')
         })
+    }
+
+    function openShop() {
+        void repositories.progression.load().then((loaded) => {
+            setProgression(loaded)
+            setView('shop')
+        })
+    }
+
+    /** Reads the saved progression, applies one shop rule to it, and saves only when the rule changed something. */
+    function changeShop(rule: (current: Progression) => Progression) {
+        remember(repositories.progression.load().then(async (current) => {
+            const next = rule(current)
+            if (next === current) return
+            await repositories.progression.save(next)
+            setProgression(next)
+        }))
+    }
+
+    /** Each shop action is one rule applied to the saved progression. A refused rule returns the same object, so nothing is written. */
+    function buyCosmetic(itemId: CosmeticId) {
+        changeShop((current) => { const result = purchase(current, itemId); return result.ok ? result.progression : current })
+    }
+
+    function equipCosmetic(itemId: CosmeticId) {
+        changeShop((current) => { const result = equip(current, itemId); return result.ok ? result.progression : current })
+    }
+
+    function unequipCosmetic(character: Character) {
+        changeShop((current) => unequip(current, character))
     }
 
     /** Claims one character's pending income and saves the progression once. Nothing is written when nothing is pending. */
@@ -209,7 +241,7 @@ export function useAppFlow(repositories: Repositories) {
     return {
         ready, preferences, plan, session, answers, open, notice, view, setView, pickCategory, showPlan,
         finishAnswers, persistSession, changeWorkout, openSession, startWorkout, handleComplete, quitRun, toggleMute,
-        progression, runLog, openStatus, collectIncome,
+        progression, runLog, openStatus, collectIncome, openShop, buyCosmetic, equipCosmetic, unequipCosmetic,
         persistName: (name: string, character: Character, weightKg: number | null) => persistPreferences({ ...preferences, name, character, weightKg }),
         dismissNotice: () => { clearStorageNotice(); setNotice('') },
         submitAction: (pending?.kind ?? 'edit') as AnswersSubmitAction,
