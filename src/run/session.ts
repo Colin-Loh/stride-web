@@ -1,3 +1,4 @@
+import type { Character } from '../domain/preferences'
 import { SCHEMA_VERSION, type RunSession } from '../domain/types'
 import type { PersonalizedWorkout } from '../plan/types'
 
@@ -9,10 +10,12 @@ export function elapsedMs(session: RunSession, now = Date.now()): number {
     return Math.max(0, until - session.startedAt - session.pausedMs)
 }
 
-export function newRunSession(workout: PersonalizedWorkout, id: string, now = new Date()): RunSession {
+/** The character is fixed at start: a later character switch does not change who gets the reward. */
+export function newRunSession(workout: PersonalizedWorkout, id: string, now = new Date(), characterId?: Character): RunSession {
     const stamp = now.toISOString()
     return {
         id, schemaVersion: SCHEMA_VERSION, createdAt: stamp, updatedAt: stamp,
         workoutId: workout.category, plan: workout, speedChanges: [], startedAt: 0, pausedMs: 0, paused: false, completed: false,
+        ...(characterId ? { characterId } : {}),
     }
 }
