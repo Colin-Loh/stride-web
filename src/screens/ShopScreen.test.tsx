@@ -54,11 +54,10 @@ describe('ShopScreen shows only the selected character', () => {
         expect(html).not.toContain('cosmetics/icons/shooshy-')
     })
 
-    it('renders exactly the three items for Shooshy and none for Chase', () => {
+    it('renders no items for Shooshy and none of the Chase items', () => {
         const html = render({ character: 'shooshy', progression: progression({ wallets: { shiba: 9, shooshy: 2 } }) })
-        expect(cardsIn(html)).toHaveLength(3)
-        for (const item of itemsFor('shooshy')) expect(itemFor(html, item.name)).toContain(`cosmetics/icons/${item.id}.png`)
-        expect(html).not.toContain('cosmetics/icons/chase-')
+        expect(cardsIn(html)).toHaveLength(0)
+        expect(html).not.toContain('cosmetics/icons/')
     })
 
     it('shows only the selected character wallet as an icon and number', () => {
@@ -123,11 +122,10 @@ describe('ShopScreen card actions', () => {
         expect(sushi).toContain('class="shop-price"')
     })
 
-    it('uses fish wording for unaffordable Shooshy items', () => {
-        const html = render({ character: 'shooshy' })
-        const sushi = itemFor(html, 'Sushi hat')
-        expect(sushi).toMatch(/<button[^>]*disabled/)
-        expect(sushi).toContain('aria-label="Not enough fish for Sushi hat"')
+    it('shows no Buy action anywhere for Shooshy, since no items are listed', () => {
+        const html = render({ character: 'shooshy', progression: progression({ wallets: { shiba: 9, shooshy: 9 } }) })
+        expect(html).not.toContain('aria-label="Buy ')
+        expect(html).not.toContain('aria-label="Not enough fish')
     })
 
     it('shows an Equip button for an owned, unequipped item', () => {

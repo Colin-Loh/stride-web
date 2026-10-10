@@ -3,8 +3,8 @@ import type { PerCharacter, Progression, StoredEquipped, StoredProgression } fro
 import { CHARACTERS, nothingWorn, SLOTS, type WornSlots } from './catalog'
 
 /**
- * The six accessories that were removed from the shop. This file is the only place their ids
- * appear. They are used by the one-time refund migration and nowhere else.
+ * The six accessories no longer sold in the shop. This file is the only place their ids appear.
+ * They are used by the one-time refund migration and nowhere else.
  */
 
 /** Grant marker for the one-time refund. Once it is in grantsApplied, the refund never runs again. */

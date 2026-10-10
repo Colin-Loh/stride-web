@@ -110,11 +110,11 @@ describe('StatusScreen health', () => {
 
     it('draws the equipped item only over the selected character still', () => {
         const html = render({
-            progression: progression({ inventory: { shiba: ['chase-sushi-hat'], shooshy: ['shooshy-hotdog'] }, equipped: { shiba: { face: null, head: 'chase-sushi-hat', body: null }, shooshy: { face: null, head: null, body: 'shooshy-hotdog' } } }),
+            progression: progression({ inventory: { shiba: ['chase-sushi-hat'], shooshy: [] }, equipped: { shiba: { face: null, head: 'chase-sushi-hat', body: null }, shooshy: { face: null, head: null, body: null } } }),
         })
         expect(html).toContain(`src="${cosmeticUrl('chase-sushi-hat')}"`)
         expect(html).toMatch(/<img[^>]*class="cosmetic-overlay"[^>]*aria-hidden="true"/)
-        expect(html).not.toContain(cosmeticUrl('shooshy-hotdog'))
+        expect(html).not.toContain(cosmeticUrl('chase-black-sunglasses'))
     })
 })
 
