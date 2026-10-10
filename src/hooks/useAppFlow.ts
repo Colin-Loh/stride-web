@@ -20,8 +20,9 @@ import { recordCompletedRun } from '../progression/reward'
 import { purchase, equip, unequip } from '../cosmetics/shop'
 import type { CosmeticId } from '../cosmetics/catalog'
 import { releaseWakeLock } from '../wakeLock'
+import { startView } from './startView'
 
-type View = 'name' | 'category' | 'baseline' | 'plan' | 'workout' | 'run' | 'complete' | 'status' | 'shop'
+type View = 'name' | 'home' | 'category' | 'baseline' | 'plan' | 'workout' | 'run' | 'complete' | 'status' | 'shop'
 
 /** What the runner was doing when we had to ask for answers first. */
 type Pending = { kind: 'plan' } | { kind: 'workout'; category: PickableWorkoutId }
@@ -58,8 +59,8 @@ export function useAppFlow(repositories: Repositories) {
         let cancelled = false
         void Promise.all([
             repositories.preferences.load(), repositories.plans.list(), repositories.runSessions.list(), repositories.answers.list(),
-            repositories.completedRuns.list(),
-        ]).then(([loadedPreferences, plans, runs, savedAnswers, loadedRunLog]) => {
+            repositories.completedRuns.list(), repositories.progression.load(),
+        ]).then(([loadedPreferences, plans, runs, savedAnswers, loadedRunLog, loadedProgression]) => {
             if (cancelled) return
             const candidate = runs[0] ?? null
             const resumed = candidate && runnablePlan(candidate.plan) && loadedPreferences.name ? candidate : null
@@ -73,8 +74,9 @@ export function useAppFlow(repositories: Repositories) {
             setPlan(plans[0] ?? null)
             setAnswers(savedAnswers[0] ?? null)
             setRunLog(loadedRunLog)
+            setProgression(loadedProgression)
             setSession(resumedWithHealth)
-            setView(!loadedPreferences.name ? 'name' : resumedWithHealth ? (resumedWithHealth.completed ? 'complete' : 'run') : 'category')
+            setView(startView(loadedPreferences.name, resumedWithHealth))
             setNotice(storageNotice())
             setReady(true)
         })
@@ -147,14 +149,17 @@ export function useAppFlow(repositories: Repositories) {
         changeShop((current) => unequip(current, character))
     }
 
-    /** Claims one character's pending income and saves the progression once. Nothing is written when nothing is pending. */
-    function collectIncome(character: Character) {
-        remember(repositories.progression.load().then(async (current) => {
+    /** Claims one character's pending income and saves the progression once. Nothing is written when nothing is pending. Resolves with the number claimed. */
+    function collectIncome(character: Character): Promise<number> {
+        const claim = repositories.progression.load().then(async (current) => {
             const { progression: next, claimed } = claimIncome(current, character, new Date())
-            if (claimed === 0) return
+            if (claimed === 0) return 0
             await repositories.progression.save(next)
             setProgression(next)
-        }))
+            return claimed
+        })
+        remember(claim.then(() => undefined))
+        return claim
     }
 
     function openWorkout(category: PickableWorkoutId, values: AnswerValues) {
@@ -223,7 +228,7 @@ export function useAppFlow(repositories: Repositories) {
         completing.current = true
         const finished: RunSession = { ...session, completed: true, paused: true, result: { elapsedMs: result.elapsedMs, distanceKm: result.distanceKm } }
         persistSession(finished)
-        remember(recordCompletedRun(repositories, finished).then(() => repositories.completedRuns.list()).then(setRunLog))
+        remember(recordCompletedRun(repositories, finished).then(() => Promise.all([repositories.completedRuns.list(), repositories.progression.load()])).then(([runs, loaded]) => { setRunLog(runs); setProgression(loaded) }))
         void releaseWakeLock(); stopCue()
         if (!preferences.muted) void playCelebration()
         setView('complete')

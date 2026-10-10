@@ -26,7 +26,7 @@ const run = (id: string, characterId: CompletedRun['characterId'], planSessionId
 })
 
 const render = (props: Partial<Parameters<typeof StatusScreen>[0]> = {}) =>
-    renderToStaticMarkup(<StatusScreen progression={progression()} runs={[]} now={NOW} onCollect={noop} onShop={noop} onBack={noop} {...props} />)
+    renderToStaticMarkup(<StatusScreen progression={progression()} runs={[]} now={NOW} onShop={noop} onBack={noop} {...props} />)
 
 /** The markup of one character's card, from its heading to the next card. */
 const cardFor = (html: string, name: string) => {
@@ -111,25 +111,18 @@ describe('StatusScreen cosmetic overlay', () => {
     })
 })
 
-describe('StatusScreen wallets and collect', () => {
-    it('labels Chase wallet as bones and Shooshy wallet as fish', () => {
+describe('StatusScreen wallets', () => {
+    it('shows each wallet as a read-only line with its currency name', () => {
         const html = render({ progression: progression({ wallets: { shiba: 3, shooshy: 7 } }) })
         expect(cardFor(html, 'Chase')).toContain('Bones: 3')
         expect(cardFor(html, 'Shooshy')).toContain('Fish: 7')
     })
 
-    it('disables the button and labels it when nothing is pending', () => {
-        const html = render()
-        expect(html).toContain('Nothing to collect today')
-        expect(html.match(/<button[^>]*disabled[^>]*>/g)?.length).toBe(2)
-    })
-
-    it('enables Collect N for a character with pending income', () => {
-        const html = render({
-            progression: progression({ lastClaimedDate: { shiba: '2026-10-07', shooshy: '2026-10-10' } }),
-        })
-        expect(cardFor(html, 'Chase')).toContain('Collect 3')
-        expect(cardFor(html, 'Chase')).not.toMatch(/<button[^>]*disabled/)
-        expect(cardFor(html, 'Shooshy')).toContain('Nothing to collect today')
+    it('has no collect button and no pending line', () => {
+        const html = render({ progression: progression({ lastClaimedDate: { shiba: '2026-10-07', shooshy: '2026-10-10' } }) })
+        expect(html).not.toContain('Collect')
+        expect(html).not.toContain('Pending')
+        expect(html).not.toContain('Nothing to collect')
+        expect(html).not.toContain('<button type="button" class="primary"')
     })
 })

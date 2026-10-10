@@ -766,3 +766,152 @@ select {
 .shop-item p {
   margin: 0;
 }
+
+/* Home screen */
+.home {
+  display: grid;
+  gap: 16px;
+  justify-items: center;
+  text-align: center;
+}
+
+.home-stage {
+  width: 100%;
+  max-width: 100%;
+  display: flex;
+  justify-content: center;
+  padding: 24px 0 8px;
+}
+
+.home-health {
+  margin: 0;
+  color: var(--text-h);
+  font-size: 1.2rem;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+}
+
+.home-balance {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: #0c241c;
+  border: 1px solid var(--accent-dim);
+  color: var(--text-h);
+}
+
+.home-currency-icon {
+  width: 20px;
+  height: 20px;
+  color: var(--accent);
+}
+
+.home-nav {
+  position: sticky;
+  bottom: 0;
+  width: 100%;
+  margin-top: 8px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+  padding: 6px;
+  border-radius: 16px;
+  background: var(--bar);
+  border: 1px solid var(--accent-dim);
+}
+
+.home-nav-button {
+  min-height: 44px;
+  min-width: 44px;
+  padding: 6px 4px;
+  border: 0;
+  border-radius: 12px;
+  background: none;
+  color: var(--muted);
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.home-nav-button[aria-current='page'] {
+  background: var(--accent);
+  color: #062016;
+  font-weight: 700;
+}
+
+.home-nav-button:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+
+/* Quest badge */
+.home-stage {
+  position: relative;
+}
+
+.quest-panel {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: grid;
+  justify-items: end;
+  gap: 4px;
+  max-width: 10rem;
+}
+
+.quest-button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 6px 10px;
+  border-radius: 12px;
+  border: 1px solid var(--accent-dim);
+  background: #0c241c;
+  color: var(--text-h);
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.quest-button.is-disabled {
+  color: var(--muted);
+  cursor: default;
+  opacity: 0.7;
+}
+
+.quest-button:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.quest-icon {
+  width: 22px;
+  height: 22px;
+  color: var(--accent);
+}
+
+.quest-count {
+  min-width: 1.4em;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #062016;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1.4em;
+  text-align: center;
+}
+
+.quest-status,
+.quest-note {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.75rem;
+  text-align: right;
+}

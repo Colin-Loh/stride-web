@@ -1,11 +1,18 @@
 import { useState } from 'react'
 import { RunnerSprite } from '../RunnerSprite'
 import { CHARACTER_NAMES, parseWeightKg, WEIGHT_KG_LIMITS, type Character } from '../domain/preferences'
+import { nameSubmission } from './nameSubmission'
 
 interface Props {
   initialName?: string
+  /** Onboarding only: the character pre-selected before the runner picks one. */
   initialCharacter?: Character
   initialWeightKg?: number | null
+  /**
+   * Set once a character is saved. Its presence makes this the edit screen: no character
+   * buttons, the locked character is shown as text, and submit keeps this value.
+   */
+  storedCharacter?: Character
   onContinue: (name: string, character: Character, weightKg: number | null) => void
 }
 
@@ -17,6 +24,7 @@ export function NameScreen({
   initialName = '',
   initialCharacter = 'shiba',
   initialWeightKg = null,
+  storedCharacter,
   onContinue,
 }: Props) {
   const [name, setName] = useState(initialName)
@@ -35,8 +43,8 @@ export function NameScreen({
         className="stack"
         onSubmit={(event) => {
           event.preventDefault()
-          const trimmed = name.trim()
-          if (trimmed && weight.ok) onContinue(trimmed, character, weight.kg)
+          const submitted = nameSubmission(name, weightText, character, storedCharacter)
+          if (submitted) onContinue(submitted.name, submitted.character, submitted.weightKg)
         }}
       >
         <label className="field">
@@ -65,28 +73,34 @@ export function NameScreen({
           </span>
           {!weight.ok && <span className="field-error" role="alert">{WEIGHT_ERROR}</span>}
         </label>
-        <fieldset className="field characters">
-          <legend>Your runner</legend>
-          <div className="character-options">
-            {CHARACTERS.map((id) => (
-              <button
-                key={id}
-                type="button"
-                className={`character${character === id ? ' selected' : ''}`}
-                aria-pressed={character === id}
-                onClick={() => setCharacter(id)}
-              >
-                <RunnerSprite
-                  character={id}
-                  state={character === id ? 'running' : 'idle'}
-                  scale={0.25}
-                  className="small"
-                />
-                {CHARACTER_NAMES[id]}
-              </button>
-            ))}
-          </div>
-        </fieldset>
+        {storedCharacter !== undefined ? (
+          <p className="muted">
+            Runner: {CHARACTER_NAMES[storedCharacter]}. The character is chosen at first use and cannot be changed here.
+          </p>
+        ) : (
+          <fieldset className="field characters">
+            <legend>Your runner</legend>
+            <div className="character-options">
+              {CHARACTERS.map((id) => (
+                <button
+                  key={id}
+                  type="button"
+                  className={`character${character === id ? ' selected' : ''}`}
+                  aria-pressed={character === id}
+                  onClick={() => setCharacter(id)}
+                >
+                  <RunnerSprite
+                    character={id}
+                    state={character === id ? 'running' : 'idle'}
+                    scale={0.25}
+                    className="small"
+                  />
+                  {CHARACTER_NAMES[id]}
+                </button>
+              ))}
+            </div>
+          </fieldset>
+        )}
         <button type="submit" className="primary" disabled={!name.trim() || !weight.ok}>
           Continue
         </button>
