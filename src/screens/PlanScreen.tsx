@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { PaceCards } from '../components/PaceCards'
 import type { Session, TrainingPlan } from '../domain/types'
 import { formatSpan } from '../plan/convert'
@@ -22,6 +23,15 @@ function sessionSummary(session: Session): string {
 /** The training plan: the runner's VDOT paces, then every week with its sessions. */
 export function PlanScreen({ plan, onOpenSession, onBack, today = new Date() }: Props) {
     const current = currentWeekIndex(plan.startDate, plan.weeks.length, today)
+    // Only the current week starts open. Before the plan starts or after it ends, currentWeekIndex
+    // clamps to week 1 or the last week, which are the open weeks the plan calls for.
+    const [expanded, setExpanded] = useState<Set<number>>(() => new Set([current]))
+    const toggle = (index: number) => setExpanded((open) => {
+        const next = new Set(open)
+        if (next.has(index)) next.delete(index)
+        else next.add(index)
+        return next
+    })
     return (
         <section className="card">
             <p className="eyebrow">Training plan · {plan.weeks.length} weeks</p>
@@ -39,24 +49,41 @@ export function PlanScreen({ plan, onOpenSession, onBack, today = new Date() }: 
 
             <h2>Week by week</h2>
             <ol className="weeks">
-                {plan.weeks.map((week, index) => (
-                    <li key={week.id} className={`week${index === current ? ' current' : ''}`} aria-current={index === current ? 'date' : undefined}>
-                        <h3>
-                            Week {week.number} · {week.targetKm.toFixed(1)} km
-                            {week.taper ? <span className="week-badge taper">Taper</span> : null}
-                            {index === current ? <span className="week-badge">This week</span> : null}
-                        </h3>
-                        <p className="muted">Starts {week.startDate}</p>
-                        <div className="stack">
-                            {week.sessions.map((session) => (
-                                <button key={session.id} type="button" className="choice workout" onClick={() => onOpenSession(session.id)}>
-                                    <strong>{WORKOUT_NAMES[session.kind]}</strong>
-                                    <span className="muted">{sessionSummary(session)}</span>
+                {plan.weeks.map((week, index) => {
+                    const open = expanded.has(index)
+                    const state = open ? 'expanded' : 'collapsed'
+                    return (
+                        <li key={week.id} className={`week${index === current ? ' current' : ''}${open ? '' : ' is-collapsed'}`} aria-current={index === current ? 'date' : undefined}>
+                            <h3>
+                                <button
+                                    type="button"
+                                    className="week-toggle"
+                                    aria-expanded={open}
+                                    aria-controls={`plan-week-${week.number}`}
+                                    aria-label={`Week ${week.number}, ${week.targetKm.toFixed(1)} km, ${state}`}
+                                    onClick={() => toggle(index)}
+                                >
+                                    Week {week.number} · {week.targetKm.toFixed(1)} km
+                                    {week.taper ? <span className="week-badge taper">Taper</span> : null}
+                                    {index === current ? <span className="week-badge">This week</span> : null}
                                 </button>
-                            ))}
-                        </div>
-                    </li>
-                ))}
+                            </h3>
+                            <p className="muted">Starts {week.startDate}</p>
+                            <div id={`plan-week-${week.number}`} hidden={!open}>
+                                {open ? (
+                                    <div className="stack">
+                                        {week.sessions.map((session) => (
+                                            <button key={session.id} type="button" className="choice workout" onClick={() => onOpenSession(session.id)}>
+                                                <strong>{WORKOUT_NAMES[session.kind]}</strong>
+                                                <span className="muted">{sessionSummary(session)}</span>
+                                            </button>
+                                        ))}
+                                    </div>
+                                ) : null}
+                            </div>
+                        </li>
+                    )
+                })}
             </ol>
 
             <div className="actions">
