@@ -1,8 +1,7 @@
-import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type { Character } from '../domain/preferences'
 import type { Progression } from '../domain/types'
 import { itemsFor, type Cosmetic, type CosmeticId } from '../cosmetics/catalog'
-import { cosmeticUrl } from '../cosmetics/art'
 import { canAfford } from '../cosmetics/shop'
 import { CharacterStill } from '../components/CharacterStill'
 import { CurrencyIcon } from '../components/CurrencyIcon'
@@ -36,61 +35,29 @@ function stateOf(progression: Progression, item: Cosmetic): ItemState {
     return canAfford(progression, item.id) ? 'affordable' : 'unaffordable'
 }
 
-/** One item card: artwork, name, price, a status line as text, and the single action for its state. */
+/** The entire card is the action; its accessible name retains the item and its state. */
 function ShopItem({ item, progression, onBuy, onEquip, onUnequip }: Omit<Props, 'character' | 'onBack'> & { item: Cosmetic }) {
     const { character, name, price } = item
-    const wallet = progression.wallets[character]
     const cost = priceText(character, price)
     const state = stateOf(progression, item)
-
-    let status: string
-    let action: ReactNode
-    switch (state) {
-        case 'equipped':
-            status = 'Equipped'
-            action = (
-                <button type="button" className="ghost shop-action" aria-label={`Unequip ${name}`} onClick={() => onUnequip(character)}>
-                    Unequip
-                </button>
-            )
-            break
-        case 'owned':
-            status = 'Owned'
-            action = (
-                <button type="button" className="ghost shop-action" aria-label={`Equip ${name}`} onClick={() => onEquip(item.id)}>
-                    Equip
-                </button>
-            )
-            break
-        case 'affordable':
-            status = `Costs ${cost}`
-            action = (
-                <button type="button" className="ghost shop-action" aria-label={`Buy ${name} for ${cost}`} onClick={() => onBuy(item.id)}>
-                    Buy
-                </button>
-            )
-            break
-        case 'unaffordable': {
-            const missing = price - wallet
-            status = `Not enough (${missing} needed)`
-            action = (
-                <button type="button" className="ghost shop-action" disabled aria-label={`Not enough ${CURRENCY[character].plural} for ${name}`}>
-                    {`Not enough ${CURRENCY[character].plural}`}
-                </button>
-            )
-            break
-        }
-    }
+    const label = state === 'equipped' ? `Unequip ${name}`
+        : state === 'owned' ? `Equip ${name}`
+            : state === 'affordable' ? `Buy ${name} for ${cost}`
+                : `Not enough ${CURRENCY[character].plural} for ${name}`
+    const action = state === 'equipped' ? () => onUnequip(character)
+        : state === 'owned' ? () => onEquip(item.id)
+            : () => onBuy(item.id)
 
     return (
         <li className={`shop-card shop-card-${state}`}>
-            <div className="shop-art">
-                <img className="shop-art-image" src={cosmeticUrl(item.id)} alt="" />
-            </div>
-            <h3>{name}</h3>
-            <p className="shop-price">{cost}</p>
-            <p className="shop-status">{status}</p>
-            {action}
+            <button type="button" className="shop-action" aria-label={label} disabled={state === 'unaffordable'} onClick={action}>
+                {(state === 'owned' || state === 'equipped') && <span className="shop-owned-mark" aria-hidden="true">✓</span>}
+                <img className="shop-art-image" src={`${import.meta.env.BASE_URL}cosmetics/icons/${item.id}.png`} alt="" />
+                <span className="shop-price" aria-hidden="true">
+                    <CurrencyIcon character={character} />
+                    {price}
+                </span>
+            </button>
         </li>
     )
 }
@@ -113,18 +80,6 @@ function BrickWall() {
                 </pattern>
             </defs>
             <rect width="100%" height="100%" fill="url(#shop-brick)" />
-        </svg>
-    )
-}
-
-/** A pixel-style hanging lamp, drawn in the Stride palette. Decorative. */
-function Lamp() {
-    return (
-        <svg className="shop-lamp" viewBox="0 0 48 40" aria-hidden="true" focusable="false">
-            <rect x="23" y="0" width="2" height="12" fill="#0b1f18" />
-            <path d="M14 22 L34 22 L40 34 L8 34 Z" fill="#3dd68c" />
-            <rect x="8" y="34" width="32" height="3" fill="#1f7a52" />
-            <rect x="21" y="25" width="6" height="4" fill="#f4fff9" />
         </svg>
     )
 }
@@ -165,18 +120,19 @@ export function ShopScreen({ character, progression, onBuy, onEquip, onUnequip, 
         <section className="card shop">
             <header className="shop-header">
                 <BrickWall />
-                <Lamp />
                 <div className="shop-sign">
                     <h1>Welcome to the Stride Shop!</h1>
                 </div>
-                <p className="shop-balance">
+                <p className="shop-balance" aria-label={`${count} ${wordFor(character, count)}`}>
                     <CurrencyIcon character={character} />
-                    <span>{`${count} ${wordFor(character, count)}`}</span>
+                    <span aria-hidden="true">{count}</span>
                 </p>
             </header>
-            <div className="shop-strip">
-                <h2>Accessories</h2>
-            </div>
+            <ul className="shop-grid" aria-label="Accessories">
+                {itemsFor(character).map((item) => (
+                    <ShopItem key={item.id} item={item} progression={progression} onBuy={onBuy} onEquip={onEquip} onUnequip={onUnequip} />
+                ))}
+            </ul>
             <div className="shop-fitting-bar">
                 <button
                     ref={toggleRef}
@@ -186,6 +142,9 @@ export function ShopScreen({ character, progression, onBuy, onEquip, onUnequip, 
                     aria-controls={fittingOpen ? FITTING_PANEL_ID : undefined}
                     onClick={() => (fittingOpen ? closeFitting() : setFittingOpen(true))}
                 >
+                    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                        <path d="M10 6a2 2 0 1 1 3 1.73C12.4 8.1 12 8.5 12 9.2V11l9 7v2H3v-2l9-7" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
+                    </svg>
                     Fitting Room
                 </button>
             </div>
@@ -198,11 +157,6 @@ export function ShopScreen({ character, progression, onBuy, onEquip, onUnequip, 
                     </button>
                 </section>
             )}
-            <ul className="shop-grid">
-                {itemsFor(character).map((item) => (
-                    <ShopItem key={item.id} item={item} progression={progression} onBuy={onBuy} onEquip={onEquip} onUnequip={onUnequip} />
-                ))}
-            </ul>
             <button type="button" className="link" onClick={onBack}>
                 Back to home
             </button>
