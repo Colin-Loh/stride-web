@@ -14,6 +14,7 @@ import { newRunSession } from '../run/session'
 import { clearStorageNotice, storageNotice, UNSAVED_NOTICE, warn } from '../storage/notice'
 import type { Repositories } from '../storage/repository'
 import type { PickableWorkoutId } from '../workouts'
+import { recordCompletedRun } from '../progression/reward'
 import { releaseWakeLock } from '../wakeLock'
 
 type View = 'name' | 'category' | 'baseline' | 'plan' | 'workout' | 'run' | 'complete'
@@ -159,11 +160,13 @@ export function useAppFlow(repositories: Repositories) {
     const handleComplete = useCallback((result: RunProgress) => {
         if (completing.current || !session || session.completed) return
         completing.current = true
-        persistSession({ ...session, completed: true, paused: true, result: { elapsedMs: result.elapsedMs, distanceKm: result.distanceKm } })
+        const finished: RunSession = { ...session, completed: true, paused: true, result: { elapsedMs: result.elapsedMs, distanceKm: result.distanceKm } }
+        persistSession(finished)
+        remember(recordCompletedRun(repositories, finished).then(() => undefined))
         void releaseWakeLock(); stopCue()
         if (!preferences.muted) void playCelebration()
         setView('complete')
-    }, [session, preferences.muted, persistSession])
+    }, [session, preferences.muted, persistSession, repositories])
 
     function quitRun() {
         completing.current = false; persistSession(null); void releaseWakeLock(); stopCue(); stopCelebration()
@@ -172,7 +175,7 @@ export function useAppFlow(repositories: Repositories) {
 
     function startWorkout() {
         if (!open || !runnablePlan(open.workout)) return
-        completing.current = false; persistSession(newRunSession(open.workout, newId())); setView('run')
+        completing.current = false; persistSession(newRunSession(open.workout, newId(), new Date(), preferences.character)); setView('run')
     }
 
     function toggleMute() {
