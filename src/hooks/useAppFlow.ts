@@ -4,7 +4,6 @@ import { DEFAULT_PREFERENCES, type Character, type Preferences } from '../domain
 import { SCHEMA_VERSION, type Answers, type CompletedRun, type Progression, type RunSession, type TrainingPlan } from '../domain/types'
 import { derivePersonalBaseline } from '../plan/baseline'
 import type { AnswersSubmitAction } from '../plan/copy'
-import { generatePersonalizedWorkout } from '../plan/generate'
 import { missingQuestions, type AnswerValues } from '../plan/questions'
 import { runnablePlan } from '../plan/runnable'
 import { generateTrainingPlan, sessionWorkout, withSessionSections } from '../plan/trainingPlan'
@@ -14,7 +13,6 @@ import { newRunSession, withHealthSnapshot } from '../run/session'
 import { deriveHealth } from '../progression/health'
 import { clearStorageNotice, storageNotice, UNSAVED_NOTICE, warn } from '../storage/notice'
 import type { Repositories } from '../storage/repository'
-import type { PickableWorkoutId } from '../workouts'
 import { claimIncome } from '../progression/income'
 import { recordCompletedRun } from '../progression/reward'
 import { purchase, equip, unequip } from '../cosmetics/shop'
@@ -22,10 +20,10 @@ import type { CosmeticId, Slot } from '../cosmetics/catalog'
 import { releaseWakeLock } from '../wakeLock'
 import { startView } from './startView'
 
-type View = 'name' | 'home' | 'category' | 'baseline' | 'plan' | 'workout' | 'run' | 'complete' | 'status' | 'shop'
+type View = 'name' | 'home' | 'baseline' | 'plan' | 'workout' | 'run' | 'complete' | 'status' | 'past-complete' | 'shop'
 
 /** What the runner was doing when we had to ask for answers first. */
-type Pending = { kind: 'plan' } | { kind: 'workout'; category: PickableWorkoutId }
+type Pending = { kind: 'plan' }
 
 /** The workout on the workout screen, and the plan session it belongs to (null for a single session). */
 interface OpenWorkout {
@@ -52,6 +50,7 @@ export function useAppFlow(repositories: Repositories) {
     const [pending, setPending] = useState<Pending | null>(null)
     const [progression, setProgression] = useState<Progression | null>(null)
     const [runLog, setRunLog] = useState<CompletedRun[]>([])
+    const [pastRunSession, setPastRunSession] = useState<RunSession | null>(null)
     const completing = useRef(false)
     const sessionRef = useRef<RunSession | null>(null)
 
@@ -103,6 +102,10 @@ export function useAppFlow(repositories: Repositories) {
         remember(repositories.preferences.save(next))
     }
 
+    function changeCharacter(character: Character) {
+        persistPreferences({ ...preferences, character })
+    }
+
     /** Replaces any earlier plan: there is one current plan. */
     function persistPlan(next: TrainingPlan) {
         const previous = plan
@@ -117,6 +120,18 @@ export function useAppFlow(repositories: Repositories) {
             setProgression(loaded)
             setView('status')
         })
+    }
+
+    function showPastRun() {
+        const saved = runLog.find((run) => run.characterId === preferences.character && run.session)
+        if (!saved?.session) return
+        setPastRunSession(saved.session)
+        setView('past-complete')
+    }
+
+    function closePastRun() {
+        setPastRunSession(null)
+        setView('status')
     }
 
     function openShop() {
@@ -162,22 +177,11 @@ export function useAppFlow(repositories: Repositories) {
         return claim
     }
 
-    function openWorkout(category: PickableWorkoutId, values: AnswerValues) {
-        setOpen({ workout: generatePersonalizedWorkout({ category, baseline: derivePersonalBaseline(values) }), sessionId: null })
-        setView('workout')
-    }
-
     /** Builds and saves a fresh plan from the answers; false when they cannot make one. */
     function makePlan(values: AnswerValues, record: Answers | null): boolean {
         const next = generateTrainingPlan({ baseline: derivePersonalBaseline(values), answersId: record?.id ?? null, newId })
         if (next) persistPlan(next)
         return next !== null
-    }
-
-    function pickCategory(category: PickableWorkoutId) {
-        if (missingQuestions(answers?.values ?? {}).length) {
-            setPending({ kind: 'workout', category }); setView('baseline')
-        } else openWorkout(category, answers?.values ?? {})
     }
 
     function showPlan() {
@@ -196,12 +200,11 @@ export function useAppFlow(repositories: Repositories) {
         remember(repositories.answers.save(record))
         const action = pending
         setPending(null)
-        if (action?.kind === 'workout') openWorkout(action.category, values)
-        else if (action?.kind === 'plan') setView(makePlan(values, record) ? 'plan' : 'category')
+        if (action?.kind === 'plan') setView(makePlan(values, record) ? 'plan' : 'home')
         else {
             // Edited answers make an existing plan stale, so it is rebuilt from them.
             if (plan) makePlan(values, record)
-            setView('category')
+            setView('home')
         }
     }
 
@@ -236,7 +239,7 @@ export function useAppFlow(repositories: Repositories) {
 
     function quitRun() {
         completing.current = false; persistSession(null); void releaseWakeLock(); stopCue(); stopCelebration()
-        setView(open?.sessionId && plan ? 'plan' : 'category')
+        setView(open?.sessionId && plan ? 'plan' : 'home')
     }
 
     function startWorkout() {
@@ -254,9 +257,9 @@ export function useAppFlow(repositories: Repositories) {
     }
 
     return {
-        ready, preferences, plan, session, answers, open, notice, view, setView, pickCategory, showPlan,
+        ready, preferences, plan, session, pastRunSession, answers, open, notice, view, setView, showPlan,
         finishAnswers, persistSession, changeWorkout, openSession, startWorkout, handleComplete, quitRun, toggleMute,
-        progression, runLog, openStatus, collectIncome, openShop, buyCosmetic, equipCosmetic, unequipCosmetic,
+        progression, runLog, openStatus, showPastRun, closePastRun, collectIncome, openShop, buyCosmetic, equipCosmetic, unequipCosmetic, changeCharacter,
         persistName: (name: string, character: Character, weightKg: number | null) => persistPreferences({ ...preferences, name, character, weightKg }),
         dismissNotice: () => { clearStorageNotice(); setNotice('') },
         submitAction: (pending?.kind ?? 'edit') as AnswersSubmitAction,

@@ -1,22 +1,20 @@
 /** The bottom bar's destinations. Each one is a view the runner can open from here. */
-export type HomeDestination = 'workouts' | 'plan' | 'shop' | 'status'
+export type HomeDestination = 'plan' | 'shop' | 'status'
 
 interface Props {
     /** Destination marked as current in the bar. Omitted when none applies. */
     current?: HomeDestination
     onPlan: () => void
-    onWorkouts: () => void
     onShop: () => void
     onStatus: () => void
 }
 
 /**
- * The bottom bar. Four labelled destinations inside a landmark named "Main". The destination
+ * The bottom bar. Three labelled destinations inside a landmark named "Main". The destination
  * marked current carries aria-current="page".
  */
-export function HomeNav({ current, onPlan, onWorkouts, onShop, onStatus }: Props) {
+export function HomeNav({ current, onPlan, onShop, onStatus }: Props) {
     const items: { id: HomeDestination; label: string; onSelect: () => void }[] = [
-        { id: 'workouts', label: 'Workouts', onSelect: onWorkouts },
         { id: 'plan', label: 'My plan', onSelect: onPlan },
         { id: 'shop', label: 'Shop', onSelect: onShop },
         { id: 'status', label: 'Status', onSelect: onStatus },

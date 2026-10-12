@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { PlanScreen } from './PlanScreen'
 import { derivePersonalBaseline } from '../plan/baseline'
-import { formatPaceSeconds, roundSpeedUp } from '../plan/convert'
-import { trainingSpeedsKmh, vdotFromRace, ZONES } from '../plan/vdot'
+import { formatPaceSeconds } from '../plan/convert'
+import type { Zone } from '../plan/vdot'
 import type { AnswerValues } from '../plan/questions'
 import { generateTrainingPlan } from '../plan/trainingPlan'
 import { addDays } from '../plan/dates'
@@ -13,32 +13,61 @@ const NOW = new Date(2026, 9, 8)
 const BASE: AnswerValues = { training_focus: 'base', weekly_volume: 15, running_days: 3, training_effort: 'base' }
 const render = (answers: AnswerValues, today = NOW) => {
     const plan = generateTrainingPlan({ baseline: derivePersonalBaseline({ ...BASE, ...answers }), now: NOW })!
-    return renderToStaticMarkup(<PlanScreen plan={plan} today={today} onOpenSession={noop} onBack={noop} />)
+    return renderToStaticMarkup(<PlanScreen plan={plan} today={today} onOpenSession={noop} />)
 }
 const RACE: AnswerValues = { fitness_method: 'recent_race', recent_race_distance: 5, recent_race_time: 35 * 60 }
+const SESSION_ZONES = { long: 'E', easyRun: 'E', threshold: 'T', interval: 'I', repetition: 'R', marathon: 'M' } as const
 
-describe('pace cards', () => {
-    it('shows E, M, T, I and R with letter, name, min/km, km/h and purpose for a known VDOT', () => {
-        const html = render(RACE)
-        const speeds = trainingSpeedsKmh(vdotFromRace(5, 35 * 60)!)!
-        const cards = [...html.matchAll(/<article[^>]*data-zone="([EMTIR])"[^>]*>(.*?)<\/article>/g)]
-        expect(cards.map((card) => card[1])).toEqual(['E', 'M', 'T', 'I', 'R'])
+describe('weekly workout paces', () => {
+    it('shows each session pace in its weekly card instead of standalone pace cards', () => {
+        const answers = { ...BASE, ...RACE, training_effort: 'advanced_quality' as const, running_days: 5 }
+        const plan = generateTrainingPlan({ baseline: derivePersonalBaseline(answers), now: NOW })!
+        const html = renderToStaticMarkup(<PlanScreen plan={plan} today={NOW} onOpenSession={noop} />)
+        const cards = [...html.matchAll(/<button[^>]*class="choice workout" data-zone="([EMTIR])"[^>]*>(.*?)<\/button>/g)]
+
+        expect(html).not.toContain('Recommended Training Paces')
+        expect(html).not.toContain('pace-cards')
+        expect(cards.map((card) => card[1])).toEqual(plan.weeks[0].sessions.map((session) => SESSION_ZONES[session.kind]))
         for (const [, zone, body] of cards) {
-            const key = zone as keyof typeof ZONES
-            expect(body).toContain(ZONES[key].name)
-            expect(body).toContain(`${formatPaceSeconds(Math.round(3600 / speeds[key]))} min/km`)
-            expect(body).toContain(`${roundSpeedUp(speeds[key]).toFixed(1)} km/h`)
-            expect(body).toContain(ZONES[key].purpose)
+            const pace = plan.paces.zones[zone as Zone]!
+            expect(body).toContain(`Pace: ${formatPaceSeconds(pace.paceSecondsPerKm)} min/km`)
+            expect(body).toContain(`Treadmill: ${pace.speedKmh.toFixed(1)}km/h`)
+            expect(body).toMatch(/Dist: \d+\.\d km/)
+            expect(body).toMatch(/class="session-purpose">[^<]+<\/span>/)
+            expect(body).toContain('class="session-workout"')
         }
-        expect(html).not.toContain('need a race result')
     })
 
-    it('shows E only, with a note, when there is no VDOT', () => {
-        const html = render({ fitness_method: 'easy_pace', conversational_easy_pace: 420 })
-        expect([...html.matchAll(/data-zone="([EMTIR])"/g)].map((match) => match[1])).toEqual(['E'])
+    it('shows a reported easy pace and effort guidance when race paces are unavailable', () => {
+        const answers = { ...BASE, fitness_method: 'easy_pace' as const, conversational_easy_pace: 420, training_effort: 'advanced_quality' as const, running_days: 5 }
+        const html = render(answers)
+
         expect(html).toContain('7:00 min/km')
-        expect(html).toContain('8.6 km/h')
-        expect(html).toContain('need a race result')
+        expect(html).toContain('Treadmill: 8.6km/h')
+        expect(html).toContain('Pace: Run by effort')
+        expect(html).toContain('Treadmill: unavailable')
+        expect(html).toContain('Add a race result to estimate pace.')
+    })
+})
+
+describe('fitness summary', () => {
+    it('shows race pace and VDOT as concise fitness facts, hiding legacy paragraphs', () => {
+        const plan = generateTrainingPlan({ baseline: derivePersonalBaseline({ ...BASE, ...RACE }), now: NOW })!
+        plan.notes.unshift(
+            'Your 5 km in 35:00 gives a VDOT of 25.6. VDOT training paces: old saved text.',
+            'The VDOT model caps the long run at a share of the week; old saved warning.',
+        )
+
+        const html = renderToStaticMarkup(<PlanScreen plan={plan} today={NOW} onOpenSession={noop} />)
+
+        expect(html).not.toContain('Your Running Fitness &amp; Training Paces')
+        expect(html).toContain('Your Current Fitness')
+        expect(html).not.toContain('Recommended Training Paces')
+        expect(html).toContain('<strong>5 km time:</strong> 35:00')
+        expect(html).toContain('<strong>Average pace:</strong> 7:00 min/km')
+        expect(html).toContain('<strong>Estimated VDOT:</strong> 25.6')
+        expect(html).not.toContain('old saved text')
+        expect(html).not.toContain('old saved warning')
     })
 })
 
@@ -55,7 +84,7 @@ describe('week by week', () => {
         const long = plan.weeks[0].sessions.find((session) => session.kind === 'long')!
         long.name = 'Long run'
 
-        const html = renderToStaticMarkup(<PlanScreen plan={plan} today={NOW} onOpenSession={noop} onBack={noop} />)
+        const html = renderToStaticMarkup(<PlanScreen plan={plan} today={NOW} onOpenSession={noop} />)
 
         expect(html).toContain('<strong>Easy run</strong>')
         expect(html).not.toContain('<strong>Long run</strong>')
@@ -63,7 +92,7 @@ describe('week by week', () => {
 
     it('renders the sessions of the expanded week only', () => {
         const plan = generateTrainingPlan({ baseline: derivePersonalBaseline({ ...BASE, ...RACE }), now: NOW })!
-        const html = renderToStaticMarkup(<PlanScreen plan={plan} today={NOW} onOpenSession={noop} onBack={noop} />)
+        const html = renderToStaticMarkup(<PlanScreen plan={plan} today={NOW} onOpenSession={noop} />)
         expect(html.match(/class="choice workout"/g)).toHaveLength(plan.weeks[0].sessions.length)
     })
 

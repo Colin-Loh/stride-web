@@ -1,19 +1,8 @@
 import { useRef, useState } from 'react'
 import type { Character } from '../domain/preferences'
 import type { Progression } from '../domain/types'
+import { CurrencyIcon } from './CurrencyIcon'
 import { CURRENCY, questLabel, questState } from '../progression/questState'
-
-/** Drawn in code in the app's palette. Decorative: the button's label names it. */
-function QuestIcon() {
-    return (
-        <svg className="quest-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-            <rect x="6" y="4" width="12" height="16" rx="2" fill="currentColor" />
-            <circle cx="6" cy="12" r="2.5" fill="currentColor" />
-            <circle cx="18" cy="12" r="2.5" fill="currentColor" />
-            <path d="M9 9 H15 M9 12 H15 M9 15 H13" stroke="#0c241c" strokeWidth="1.5" strokeLinecap="round" />
-        </svg>
-    )
-}
 
 interface Props {
     progression: Progression
@@ -63,12 +52,11 @@ export function QuestBadge({ progression, character, now, onCollect }: Props) {
                 aria-disabled={blocked}
                 onClick={() => void activate()}
             >
-                <QuestIcon />
-                <span className="quest-text">Quest</span>
+                <CurrencyIcon character={character} />
+                <span className="quest-text">Daily Food</span>
                 {state.kind === 'ready' && <span className="quest-count" aria-hidden="true">{state.pending}</span>}
             </button>
             <p className="quest-status" role="status" aria-live="polite">{message}</p>
-            <p className="quest-note">Up to 14 days can be collected. Older days are not kept.</p>
         </div>
     )
 }

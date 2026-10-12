@@ -33,8 +33,8 @@ export function questLabel(state: QuestState, character: Character): string {
     const currency = CURRENCY[character]
     if (state.kind === 'ready') {
         const word = state.pending === 1 ? currency.singular : currency.plural
-        return `Quest: collect ${state.pending} ${word}`
+        return `Daily Food: collect ${state.pending} ${word}`
     }
-    if (state.kind === 'claimed') return 'Quest done today'
-    return 'Quest: nothing to collect yet'
+    if (state.kind === 'claimed') return 'Daily Food done today'
+    return 'Daily Food: nothing to collect yet'
 }

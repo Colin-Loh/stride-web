@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { RunScreen } from './RunScreen'
 import { BaselineScreen } from './BaselineScreen'
+import { WorkoutScreen } from './WorkoutScreen'
 import { generatePersonalizedWorkout } from '../plan/generate'
 import { derivePersonalBaseline } from '../plan/baseline'
 import { QUESTIONS } from '../plan/questions'
@@ -35,6 +36,31 @@ describe('screen regressions', () => {
       character="shooshy" onSession={noop} onComplete={noop} onQuit={noop} onToggleMute={noop} />)
     expect(html).toContain('Run 2 of 2')
   })
+  it('keeps workout explanations concise and formats validation messages as warning bullets', () => {
+    const workout = generatePersonalizedWorkout({
+      category: 'repetition',
+      baseline: derivePersonalBaseline({
+        fitness_method: 'recent_race', recent_race_distance: 5, recent_race_time: 35 * 60,
+        training_focus: '5k', weekly_volume: 15, running_days: 3, training_effort: 'advanced_quality',
+      }),
+    })
+    const renderWorkout = (value: typeof workout) => renderToStaticMarkup(
+      <WorkoutScreen workout={value} onChange={noop} onStart={noop} onBack={noop} backLabel="Back" />,
+    )
+    const html = renderWorkout(workout)
+
+    expect(html).not.toContain('Paces and session sizes follow the VDOT model')
+    expect(html).not.toContain('Treadmill speeds round up')
+    expect(html).toContain('Fast, recovered reps near mile pace.')
+    expect(html).toMatch(/VDOT cap: [\d.]+ km; \d+ reps? allowed\./)
+    expect(html).not.toContain('The VDOT model caps')
+
+    const invalid = { ...workout, sections: workout.sections.map((section, index) => index === 0 ? { ...section, speedKmh: 0.1 } : section) }
+    const invalidHtml = renderWorkout(invalid)
+    expect(invalidHtml).toContain('class="warning-list"')
+    expect(invalidHtml).toContain('⚠️')
+    expect(invalidHtml).toContain('Fix highlighted settings to start. Timed sections may omit speed.')
+  })
   it('asks only the always-visible questions before a fitness method is chosen', () => {
     const html = renderToStaticMarkup(<BaselineScreen initial={{}} submitAction="plan" onBack={noop} onDone={noop} />)
     const asked = [...html.matchAll(/data-question="([a-z_]+)"/g)].map(m => m[1])
@@ -58,7 +84,7 @@ describe('screen regressions', () => {
   })
   it('enables the build button once every required answer is valid', () => {
     const complete = {
-      fitness_method: 'easy_pace', conversational_easy_pace: 420, training_focus: 'base', weekly_volume: 30,
+      fitness_method: 'easy_pace', conversational_easy_pace: 420, training_focus: '10k', weekly_volume: 30,
       running_days: 3, training_effort: 'base'
     } as const
     expect(renderToStaticMarkup(<BaselineScreen initial={complete} submitAction="plan" onBack={noop} onDone={noop} />)).not.toContain('disabled=""')

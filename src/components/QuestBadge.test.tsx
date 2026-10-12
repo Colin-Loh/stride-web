@@ -53,36 +53,37 @@ describe('questState', () => {
 describe('QuestBadge states', () => {
     it('ready: names the count in the accessible name and is enabled', () => {
         const html = render({ progression: progression({ lastClaimedDate: { shiba: '2026-10-09', shooshy: '2026-10-10' } }) })
-        expect(buttonOf(html)).toContain('aria-label="Quest: collect 1 bone"')
+        expect(buttonOf(html)).toContain('aria-label="Daily Food: collect 1 bone"')
+        expect(html).toContain('>Daily Food</span>')
         expect(buttonOf(html)).toContain('aria-disabled="false"')
         expect(html).toContain('>1</span>')
     })
 
     it('ready: uses the plural for more than one unit and the fish name for Shooshy', () => {
         const html = render({ character: 'shooshy', progression: progression({ lastClaimedDate: { shiba: '2026-10-10', shooshy: '2026-10-07' } }) })
-        expect(buttonOf(html)).toContain('aria-label="Quest: collect 3 fish"')
+        expect(buttonOf(html)).toContain('aria-label="Daily Food: collect 3 fish"')
     })
 
     it('claimed: shows done today and is aria-disabled, with no count', () => {
         const html = render()
-        expect(buttonOf(html)).toContain('aria-label="Quest done today"')
+        expect(buttonOf(html)).toContain('aria-label="Daily Food done today"')
         expect(buttonOf(html)).toContain('aria-disabled="true"')
         expect(html).not.toContain('quest-count')
     })
 
     it('nothing yet: is aria-disabled with the nothing-yet name', () => {
         const html = render({ progression: progression({ startDate: '2026-10-10' }) })
-        expect(buttonOf(html)).toContain('aria-label="Quest: nothing to collect yet"')
+        expect(buttonOf(html)).toContain('aria-label="Daily Food: nothing to collect yet"')
         expect(buttonOf(html)).toContain('aria-disabled="true"')
     })
 
-    it('shows the backlog note once in the panel', () => {
+    it('does not show the backlog note', () => {
         const html = render()
-        expect(html.match(/Up to 14 days can be collected. Older days are not kept./g)?.length).toBe(1)
+        expect(html).not.toContain('Up to 14 days can be collected')
     })
 
     it('keeps the icon decorative', () => {
-        expect(render()).toMatch(/<svg[^>]*aria-hidden="true"/)
+        expect(render()).toMatch(/<svg[^>]*class="home-currency-icon"[^>]*aria-hidden="true"/)
     })
 })
 

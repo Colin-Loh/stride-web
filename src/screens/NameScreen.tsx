@@ -35,10 +35,7 @@ export function NameScreen({
   return (
     <section className="card">
       <p className="eyebrow">Stride</p>
-      <h1>What should we call you?</h1>
-      <p className="lede">
-        A few questions, then you see your training plan or pick a single session. Timed sections follow the clock; distance sections follow your entered speed.
-      </p>
+      <h1>What is your name?</h1>
       <form
         className="stack"
         onSubmit={(event) => {
@@ -73,11 +70,7 @@ export function NameScreen({
           </span>
           {!weight.ok && <span className="field-error" role="alert">{WEIGHT_ERROR}</span>}
         </label>
-        {storedCharacter !== undefined ? (
-          <p className="muted">
-            Runner: {CHARACTER_NAMES[storedCharacter]}. The character is chosen at first use and cannot be changed here.
-          </p>
-        ) : (
+        {storedCharacter === undefined ? (
           <fieldset className="field characters">
             <legend>Your runner</legend>
             <div className="character-options">
@@ -100,7 +93,7 @@ export function NameScreen({
               ))}
             </div>
           </fieldset>
-        )}
+        ) : null}
         <button type="submit" className="primary" disabled={!name.trim() || !weight.ok}>
           Continue
         </button>

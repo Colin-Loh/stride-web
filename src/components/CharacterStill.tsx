@@ -9,6 +9,7 @@ import { isCosmeticId, SLOTS, type WornSlots } from '../cosmetics/catalog'
 interface Props {
     character: Character
     status: HealthStatus
+    scale?: number
     /** The item worn in each slot. Every worn item is drawn over the still. */
     equipped: WornSlots
 }
@@ -18,14 +19,14 @@ interface Props {
  * the run sheet, with the equipped item drawn over it. Decorative: the health label beside it
  * carries the meaning, so alt is empty.
  */
-export function CharacterStill({ character, status, equipped }: Props) {
+export function CharacterStill({ character, status, equipped, scale = STILL_SCALE }: Props) {
     const sprite =
         status === 'obese' ? (
             <img
                 className="status-sprite"
                 src={OBESE_STILLS[character].url}
-                width={Math.round(OBESE_STILLS[character].width * STILL_SCALE)}
-                height={Math.round(OBESE_STILLS[character].height * STILL_SCALE)}
+                width={Math.round(OBESE_STILLS[character].width * scale)}
+                height={Math.round(OBESE_STILLS[character].height * scale)}
                 alt=""
             />
         ) : (
@@ -36,15 +37,15 @@ export function CharacterStill({ character, status, equipped }: Props) {
                     backgroundImage: `url(${CHARACTER_SPRITES[character].url})`,
                     backgroundSize: `${CHARACTER_SPRITES[character].frames * 100}% 100%`,
                     backgroundPosition: '0 0',
-                    width: `${Math.round(CHARACTER_SPRITES[character].frameWidth * STILL_SCALE)}px`,
-                    height: `${Math.round(CHARACTER_SPRITES[character].frameHeight * STILL_SCALE)}px`,
+                    width: `${Math.round(CHARACTER_SPRITES[character].frameWidth * scale)}px`,
+                    height: `${Math.round(CHARACTER_SPRITES[character].frameHeight * scale)}px`,
                 } as CSSProperties}
             />
         )
     return (
         <div className="still-frame">
             {sprite}
-            {SLOTS.map((slot) => isCosmeticId(equipped[slot]) && <CosmeticOverlay key={slot} itemId={equipped[slot]} />)}
+            {SLOTS.map((slot) => isCosmeticId(equipped[slot]) && <CosmeticOverlay key={slot} itemId={equipped[slot]} scale={scale} />)}
         </div>
     )
 }

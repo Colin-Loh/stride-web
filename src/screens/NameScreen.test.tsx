@@ -6,19 +6,21 @@ import { nameSubmission } from './nameSubmission'
 const noop = () => { }
 
 describe('NameScreen', () => {
-    it('onboarding mode renders both character buttons and no locked text', () => {
+    it('onboarding mode uses the direct name heading and renders both character buttons', () => {
         const html = renderToStaticMarkup(<NameScreen onContinue={noop} />)
+        expect(html).toContain('<h1>What is your name?</h1>')
         expect(html).toContain('Your runner')
         expect(html).toContain('class="character')
         expect(html).not.toContain('cannot be changed here')
+        expect(html).not.toContain('A few questions, then you see your training plan')
     })
 
-    it('edit mode renders no character buttons and shows the locked character as text', () => {
+    it('edit mode renders no character buttons or locked-character paragraph', () => {
         const html = renderToStaticMarkup(<NameScreen initialName="Alex" initialCharacter="shooshy" storedCharacter="shiba" onContinue={noop} />)
         expect(html).not.toContain('Your runner')
         expect(html).not.toContain('aria-pressed')
         expect(html).not.toContain('class="character')
-        expect(html).toContain('Runner: Chase. The character is chosen at first use and cannot be changed here.')
+        expect(html).not.toContain('Runner: Chase.')
     })
 
     it('offers Chase and Shooshy, with no Cat', () => {

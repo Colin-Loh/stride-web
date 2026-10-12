@@ -8,21 +8,23 @@ const pace = (kmh: number) => `${formatPaceSeconds(paceSecondsPerKmFromSpeed(kmh
 const raceLabel = (distanceKm: number) =>
     RACE_DISTANCES.find((race) => Math.abs(race.km - distanceKm) < 1e-9)?.label ?? `${distanceKm} km`
 
-/** Where the paces came from, shown at the top of every plan. Null when nothing is known yet. */
-export function fitnessNote(baseline: PersonalBaseline, speeds: TrainingSpeeds | null): string | null {
+/** Concise VDOT facts shown as bullets at the top of a plan. */
+export function fitnessNote(baseline: PersonalBaseline, speeds: TrainingSpeeds | null): string[] {
     if (baseline.fitnessMethod === 'easy_pace') {
-        return 'No VDOT can be worked out from an easy pace alone, so easy running uses the pace you reported and speed sessions have no target pace. Add a race or time trial for training paces.'
+        return [
+            `Reported easy pace: ${pace(baseline.reportedEasySpeedKmh ?? 0)}`,
+            'VDOT and race-based paces need a race or time-trial result.',
+        ]
     }
-    if (!speeds || baseline.vdot === null || baseline.race === null) return null
+    if (!speeds || baseline.vdot === null || baseline.race === null) return []
     const paces = (Object.keys(ZONES) as Zone[]).map((zone) => `${ZONES[zone].name.toLowerCase()} ${pace(speeds[zone])}`).join(', ')
-    const result = `Your ${raceLabel(baseline.race.distanceKm).toLowerCase()} in ${formatDurationSeconds(baseline.race.seconds)} gives a VDOT of ${baseline.vdot.toFixed(1)}. VDOT training paces: ${paces}.`
-    const provisional = baseline.fitnessMethod === 'estimated_race'
-        ? ' This comes from your own estimate, so treat it as provisional until you run a race or time trial.'
-        : ''
-    const extrapolated = isExtrapolatedVdot(baseline.vdot)
-        ? ' This VDOT is outside the range of the published tables, so the paces are extrapolated.'
-        : ''
-    return result + provisional + extrapolated
+    return [
+        `Race result: ${raceLabel(baseline.race.distanceKm)} in ${formatDurationSeconds(baseline.race.seconds)}`,
+        `VDOT: ${baseline.vdot.toFixed(1)}`,
+        `Training paces: ${paces}`,
+        ...(baseline.fitnessMethod === 'estimated_race' ? ['Estimate (provisional): confirm with a race or time trial.'] : []),
+        ...(isExtrapolatedVdot(baseline.vdot) ? ['VDOT is outside the published range; paces are extrapolated.'] : []),
+    ]
 }
 
 /** Where the goal race falls in the VDOT model's ideal 24-week season, or null when there is no date or it is out of range. */

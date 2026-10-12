@@ -51,7 +51,7 @@ export function buildWorkout(input: WorkoutInput): PersonalizedWorkout {
             category, categoryName, baseline, ...repeats, repSpeedKmh: speeds[zone], easySpeedKmh: easy,
         })
         if (speeds[zone] !== null && weeklyKm !== null) {
-            workout.explanation.push(`The VDOT model caps ${ZONES[zone].name.toLowerCase()} running per session at the lesser of a share of your ${weeklyKm} km week and a fixed distance (${sessionCapKm(zone, weeklyKm).toFixed(2)} km), which allows ${repeats.reps} rep${repeats.reps === 1 ? '' : 's'}.`)
+            workout.explanation.push(`VDOT cap: ${sessionCapKm(zone, weeklyKm).toFixed(2)} km; ${repeats.reps} ${repeats.reps === 1 ? 'rep' : 'reps'} allowed.`)
         }
         return finish(workout, zone)
     }
@@ -95,8 +95,8 @@ export function buildWorkout(input: WorkoutInput): PersonalizedWorkout {
     explanation.push(isEasyDay && main.target.basis === 'distance'
         ? `An easy run of ${main.target.distanceKm} km: this day's share of your ${weeklyKm} km week after the hard days and the longest easy run.`
         : main.target.basis === 'distance'
-        ? `The VDOT model sizes this Easy run by a share of your ${weeklyKm} km week and a maximum duration at easy pace: ${main.target.distanceKm} km.`
-        : 'We need your weekly distance and an easy pace to size this run, so it is timed instead.')
+            ? `The VDOT model sizes this Easy run by a share of your ${weeklyKm} km week and a maximum duration at easy pace: ${main.target.distanceKm} km.`
+            : 'We need your weekly distance and an easy pace to size this run, so it is timed instead.')
     if (easy === null) {
         adjustments.push('We have no pace for you yet, so sections are timed and show effort instead of speed.')
     }
@@ -171,7 +171,7 @@ export function generatePersonalizedWorkout(input: WorkoutInput & { today?: Date
     const { baseline, today = new Date() } = input
     const workout = buildWorkout(input)
     const rawSpeeds = baseline.vdot === null ? null : trainingSpeedsKmh(baseline.vdot)
-    const notes = [fitnessNote(baseline, rawSpeeds), goalNote(baseline, today)].filter((note): note is string => note !== null)
+    const notes = [...fitnessNote(baseline, rawSpeeds), goalNote(baseline, today)].filter((note): note is string => note !== null)
     return {
         ...workout,
         explanation: [...notes, ...workout.explanation],

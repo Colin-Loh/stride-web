@@ -8,7 +8,7 @@ const ids = (answers: AnswerValues) => visibleQuestions(answers).map((q) => q.id
 
 const COMPLETE: AnswerValues = {
     fitness_method: 'recent_race', recent_race_distance: 5, recent_race_time: 1500,
-    training_focus: 'base', weekly_volume: 30, running_days: 3, training_effort: 'base',
+    training_focus: '10k', weekly_volume: 30, running_days: 3, training_effort: 'base',
 }
 
 describe('question list', () => {
@@ -22,6 +22,13 @@ describe('question list', () => {
     it('has unique ids and a label and canonical unit on every question', () => {
         expect(new Set(QUESTIONS.map((q) => q.id)).size).toBe(QUESTIONS.length)
         for (const q of QUESTIONS) expect(q.label.length).toBeGreaterThan(5)
+    })
+
+    it('offers Base fitness as a training-focus choice', () => {
+        const focus = QUESTIONS.find((question) => question.id === 'training_focus')!
+        expect(focus.input.type).toBe('choice')
+        if (focus.input.type === 'choice') expect(focus.input.options).toContainEqual({ value: 'base', label: 'Base fitness' })
+        expect(isAnswers({ ...COMPLETE, training_focus: 'base' })).toBe(true)
     })
 
     it('has no trace of the removed questions', () => {

@@ -1,5 +1,6 @@
 import { formatDurationMs } from '../format'
 import { RunnerSprite } from '../RunnerSprite'
+import { STILL_SCALE } from '../cosmetics/art'
 import type { Character } from '../domain/preferences'
 import type { RunSession } from '../domain/types'
 import type { WornSlots } from '../cosmetics/catalog'
@@ -35,7 +36,7 @@ export function RunScreen({ session, muted, character, equipped, onSession, onCo
       <div className="stat"><span className="stat-label">Speed km/h</span><strong className="stat-value">{progress.speed?.toFixed(1) ?? 'By effort'}</strong></div>
     </div>
     <div className="stat-line" role="progressbar" aria-label="Overall section progress" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(progress.overall * 100)}><span style={{ width: `${progress.overall * 100}%` }} /></div>
-    <RunnerSprite character={character} state={running ? 'running' : 'idle'} speedKmh={progress.speed ?? undefined} health={session.healthAtStart ?? 'healthy'} equipped={equipped} />
+    <RunnerSprite character={character} state={running ? 'running' : 'idle'} scale={STILL_SCALE} speedKmh={progress.speed ?? undefined} health={session.healthAtStart ?? 'healthy'} equipped={equipped} />
     <p className="muted">{!session.startedAt ? 'Ready' : session.paused ? 'Paused' : `${formatDurationMs(progress.elapsedMs)} active time`}</p>
     {repLabel && <p className="muted">{repLabel}</p>}
     <label className="progress-label">{current.label} · {formatDurationMs(sectionRemaining)} left</label>

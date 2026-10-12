@@ -165,7 +165,7 @@ export const ZONES: Record<Zone, ZoneDefinition> = {
         vo2MaxPercent: null,
         hrMaxPercent: null,
         // TODO(verify): the spec says R is "~current 1500 m / mile race pace"; no official intensity exists.
-        purpose: 'Short, fast, fully recovered reps near mile pace for speed and economy. Do not use heart rate.',
+        purpose: 'Fast, recovered reps near mile pace.',
     },
 }
 

@@ -193,7 +193,7 @@ describe('without a VDOT', () => {
     it('runs easy at the reported pace and says why speed sessions have none', () => {
         const plan = build('long', easyPace)
         expect(plan.sections[0].speedKmh).toBe(roundSpeedUp(3600 / 420))
-        expect(plan.explanation.join(' ')).toContain('No VDOT can be worked out')
+        expect(plan.explanation.join(' ')).toContain('VDOT and race-based paces need')
     })
 
     it('gives speed sessions effort targets instead of paces, and they stay runnable', () => {
@@ -215,7 +215,8 @@ describe('without a VDOT', () => {
 describe('explanations', () => {
     it('shows the race, VDOT and all five VDOT paces', () => {
         const text = build('long').explanation.join(' ')
-        expect(text).toContain('Your 5 km in 25:00 gives a VDOT of 38.3')
+        expect(text).toContain('Race result: 5 km in 25:00')
+        expect(text).toContain('VDOT: 38.3')
         for (const zone of ['easy', 'marathon', 'threshold', 'interval', 'repetition']) expect(text).toContain(zone)
     })
 

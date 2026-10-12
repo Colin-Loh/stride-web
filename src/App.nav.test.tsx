@@ -18,17 +18,16 @@ vi.mock('./hooks/useAppFlow', () => ({
         progression: { wallets: { shiba: 0, shooshy: 0 }, inventory: { shiba: [], shooshy: [] }, equipped: { shiba: { face: null, head: null, body: null }, shooshy: { face: null, head: null, body: null } } },
         runLog: [],
         answers: null,
-        setView: () => {},
-        showPlan: () => {}, openShop: () => {}, openStatus: () => {},
-        collectIncome: async () => 0, buyCosmetic: () => {}, equipCosmetic: () => {}, unequipCosmetic: () => {},
-        dismissNotice: () => {}, submitAction: 'edit', editAnswers: () => {},
+        setView: () => { },
+        showPlan: () => { }, openShop: () => { }, openStatus: () => { },
+        collectIncome: async () => 0, buyCosmetic: () => { }, equipCosmetic: () => { }, unequipCosmetic: () => { },
+        dismissNotice: () => { }, submitAction: 'edit', editAnswers: () => { },
     }),
 }))
 
 vi.mock('./screens/PlanScreen', () => ({ PlanScreen: () => <div data-testid="plan-body" /> }))
 vi.mock('./screens/ShopScreen', () => ({ ShopScreen: () => <div data-testid="shop-body" /> }))
 vi.mock('./screens/StatusScreen', () => ({ StatusScreen: () => <div data-testid="status-body" /> }))
-vi.mock('./screens/CategoryScreen', () => ({ CategoryScreen: () => <div data-testid="category-body" /> }))
 
 const repositories = {} as Repositories
 
@@ -45,11 +44,11 @@ const mainNav = (html: string) => {
 const buttonCount = (nav: string) => (nav.match(/<button/g) ?? []).length
 
 describe('main navigation bar on every main view', () => {
-    it.each(['plan', 'shop', 'status', 'category'])('renders the Main nav with four buttons on %s', (view) => {
+    it.each(['plan', 'shop', 'status'])('renders the Main nav with three buttons on %s', (view) => {
         const nav = mainNav(renderView(view))
         expect(nav).not.toBe('')
-        expect(buttonCount(nav)).toBe(4)
-        expect(nav).toContain('Workouts')
+        expect(buttonCount(nav)).toBe(3)
+        expect(nav).not.toContain('Workouts')
         expect(nav).toContain('My plan')
         expect(nav).toContain('Shop')
         expect(nav).toContain('Status')
@@ -59,7 +58,6 @@ describe('main navigation bar on every main view', () => {
         ['plan', 'My plan'],
         ['shop', 'Shop'],
         ['status', 'Status'],
-        ['category', 'Workouts'],
     ])('marks the %s destination as the current page', (view, label) => {
         const nav = mainNav(renderView(view))
         const current = nav.match(/<button[^>]*aria-current="page"[^>]*>([^<]*)<\/button>/)

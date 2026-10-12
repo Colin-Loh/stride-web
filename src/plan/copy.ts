@@ -65,9 +65,6 @@ export const REPEAT_COPY: Record<'interval' | 'repetition', RepeatCopy> = {
     },
 }
 
-export const RULES_DISCLAIMER =
-    'Paces and session sizes follow the VDOT model. Some details, such as warm-up and cool-down lengths, are sensible defaults rather than exact model prescriptions, so adjust them to how you feel.'
-
 /** Label for the answers screen's submit button, by what happens next. */
 export const ANSWERS_SUBMIT_LABELS = {
     plan: 'Build my plan',
@@ -79,8 +76,5 @@ export type AnswersSubmitAction = keyof typeof ANSWERS_SUBMIT_LABELS
 
 export const REDUCED_QUALITY_NOTE =
     'Your training effort asks for more speed days than a week allows: hard days (speed and steady runs) are capped and never back to back, and each week keeps easy runs. Some speed days were left out.'
-
-export const CONFLICT_NOTE =
-    'The VDOT model caps the Easy run by weekly volume and maximum duration, so another run may be longer. Adding a running day spreads the distance out.'
 
 export const TAPER_NOTE = 'The weeks marked Taper before your goal race run less distance with the same familiar paces, and the last one has at most one hard day. Easy days stay easy.'

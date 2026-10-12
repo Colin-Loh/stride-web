@@ -1,5 +1,4 @@
 import { PlanSectionEditor } from '../components/PlanSectionEditor'
-import { RULES_DISCLAIMER } from '../plan/copy'
 import { roundSpeedUp } from '../plan/convert'
 import { useMemo, useState } from 'react'
 import {
@@ -12,6 +11,13 @@ import {
 } from '../plan/metrics'
 import { validateWorkout } from '../plan/validation'
 import type { PersonalizedWorkout, PlanSection } from '../plan/types'
+
+function compactExplanation(line: string): string {
+    if (line.startsWith('Repetition (R):')) return 'Fast, recovered reps near mile pace.'
+    const cap = line.match(/fixed distance \(([^)]+)\), which allows (.+)\.$/)
+    if (line.startsWith('The VDOT model caps') && cap) return `VDOT cap: ${cap[1]}; ${cap[2]} allowed.`
+    return line
+}
 
 interface Props {
     workout: PersonalizedWorkout
@@ -42,20 +48,21 @@ export function WorkoutScreen({ workout, onChange, onStart, onBack, backLabel }:
         <section className="card">
             <p className="eyebrow">{workout.categoryName} · tailored</p>
             <h1>Your workout</h1>
-            <p className="muted">{RULES_DISCLAIMER}</p>
-            <p className="muted">Treadmill speeds round up to 0.1 km/h. Distance is estimated; time targets stay fixed.</p>
 
             <ul className="reasons">
-                {workout.explanation.map((line) => (
-                    <li key={line}>{line}</li>
-                ))}
+                {workout.explanation.map((line) => {
+                    const text = compactExplanation(line)
+                    return <li key={line}>{text}</li>
+                })}
             </ul>
 
             {workout.adjustments.length > 0 ? (
                 <div className="notice">
-                    {workout.adjustments.map((line) => (
-                        <p key={line}>{line}</p>
-                    ))}
+                    <ul className="warning-list">
+                        {workout.adjustments.map((line) => (
+                            <li key={line}><span aria-hidden="true">⚠️</span>{line}</li>
+                        ))}
+                    </ul>
                 </div>
             ) : null}
 
@@ -92,9 +99,11 @@ export function WorkoutScreen({ workout, onChange, onStart, onBack, backLabel }:
 
             {!validation.ok ? (
                 <div className="notice">
-                    {validation.issues.map((issue) => (
-                        <p key={issue.message}>{issue.message}</p>
-                    ))}
+                    <ul className="warning-list">
+                        {validation.issues.map((issue) => (
+                            <li key={issue.message}><span aria-hidden="true">⚠️</span>{issue.message}</li>
+                        ))}
+                    </ul>
                 </div>
             ) : null}
 
@@ -109,7 +118,7 @@ export function WorkoutScreen({ workout, onChange, onStart, onBack, backLabel }:
                 </button>
                 {!validation.ok ? (
                     <p className="muted">
-                        Correct the plan above before starting. Timed sections can run without a speed.
+                        Fix highlighted settings to start. Timed sections may omit speed.
                     </p>
                 ) : null}
                 <button type="button" className="link" onClick={onBack}>

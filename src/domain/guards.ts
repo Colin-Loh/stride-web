@@ -129,6 +129,7 @@ export function isCompletedRun(v: unknown): v is CompletedRun {
     const run = v as unknown as Record<string, unknown>
     return isCharacter(run.characterId) && WORKOUT_IDS.includes(String(run.workoutId)) && nullOr(text)(run.planSessionId)
         && isoDateTime(run.completedAt) && nonnegative(run.elapsedMs) && nullOr(nonnegative)(run.distanceKm)
+        && (run.session === undefined || (isRunSession(run.session) && run.session.completed && run.session.id === run.id))
 }
 
 /**

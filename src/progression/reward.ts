@@ -48,6 +48,7 @@ export function completedRunFromSession(session: RunSession, now = new Date()): 
         completedAt: stamp,
         elapsedMs: session.result.elapsedMs,
         distanceKm: session.result.distanceKm,
+        session,
     }
 }
 

@@ -1,13 +1,13 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { cleanup, fireEvent, render as rtl, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render as rtl, screen, within } from '@testing-library/react'
 import { ShopScreen } from './ShopScreen'
 import { SCHEMA_VERSION, type Progression } from '../domain/types'
 import { cosmeticUrl } from '../cosmetics/art'
 import { COSMETICS, itemsFor } from '../cosmetics/catalog'
 
-const noop = () => {}
+const noop = () => { }
 const STAMP = '2026-10-01T00:00:00.000Z'
 
 const progression = (overrides: Partial<Progression> = {}): Progression => ({
@@ -21,7 +21,7 @@ const progression = (overrides: Partial<Progression> = {}): Progression => ({
 
 const render = (props: Partial<Parameters<typeof ShopScreen>[0]> = {}) =>
     renderToStaticMarkup(
-        <ShopScreen character="shiba" progression={progression()} onBuy={noop} onEquip={noop} onUnequip={noop} onBack={noop} {...props} />,
+        <ShopScreen character="shiba" progression={progression()} onBuy={noop} onEquip={noop} onUnequip={noop} {...props} />,
     )
 
 const escape = (text: string) => text.replace(/'/g, '&#x27;')
@@ -35,9 +35,7 @@ const itemFor = (html: string, name: string) => {
 }
 
 const interactive = (props: Partial<Parameters<typeof ShopScreen>[0]> = {}) =>
-    rtl(<ShopScreen character="shiba" progression={progression()} onBuy={noop} onEquip={noop} onUnequip={noop} onBack={noop} {...props} />)
-
-const fittingButton = () => screen.getByRole('button', { name: 'Fitting Room' })
+    rtl(<ShopScreen character="shiba" progression={progression()} onBuy={noop} onEquip={noop} onUnequip={noop} {...props} />)
 
 afterEach(() => {
     cleanup()
@@ -51,14 +49,14 @@ describe('ShopScreen shows only the selected character', () => {
         const html = render({ character: 'shiba' })
         expect(cardsIn(html)).toHaveLength(2)
         for (const item of itemsFor('shiba')) expect(html).toContain(`aria-label="Not enough bones for ${escape(item.name)}"`)
-        expect(html).not.toContain('cosmetics/icons/shooshy-')
+        expect(html).not.toContain('cosmetics/shooshy-')
     })
 
     it('renders the two Shooshy items and none of the Chase items', () => {
         const html = render({ character: 'shooshy', progression: progression({ wallets: { shiba: 9, shooshy: 2 } }) })
         expect(cardsIn(html)).toHaveLength(2)
-        for (const item of itemsFor('shooshy')) expect(itemFor(html, item.name)).toContain(`cosmetics/icons/${item.id}.png`)
-        expect(html).not.toContain('cosmetics/icons/chase-')
+        for (const item of itemsFor('shooshy')) expect(itemFor(html, item.name)).toContain(cosmeticUrl(item.id))
+        expect(html).not.toContain('cosmetics/chase-')
     })
 
     it('shows only the selected character wallet as an icon and number', () => {
@@ -75,19 +73,21 @@ describe('ShopScreen shows only the selected character', () => {
         expect(render({ progression: progression({ wallets: { shiba: 1, shooshy: 0 } }) })).toContain('aria-label="1 bone"')
     })
 
-    it('lists every catalog item under its own character only', () => {
+    it('shows every item on its owning character only', () => {
         for (const item of COSMETICS) {
             const html = render({ character: item.character })
-            expect(itemFor(html, item.name)).toContain(`cosmetics/icons/${item.id}.png`)
+            expect(itemFor(html, item.name)).toContain(cosmeticUrl(item.id))
         }
     })
 })
 
 describe('ShopScreen visual card contents', () => {
-    it('shows the correct pixel icon, currency glyph and numeric price without body copy', () => {
+    it('shows the selected character wearing the item with currency and price, without body copy', () => {
         for (const item of COSMETICS) {
             const card = itemFor(render({ character: item.character }), item.name)
-            expect(card).toContain(`cosmetics/icons/${item.id}.png`)
+            expect(card).toContain('class="shop-preview"')
+            expect(card).toContain(cosmeticUrl(item.id))
+            expect(card).toContain('class="cosmetic-overlay"')
             expect(card).toContain('class="home-currency-icon"')
             expect(card).toContain(`</svg>${item.price}</span>`)
             expect(card).not.toMatch(/<h3|<p[ >]|shop-status|>Buy<|>Equip<|>Owned<|>Worn</)
@@ -152,101 +152,51 @@ describe('ShopScreen card actions', () => {
         fireEvent.click(screen.getByRole('button', { name: 'Buy Sushi hat for 3 bones' }))
         fireEvent.click(screen.getByRole('button', { name: 'Confirm purchase of Sushi hat for 3 bones' }))
         expect(onBuy).toHaveBeenCalledWith('chase-sushi-hat')
-        rerender(<ShopScreen character="shiba" progression={progression({ inventory: { shiba: ['chase-sushi-hat'], shooshy: [] } })} onBuy={onBuy} onEquip={onEquip} onUnequip={onUnequip} onBack={noop} />)
+        rerender(<ShopScreen character="shiba" progression={progression({ inventory: { shiba: ['chase-sushi-hat'], shooshy: [] } })} onBuy={onBuy} onEquip={onEquip} onUnequip={onUnequip} />)
         fireEvent.click(screen.getByRole('button', { name: 'Equip Sushi hat' }))
         expect(onEquip).toHaveBeenCalledWith('chase-sushi-hat')
-        rerender(<ShopScreen character="shiba" progression={progression({ inventory: { shiba: ['chase-sushi-hat'], shooshy: [] }, equipped: { shiba: { face: null, head: 'chase-sushi-hat', body: null }, shooshy: { face: null, head: null, body: null } } })} onBuy={onBuy} onEquip={onEquip} onUnequip={onUnequip} onBack={noop} />)
+        rerender(<ShopScreen character="shiba" progression={progression({ inventory: { shiba: ['chase-sushi-hat'], shooshy: [] }, equipped: { shiba: { face: null, head: 'chase-sushi-hat', body: null }, shooshy: { face: null, head: null, body: null } } })} onBuy={onBuy} onEquip={onEquip} onUnequip={onUnequip} />)
         fireEvent.click(screen.getByRole('button', { name: 'Unequip Sushi hat' }))
         expect(onUnequip).toHaveBeenCalledWith('shiba', 'head')
     })
 })
 
-describe('ShopScreen fitting room button and panel', () => {
-    it('renders a Fitting Room button that starts collapsed with no panel', () => {
-        interactive()
-        const button = fittingButton()
-        expect(button.getAttribute('aria-expanded')).toBe('false')
-        expect(screen.queryByRole('region', { name: 'Fitting room' })).toBeNull()
-        expect(screen.queryByText(/Nothing equipped|Wearing:/)).toBeNull()
+describe('ShopScreen character previews', () => {
+    it.each(['shiba', 'shooshy'] as const)('shows each %s accessory on its character in the shop cards', (character) => {
+        const { container } = interactive({ character })
+        const overlays = [...container.querySelectorAll('.shop-preview .cosmetic-overlay')]
+            .map((image) => image.getAttribute('src'))
+        expect(overlays).toEqual(itemsFor(character).map((item) => cosmeticUrl(item.id)))
+        expect(container.querySelectorAll('.shop-preview .status-sprite-run')).toHaveLength(2)
     })
+})
 
-    it('opens the panel on click and shows Nothing equipped with no overlay', () => {
-        const { container } = interactive()
-        fireEvent.click(fittingButton())
-        expect(fittingButton().getAttribute('aria-expanded')).toBe('true')
-        expect(screen.getByRole('region', { name: 'Fitting room' })).toBeTruthy()
-        expect(screen.getByText('Nothing equipped')).toBeTruthy()
-        expect(container.querySelector('.cosmetic-overlay')).toBeNull()
-    })
-
-    it('names the equipped item and draws its overlay when one is worn', () => {
+describe('ShopScreen fitting room', () => {
+    it('previews the current outfit and closes from the toggle button', () => {
         const { container } = interactive({
-            progression: progression({ inventory: { shiba: ['chase-sushi-hat'], shooshy: [] }, equipped: { shiba: { face: null, head: 'chase-sushi-hat', body: null }, shooshy: { face: null, head: null, body: null } } }),
+            progression: progression({
+                inventory: { shiba: ['chase-black-sunglasses', 'chase-sushi-hat'], shooshy: [] },
+                equipped: { shiba: { face: null, head: 'chase-sushi-hat', body: null }, shooshy: { face: null, head: null, body: null } },
+            }),
         })
-        fireEvent.click(fittingButton())
-        expect(screen.getByText('Wearing: Sushi hat')).toBeTruthy()
-        expect(screen.queryByText('Nothing equipped')).toBeNull()
+
+        fireEvent.click(screen.getByRole('button', { name: 'Fitting Room' }))
+
+        const fittingRoom = screen.getByRole('region', { name: 'Fitting room' })
+        expect(fittingRoom).toBeTruthy()
         expect(container.querySelector('.shop-fitting .cosmetic-overlay')?.getAttribute('src')).toBe(cosmeticUrl('chase-sushi-hat'))
-    })
-
-    it('draws the overlay that matches the equipped id, not another item', () => {
-        const { container } = interactive({
-            progression: progression({ inventory: { shiba: ['chase-black-sunglasses', 'chase-sushi-hat'], shooshy: [] }, equipped: { shiba: { face: null, head: 'chase-sushi-hat', body: null }, shooshy: { face: null, head: null, body: null } } }),
-        })
-        fireEvent.click(fittingButton())
-        const overlays = [...container.querySelectorAll('.shop-fitting .cosmetic-overlay')].map((img) => img.getAttribute('src'))
-        expect(overlays).toEqual([cosmeticUrl('chase-sushi-hat')])
-    })
-
-    it('closes with the Close button and returns focus to the Fitting Room button', () => {
-        interactive()
-        fireEvent.click(fittingButton())
-        fireEvent.click(screen.getByRole('button', { name: 'Close' }))
+        expect(within(fittingRoom).queryByRole('button')).toBeNull()
+        fireEvent.click(screen.getByRole('button', { name: 'Fitting Room' }))
         expect(screen.queryByRole('region', { name: 'Fitting room' })).toBeNull()
-        expect(fittingButton().getAttribute('aria-expanded')).toBe('false')
-        expect(document.activeElement).toBe(fittingButton())
-    })
-
-    it('closes on Escape and returns focus to the Fitting Room button', () => {
-        interactive()
-        fireEvent.click(fittingButton())
-        fireEvent.keyDown(document, { key: 'Escape' })
-        expect(screen.queryByRole('region', { name: 'Fitting room' })).toBeNull()
-        expect(document.activeElement).toBe(fittingButton())
-    })
-
-    it('ignores keys other than Escape while open', () => {
-        interactive()
-        fireEvent.click(fittingButton())
-        fireEvent.keyDown(document, { key: 'Enter' })
-        expect(screen.getByRole('region', { name: 'Fitting room' })).toBeTruthy()
-    })
-
-    it('toggles closed when the Fitting Room button is pressed again', () => {
-        interactive()
-        fireEvent.click(fittingButton())
-        fireEvent.click(fittingButton())
-        expect(screen.queryByRole('region', { name: 'Fitting room' })).toBeNull()
-        expect(fittingButton().getAttribute('aria-expanded')).toBe('false')
-    })
-
-    it('writes nothing to storage when the panel opens or closes', () => {
-        const setItem = vi.spyOn(Storage.prototype, 'setItem')
-        interactive()
-        fireEvent.click(fittingButton())
-        fireEvent.click(screen.getByRole('button', { name: 'Close' }))
-        fireEvent.click(fittingButton())
-        fireEvent.keyDown(document, { key: 'Escape' })
-        expect(setItem).not.toHaveBeenCalled()
     })
 })
 
 describe('ShopScreen grid and accessibility', () => {
-    it('renders a grid of equal-format icon cards, one per item for the character', () => {
+    it('renders a two-column grid of character previews, one per item', () => {
         const html = render()
         expect(html).toContain('class="shop-grid" aria-label="Accessories"')
         expect(cardsIn(html)).toHaveLength(itemsFor('shiba').length)
-        expect(html.match(/class="shop-art-image"/g)).toHaveLength(itemsFor('shiba').length)
+        expect(html.match(/class="shop-preview"/g)).toHaveLength(itemsFor('shiba').length)
         expect(html).not.toContain('<h3>')
     })
 
@@ -254,16 +204,16 @@ describe('ShopScreen grid and accessibility', () => {
         const html = render()
         const images = html.match(/<img[^>]*>/g) ?? []
         expect(images.length).toBeGreaterThan(0)
-        for (const image of images.filter((img) => img.includes('shop-art-image'))) {
+        for (const image of images.filter((img) => img.includes('cosmetic-overlay'))) {
             expect(image).toContain('alt=""')
         }
     })
 
-    it('labels every button including icon-only cards and the back action', () => {
+    it('labels every button, including cards and the fitting room action', () => {
         interactive({ progression: progression({ wallets: { shiba: 9, shooshy: 9 } }) })
         for (const button of screen.getAllByRole('button')) expect(button.getAttribute('aria-label') || button.textContent?.trim()).toBeTruthy()
-        expect(screen.getByRole('button', { name: 'Back to home' })).toBeTruthy()
-        expect(fittingButton().querySelector('svg')?.getAttribute('aria-hidden')).toBe('true')
+        expect(screen.getByRole('button', { name: 'Fitting Room' })).toBeTruthy()
+        expect(screen.queryByRole('button', { name: 'Back to home' })).toBeNull()
     })
 })
 
@@ -395,13 +345,12 @@ describe('ShopScreen purchase confirm panel', () => {
         expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Buy Sushi hat for 3 bones' }))
     })
 
-    it('Escape closes only the confirm dialog, not the fitting room behind it', () => {
+    it('Escape closes the confirm dialog and leaves the shop cards visible', () => {
         interactive({ progression: progression({ wallets: { shiba: 9, shooshy: 0 } }) })
-        fireEvent.click(fittingButton())
         fireEvent.click(screen.getByRole('button', { name: 'Buy Sushi hat for 3 bones' }))
         fireEvent.keyDown(document, { key: 'Escape' })
         expect(confirmDialog()).toBeNull()
-        expect(screen.getByRole('region', { name: 'Fitting room' })).toBeTruthy()
+        expect(screen.getByRole('button', { name: 'Buy Sushi hat for 3 bones' })).toBeTruthy()
     })
 
     it('has accessible names on both Confirm and Cancel', () => {
@@ -414,7 +363,7 @@ describe('ShopScreen purchase confirm panel', () => {
         const { rerender, onBuy } = openSushi()
         fireEvent.click(screen.getByRole('button', { name: 'Confirm purchase of Sushi hat for 3 bones' }))
         expect(onBuy).toHaveBeenCalledTimes(1)
-        rerender(<ShopScreen character="shiba" progression={progression({ wallets: { shiba: 6, shooshy: 0 }, inventory: { shiba: ['chase-sushi-hat'], shooshy: [] } })} onBuy={onBuy} onEquip={noop} onUnequip={noop} onBack={noop} />)
+        rerender(<ShopScreen character="shiba" progression={progression({ wallets: { shiba: 6, shooshy: 0 }, inventory: { shiba: ['chase-sushi-hat'], shooshy: [] } })} onBuy={onBuy} onEquip={noop} onUnequip={noop} />)
         expect(screen.getByLabelText('6 bones')).toBeTruthy()
     })
 })

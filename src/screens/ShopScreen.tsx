@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useId, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react'
 import type { Character } from '../domain/preferences'
 import type { Progression } from '../domain/types'
-import { itemsFor, type Cosmetic, type CosmeticId, type Slot } from '../cosmetics/catalog'
+import { itemsFor, nothingWorn, type Cosmetic, type CosmeticId, type Slot } from '../cosmetics/catalog'
 import { canAfford } from '../cosmetics/shop'
 import { CharacterStill } from '../components/CharacterStill'
 import { CurrencyIcon } from '../components/CurrencyIcon'
@@ -23,7 +23,6 @@ interface Props {
     onBuy: (itemId: CosmeticId) => void
     onEquip: (itemId: CosmeticId) => void
     onUnequip: (character: Character, slot: Slot) => void
-    onBack: () => void
 }
 
 type ItemState = 'equipped' | 'owned' | 'affordable' | 'unaffordable'
@@ -50,12 +49,15 @@ function ShopItem({ item, progression, onRequestBuy, onEquip, onUnequip }: Omit<
     const action = state === 'equipped' ? () => onUnequip(character, item.slot)
         : state === 'owned' ? () => onEquip(item.id)
             : (event: { currentTarget: HTMLButtonElement }) => onRequestBuy(item, event.currentTarget)
+    const preview = { ...nothingWorn(), [item.slot]: item.id }
 
     return (
         <li className={`shop-card shop-card-${state}`}>
             <button type="button" className="shop-action" aria-label={label} disabled={state === 'unaffordable'} onClick={action}>
                 {(state === 'owned' || state === 'equipped') && <span className="shop-owned-mark" aria-hidden="true">✓</span>}
-                <img className="shop-art-image" src={`${import.meta.env.BASE_URL}cosmetics/icons/${item.id}.png`} alt="" />
+                <div className="shop-preview" aria-hidden="true">
+                    <CharacterStill character={character} status="healthy" equipped={preview} scale={0.5} />
+                </div>
                 <span className="shop-price" aria-hidden="true">
                     <CurrencyIcon character={character} />
                     {price}
@@ -87,18 +89,14 @@ function BrickWall() {
     )
 }
 
-const FITTING_PANEL_ID = 'shop-fitting-panel'
-
 /** The balance as a number with its currency word, e.g. "9 bones" or "1 fish". */
 const balanceText = (character: Character, count: number) => `${count} ${wordFor(character, count)}`
 
-export function ShopScreen({ character, progression, onBuy, onEquip, onUnequip, onBack }: Props) {
+export function ShopScreen({ character, progression, onBuy, onEquip, onUnequip }: Props) {
     const count = progression.wallets[character]
-    const worn = itemsFor(character).filter((item) => progression.equipped[character][item.slot] === item.id)
 
     const [fittingOpen, setFittingOpen] = useState(false)
-    const toggleRef = useRef<HTMLButtonElement>(null)
-    const closeRef = useRef<HTMLButtonElement>(null)
+    const fittingButtonRef = useRef<HTMLButtonElement>(null)
 
     // The purchase waiting for Confirm, and the card button that opened it (focus returns there).
     const [pendingItem, setPendingItem] = useState<Cosmetic | null>(null)
@@ -107,6 +105,7 @@ export function ShopScreen({ character, progression, onBuy, onEquip, onUnequip, 
     const confirmRef = useRef<HTMLButtonElement>(null)
     const cancelRef = useRef<HTMLButtonElement>(null)
     const confirmTitleId = useId()
+    const fittingPanelId = useId()
 
     const openConfirm = useCallback((item: Cosmetic, trigger: HTMLButtonElement) => {
         triggerRef.current = trigger
@@ -153,19 +152,11 @@ export function ShopScreen({ character, progression, onBuy, onEquip, onUnequip, 
         }
     }
 
-    /** Hides the panel and hands focus back to the button that opened it. Nothing is stored. */
     const closeFitting = useCallback(() => {
         setFittingOpen(false)
-        toggleRef.current?.focus()
+        fittingButtonRef.current?.focus()
     }, [])
 
-    // Opening moves focus to the panel's Close button, so keyboard users land inside it.
-    useEffect(() => {
-        if (fittingOpen) closeRef.current?.focus()
-    }, [fittingOpen])
-
-    // Escape closes the panel from anywhere on the page while it is open. It stands down while a
-    // purchase is waiting for Confirm, so one Escape closes only the confirm panel.
     useEffect(() => {
         if (!fittingOpen || pendingItem) return
         const onKeyDown = (event: KeyboardEvent) => {
@@ -231,6 +222,7 @@ export function ShopScreen({ character, progression, onBuy, onEquip, onUnequip, 
                             <button
                                 ref={confirmRef}
                                 type="button"
+                                className="ghost"
                                 aria-label={`Confirm purchase of ${pendingItem.name} for ${priceText(character, pendingItem.price)}`}
                                 onClick={confirmPurchase}
                             >
@@ -240,33 +232,21 @@ export function ShopScreen({ character, progression, onBuy, onEquip, onUnequip, 
                     </div>
                 </div>
             )}
-            <div className="shop-fitting-bar">
-                <button
-                    ref={toggleRef}
-                    type="button"
-                    className="ghost shop-fitting-button"
-                    aria-expanded={fittingOpen}
-                    aria-controls={fittingOpen ? FITTING_PANEL_ID : undefined}
-                    onClick={() => (fittingOpen ? closeFitting() : setFittingOpen(true))}
-                >
-                    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                        <path d="M10 6a2 2 0 1 1 3 1.73C12.4 8.1 12 8.5 12 9.2V11l9 7v2H3v-2l9-7" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
-                    </svg>
-                    Fitting Room
-                </button>
-            </div>
+            <button
+                ref={fittingButtonRef}
+                type="button"
+                className="ghost shop-fitting-toggle"
+                aria-expanded={fittingOpen}
+                aria-controls={fittingPanelId}
+                onClick={() => setFittingOpen((open) => !open)}
+            >
+                <span aria-hidden="true">🪞</span> Fitting Room
+            </button>
             {fittingOpen && (
-                <section id={FITTING_PANEL_ID} className="shop-fitting" aria-label="Fitting room">
+                <section id={fittingPanelId} className="shop-fitting" aria-label="Fitting room">
                     <CharacterStill character={character} status="healthy" equipped={progression.equipped[character]} />
-                    <p className="shop-wearing">{worn.length > 0 ? `Wearing: ${worn.map((item) => item.name).join(', ')}` : 'Nothing equipped'}</p>
-                    <button ref={closeRef} type="button" className="ghost shop-fitting-close" onClick={closeFitting}>
-                        Close
-                    </button>
                 </section>
             )}
-            <button type="button" className="link" onClick={onBack}>
-                Back to home
-            </button>
         </section>
     )
 }

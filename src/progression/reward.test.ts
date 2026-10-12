@@ -136,8 +136,8 @@ describe('recordCompletedRun', () => {
         await recordCompletedRun(repos, run)
         await recordCompletedRun(repos, { ...run, updatedAt: '2026-10-10T06:00:00.000Z' })
         expect((await repos.progression.load()).wallets.shooshy).toBe(21)
-        expect((await repos.completedRuns.load('edited'))).not.toBeNull()
-        expect(values.get('stride.runlog')?.match(/"id":"edited"/g)).toHaveLength(1)
+        expect(await repos.completedRuns.list()).toHaveLength(1)
+        expect((await repos.completedRuns.load('edited'))?.session?.id).toBe('edited')
     })
 
     it('does not award again after a reload (a fresh repository instance reads the same storage)', async () => {

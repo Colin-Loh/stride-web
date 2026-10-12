@@ -70,7 +70,6 @@ export const QUESTIONS = [
         },
         units: null,
         required: true,
-        hint: 'An actual result gives the best paces. An estimate or an easy pace is provisional.',
     },
     {
         id: 'recent_race_distance',
@@ -90,7 +89,7 @@ export const QUESTIONS = [
     },
     {
         id: 'estimated_distance_time',
-        label: 'Without a recent race, what distance and time could you race today?',
+        label: 'What distance and time could you race today?',
         input: { type: 'distanceTime' },
         units: 'km, h:mm:ss',
         required: true,
@@ -115,15 +114,14 @@ export const QUESTIONS = [
     },
     {
         id: 'weekly_volume',
-        label: 'How much can you safely run in a typical current week?',
+        label: 'How much can you run in a week?',
         input: { type: 'number', min: 0, integer: false, step: 1 },
         units: 'km/week',
         required: true,
-        hint: 'Your current safe distance, not a peak you hope to reach.',
     },
     {
         id: 'running_days',
-        label: 'How many days per week can you run consistently?',
+        label: 'How many days per week do you run?',
         // TODO(verify): official bounds are unpublished; 1-7 is the spec's sensible UI range.
         input: { type: 'number', min: 1, max: 7, integer: true, step: 1 },
         units: 'days/week',
@@ -135,7 +133,6 @@ export const QUESTIONS = [
         input: { type: 'choice', options: toOptions(TRAINING_EFFORTS) },
         units: null,
         required: true,
-        hint: 'Every option includes an Easy run. When unsure, choose Base.',
     },
     {
         id: 'goal_race_date',
@@ -145,7 +142,7 @@ export const QUESTIONS = [
         required: false,
         askWhen: { id: 'training_focus', in: RACE_FOCUSES },
         // TODO(verify): plan-length constraints for a goal date are unpublished.
-        hint: 'Leave blank if there is no date yet.',
+        hint: 'Sets your plan length and taper timing. Leave blank if you have no goal race date.',
     },
 ] as const satisfies readonly Question[]
 

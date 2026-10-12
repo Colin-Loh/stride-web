@@ -1,13 +1,13 @@
 import { SCHEMA_VERSION, type Session, type SessionKind, type TrainingPlan, type Week } from '../domain/types'
 import { WORKOUT_NAMES } from '../workouts'
 import { calculateSectionMetrics } from './metrics'
-import { CONFLICT_NOTE, REDUCED_QUALITY_NOTE, TAPER_NOTE } from './copy'
+import { REDUCED_QUALITY_NOTE, TAPER_NOTE } from './copy'
 import { addDays, daysBetween, weeksUntil } from './dates'
 import {
     DAYS_PER_WEEK, hardDayPositions, planWeekCount, qualityKinds, qualitySessionsPerWeek, steadyKindForFocus, TAPER_FINAL_WEEK_HARD_CAP,
-    taperWeeks, trainingSpeedsKmh, weekStructure, weeklyVolumes, type SteadyKind, type WeekStructure,
+    taperWeeks, weekStructure, weeklyVolumes, type SteadyKind, type WeekStructure,
 } from './vdot'
-import { fitnessNote, goalNote } from './explanations'
+import { goalNote } from './explanations'
 import { buildWorkout } from './generate'
 import { buildPaceSet } from './paces'
 import { toIsoDate } from './questions'
@@ -67,7 +67,6 @@ export function generateTrainingPlan(input: PlanInput): TrainingPlan | null {
     const runsPerWeek = baseline.daysPerWeek
     const structure = weekStructure(runsPerWeek, baseline.trainingEffort)
     const steadyKind = steadyKindForFocus(baseline.trainingFocus)
-    let otherLongerThanLong = false
 
     const weeks: Week[] = tapered.map(({ targetKm, taper, final }, index) => {
         const weekId = `${planId}-w${index + 1}`
@@ -84,9 +83,6 @@ export function generateTrainingPlan(input: PlanInput): TrainingPlan | null {
         const fixedKm = fixed.reduce((km, workout) => km + knownDistanceKm(workout.sections), 0)
         const sharedSlots = slots.length - fixed.length
         const sharedKm = sharedSlots > 0 ? Math.max(0, targetKm - fixedKm) / sharedSlots : 0
-        const longKm = fixed.find((workout) => workout.category === 'long')?.sections[0].target
-        if (sharedSlots > 0 && longKm?.basis === 'distance' && sharedKm > longKm.distanceKm) otherLongerThanLong = true
-
         const queue = [...fixed]
         const workouts = slots.map((slot) =>
             slot.shared
@@ -101,13 +97,10 @@ export function generateTrainingPlan(input: PlanInput): TrainingPlan | null {
         }
     })
 
-    const rawSpeeds = baseline.vdot === null ? null : trainingSpeedsKmh(baseline.vdot)
     const notes = [
-        fitnessNote(baseline, rawSpeeds),
         goalNote(baseline, now),
         tapered.some((week) => week.taper) ? TAPER_NOTE : null,
         wantedQuality > structure.quality ? REDUCED_QUALITY_NOTE : null,
-        otherLongerThanLong ? CONFLICT_NOTE : null,
     ].filter((note): note is string => note !== null)
 
     return {

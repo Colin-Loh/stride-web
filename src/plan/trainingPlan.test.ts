@@ -112,7 +112,7 @@ describe('generateTrainingPlan', () => {
         }
     })
 
-    it('gives the steady days the rest of the week and reports the long-run cap conflict', () => {
+    it('gives the steady days the rest of the weekly distance', () => {
         const result = plan()
         const week = result.weeks[0]
         const dayKm = week.sessions.map((session) => knownKm(session.sections))
@@ -122,7 +122,7 @@ describe('generateTrainingPlan', () => {
         const total = dayKm.reduce((a, b) => a + b, 0)
         expect(total).toBeLessThanOrEqual(15 + 1e-9)
         expect(total).toBeGreaterThan(15 - 0.5)
-        expect(result.notes.join(' ')).toContain('another run may be longer')
+        expect(result.notes.join(' ')).not.toContain('another run may be longer')
     })
 
     it('runs until the goal race when it is further than 12 weeks away, and highlights the current week', () => {

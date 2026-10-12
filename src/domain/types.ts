@@ -106,6 +106,8 @@ export interface CompletedRun extends Stamped {
     completedAt: string
     elapsedMs: number
     distanceKm: number | null
+    /** Full workout snapshot for reopening the completion report. Absent on older run-log entries. */
+    session?: RunSession
 }
 
 /** Per-character values, keyed by character id. */

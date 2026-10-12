@@ -1,7 +1,6 @@
 import { useAppFlow } from './hooks/useAppFlow'
 import type { Repositories } from './storage/repository'
 import { NameScreen } from './screens/NameScreen'
-import { CategoryScreen } from './screens/CategoryScreen'
 import { BaselineScreen } from './screens/BaselineScreen'
 import { PlanScreen } from './screens/PlanScreen'
 import { WorkoutScreen } from './screens/WorkoutScreen'
@@ -22,22 +21,23 @@ export default function App({ repositories }: { repositories: Repositories }) {
     {view === 'name' && <NameScreen initialName={name} initialCharacter={preferences.character} initialWeightKg={preferences.weightKg}
       storedCharacter={preferences.name ? preferences.character : undefined}
       onContinue={(next, character, weightKg) => { flow.persistName(next, character, weightKg); flow.setView('home') }} />}
-    {view === 'category' && <CategoryScreen name={name} selected={open?.workout.category}
-      onChangeName={() => flow.setView('name')} onEditAnswers={flow.editAnswers} onPick={flow.pickCategory} onShowPlan={flow.showPlan}
-      onShowStatus={flow.openStatus} />}
-    {view === 'category' && <HomeNav current="workouts" onPlan={flow.showPlan} onWorkouts={() => flow.setView('category')} onShop={flow.openShop} onStatus={flow.openStatus} />}
     {(view === 'home' || view === 'status') && flow.progression && <StatusScreen character={preferences.character} progression={flow.progression} runs={flow.runLog} now={new Date()}
-      onCollect={flow.collectIncome} onBack={() => flow.setView('category')} />}
-    {(view === 'home' || view === 'status') && flow.progression && <HomeNav current="status" onPlan={flow.showPlan} onWorkouts={() => flow.setView('category')} onShop={flow.openShop} onStatus={flow.openStatus} />}
+      plan={flow.plan}
+      hasPastRun={flow.runLog.some(run => run.characterId === preferences.character && run.session !== undefined)}
+      onCollect={flow.collectIncome} onChangeCharacter={flow.changeCharacter} onEditAnswers={flow.editAnswers} onShowPastRun={flow.showPastRun} />}
+    {(view === 'home' || view === 'status') && flow.progression && <HomeNav current="status" onPlan={flow.showPlan} onShop={flow.openShop} onStatus={flow.openStatus} />}
+    {view === 'past-complete' && flow.pastRunSession && <CompleteScreen name={name} session={flow.pastRunSession}
+      character={flow.pastRunSession.characterId ?? preferences.character} weightKg={preferences.weightKg}
+      onAgain={flow.closePastRun} onAgainLabel="Back to status" />}
     {view === 'shop' && flow.progression && <ShopScreen character={preferences.character} progression={flow.progression}
-      onBuy={flow.buyCosmetic} onEquip={flow.equipCosmetic} onUnequip={flow.unequipCosmetic} onBack={() => flow.setView('home')} />}
-    {view === 'shop' && flow.progression && <HomeNav current="shop" onPlan={flow.showPlan} onWorkouts={() => flow.setView('category')} onShop={flow.openShop} onStatus={flow.openStatus} />}
-    {view === 'baseline' && <BaselineScreen initial={flow.answers?.values ?? {}} submitAction={flow.submitAction} onBack={() => flow.setView('category')} onDone={flow.finishAnswers} />}
-    {view === 'plan' && plan && <PlanScreen plan={plan} onOpenSession={flow.openSession} onBack={() => flow.setView('category')} />}
-    {view === 'plan' && plan && <HomeNav current="plan" onPlan={flow.showPlan} onWorkouts={() => flow.setView('category')} onShop={flow.openShop} onStatus={flow.openStatus} />}
+      onBuy={flow.buyCosmetic} onEquip={flow.equipCosmetic} onUnequip={flow.unequipCosmetic} />}
+    {view === 'shop' && flow.progression && <HomeNav current="shop" onPlan={flow.showPlan} onShop={flow.openShop} onStatus={flow.openStatus} />}
+    {view === 'baseline' && <BaselineScreen initial={flow.answers?.values ?? {}} submitAction={flow.submitAction} onBack={() => flow.setView('home')} onDone={flow.finishAnswers} />}
+    {view === 'plan' && plan && <PlanScreen plan={plan} onOpenSession={flow.openSession} />}
+    {view === 'plan' && plan && <HomeNav current="plan" onPlan={flow.showPlan} onShop={flow.openShop} onStatus={flow.openStatus} />}
     {view === 'workout' && open && <WorkoutScreen workout={open.workout} onChange={flow.changeWorkout} onStart={flow.startWorkout}
       backLabel={open.sessionId ? 'Back to my plan' : 'Pick a different session'}
-      onBack={() => flow.setView(open.sessionId ? 'plan' : 'category')} />}
+      onBack={() => flow.setView(open.sessionId ? 'plan' : 'home')} />}
     {view === 'run' && session && <RunScreen session={session} muted={preferences.muted} character={preferences.character}
       equipped={flow.progression?.equipped[preferences.character]}
       onSession={flow.persistSession} onComplete={flow.handleComplete} onQuit={flow.quitRun} onToggleMute={flow.toggleMute} />}

@@ -5,12 +5,19 @@ import { SCHEMA_VERSION, type CompletedRun, type Progression } from '../domain/t
 import type { Character } from '../domain/preferences'
 import { OBESE_STILLS } from '../sprites'
 import { cosmeticUrl } from '../cosmetics/art'
+import { derivePersonalBaseline } from '../plan/baseline'
+import { generateTrainingPlan } from '../plan/trainingPlan'
+import type { AnswerValues } from '../plan/questions'
 
 const noop = async () => 0
-const back = () => { }
+const changeCharacter = () => { }
+const editAnswers = () => { }
+const showPastRun = () => { }
 const STAMP = '2026-10-01T00:00:00.000Z'
 // Local calendar day D is 2026-10-10 (month index 9 is October).
 const NOW = new Date(2026, 9, 10, 12, 0)
+const PLAN_ANSWERS: AnswerValues = { training_focus: 'base', weekly_volume: 15, running_days: 3, training_effort: 'base' }
+const PLAN = generateTrainingPlan({ baseline: derivePersonalBaseline(PLAN_ANSWERS), now: NOW })!
 
 const progression = (overrides: Partial<Progression> = {}): Progression => ({
     id: 'progression', schemaVersion: SCHEMA_VERSION, createdAt: STAMP, updatedAt: STAMP,
@@ -21,15 +28,15 @@ const progression = (overrides: Partial<Progression> = {}): Progression => ({
     ...overrides,
 })
 
-const run = (id: string, characterId: CompletedRun['characterId'], planSessionId: string | null = null): CompletedRun => ({
+const run = (id: string, characterId: CompletedRun['characterId'], planSessionId: string | null = null, distanceKm: number | null = 5, completedAt = new Date(2026, 9, 10, 9, 0).toISOString()): CompletedRun => ({
     id, schemaVersion: SCHEMA_VERSION, createdAt: STAMP, updatedAt: STAMP, characterId,
-    workoutId: 'easyRun', planSessionId, completedAt: new Date(2026, 9, 10, 9, 0).toISOString(),
-    elapsedMs: 1_500_000, distanceKm: 5,
+    workoutId: 'easyRun', planSessionId, completedAt,
+    elapsedMs: 1_500_000, distanceKm,
 })
 
 const render = (props: Partial<Parameters<typeof StatusScreen>[0]> = {}) =>
     renderToStaticMarkup(
-        <StatusScreen character="shiba" progression={progression()} runs={[]} now={NOW} onCollect={noop} onBack={back} {...props} />,
+        <StatusScreen character="shiba" progression={progression()} runs={[]} plan={PLAN} now={NOW} onCollect={noop} onChangeCharacter={changeCharacter} onEditAnswers={editAnswers} hasPastRun={false} onShowPastRun={showPastRun} {...props} />,
     )
 
 const buttonOf = (html: string) => html.match(/<button[^>]*quest-button[^>]*>/)?.[0] ?? ''
@@ -39,8 +46,8 @@ describe('StatusScreen one character', () => {
         const html = render({ character: 'shiba' })
         expect(html).toContain('<h1>How is Chase?</h1>')
         expect(html).toContain('Chase is obese')
-        expect(html).not.toContain('Shooshy')
-        expect(html).not.toContain('shooshy')
+        expect(html).toContain('Switch to Shooshy')
+        expect(html).not.toContain('Shooshy is')
         expect(html).not.toContain('Fish')
         expect(html).not.toContain('fish')
     })
@@ -49,7 +56,8 @@ describe('StatusScreen one character', () => {
         const html = render({ character: 'shooshy', progression: progression({ wallets: { shiba: 4, shooshy: 2 } }) })
         expect(html).toContain('<h1>How is Shooshy?</h1>')
         expect(html).toContain('Shooshy is obese')
-        expect(html).not.toContain('Chase')
+        expect(html).toContain('Switch to Chase')
+        expect(html).not.toContain('Chase is')
         expect(html).not.toContain('shiba')
         expect(html).not.toContain('Bones')
         expect(html).not.toContain('bone')
@@ -59,14 +67,22 @@ describe('StatusScreen one character', () => {
         expect(render().match(/<article/g)?.length).toBe(1)
     })
 
-    it('shows the plain-text rule explanation', () => {
-        expect(render()).toContain('Obese after 7 days with no completed run of 5 minutes or more. A new run restores health.')
+    it('offers buttons to switch character and update answers', () => {
+        const html = render()
+        expect(html).toContain('>Switch to Shooshy</button>')
+        expect(html).toContain('>Update answers</button>')
     })
 
-    it('shows Back and no Shop button', () => {
+    it('places Daily Food at the far right of the wallet row when enabled', () => {
+        const html = render({ hasPastRun: true })
+        expect(html.indexOf('class="status-wallet-balance"')).toBeLessThan(html.indexOf('class="quest-panel"'))
+        expect(html).toContain('>View past run</button>')
+        expect(render()).toMatch(/<button[^>]*disabled=""[^>]*>View past run<\/button>/)
+    })
+
+    it('does not show a redundant Back button', () => {
         const html = render()
-        expect(html).toContain('>Back<')
-        expect(html).not.toContain('>Shop<')
+        expect(html).not.toContain('>Back<')
     })
 })
 
@@ -98,9 +114,9 @@ describe('StatusScreen health', () => {
         expect(html).toContain('Shooshy is obese')
     })
 
-    it('shows the plan-session count as information, not as a health change', () => {
+    it('omits the verbose plan-session count while retaining health status', () => {
         const html = render({ runs: [run('r1', 'shiba', 'week-1-session-1')] })
-        expect(html).toContain('Completed plan sessions in the last 7 days: 1')
+        expect(html).not.toContain('Completed plan sessions in the last 7 days')
         expect(html).toContain('Chase is very healthy')
     })
 
@@ -127,20 +143,69 @@ describe('StatusScreen health', () => {
     })
 })
 
-describe('StatusScreen wallet', () => {
-    it('shows the bones wallet line for Chase, singular and plural', () => {
-        expect(render({ progression: progression({ wallets: { shiba: 1, shooshy: 0 } }) })).toContain('<p>Bones: 1</p>')
-        expect(render({ progression: progression({ wallets: { shiba: 3, shooshy: 0 } }) })).toContain('<p>Bones: 3</p>')
+describe('StatusScreen plan-week distance goal', () => {
+    it('tracks completed distance within the current plan week for the selected character', () => {
+        const html = render({
+            runs: [
+                run('r1', 'shiba', null, 1.2),
+                run('r2', 'shiba', null, 0.8),
+                run('r3', 'shooshy', null, 5),
+                run('r4', 'shiba', null, 3, new Date(2026, 9, 9, 9, 0).toISOString()),
+            ]
+        })
+
+        expect(PLAN.weeks[0].targetKm).toBe(15)
+        expect(html).toContain('2.0 / 15.0 km')
+        expect(html).toContain('13.0 km left this week')
+        expect(html).toContain('value="2" max="15"')
     })
 
-    it('shows the fish wallet line for Shooshy', () => {
+    it('personalizes weekly progress for Shooshy', () => {
+        const html = render({ character: 'shooshy', runs: [run('r1', 'shooshy', null, 2)] })
+        expect(html).toContain('2.0 / 15.0 km')
+        expect(html).toContain('13.0 km left this week')
+    })
+
+    it('updates the goal to the current week target, including week 5', () => {
+        expect(PLAN.weeks[4].targetKm).toBeCloseTo(19.8, 1)
+        const weekFiveStart = new Date(`${PLAN.weeks[4].startDate}T12:00:00`)
+        const html = render({ now: weekFiveStart, runs: [run('r1', 'shiba', null, 2, weekFiveStart.toISOString())] })
+
+        expect(html).toContain('2.0 / 19.8 km')
+        expect(html).toContain('17.8 km left this week')
+        expect(html).toContain('value="2" max="19.8"')
+    })
+
+    it('reports completion at the weekly target', () => {
+        const html = render({ runs: [run('r1', 'shiba', null, 15.2)] })
+        expect(html).toContain('Goal complete')
+        expect(html).toContain('value="15" max="15"')
+    })
+
+    it('shows no goal without an active plan', () => {
+        const html = render({ plan: null })
+        expect(html).toContain('No active training plan')
+        expect(html).not.toContain('daily 3 km goal')
+    })
+})
+
+describe('StatusScreen wallet', () => {
+    it('shows Chase’s bone icon and balance without the word Bones', () => {
+        const html = render({ progression: progression({ wallets: { shiba: 3, shooshy: 0 } }) })
+        expect(html).toContain('role="img" aria-label="3 bones"')
+        expect(html).toContain('class="home-currency-icon"')
+        expect(html).not.toContain('Bones:')
+    })
+
+    it('shows Shooshy’s fish icon and balance', () => {
         const html = render({ character: 'shooshy', progression: progression({ wallets: { shiba: 0, shooshy: 7 } }) })
-        expect(html).toContain('<p>Fish: 7</p>')
+        expect(html).toContain('role="img" aria-label="7 fish"')
+        expect(html).toContain('class="home-currency-icon"')
     })
 
     it('does not show the other wallet', () => {
         const html = render({ progression: progression({ wallets: { shiba: 3, shooshy: 7 } }) })
-        expect(html).toContain('Bones: 3')
+        expect(html).toContain('aria-label="3 bones"')
         expect(html).not.toContain('Fish')
         expect(html).not.toContain('Fish: 7')
     })
@@ -155,28 +220,29 @@ describe('StatusScreen quest button', () => {
 
     it('is on this screen, with the ready name when one unit is pending', () => {
         const html = questFor('shiba', '2026-10-09')
-        expect(buttonOf(html)).toContain('aria-label="Quest: collect 1 bone"')
+        expect(buttonOf(html)).toContain('aria-label="Daily Food: collect 1 bone"')
+        expect(html).toContain('>Daily Food</span>')
         expect(buttonOf(html)).toContain('aria-disabled="false"')
     })
 
     it('uses the fish name for Shooshy when units are pending', () => {
         const html = questFor('shooshy', '2026-10-07')
-        expect(buttonOf(html)).toContain('aria-label="Quest: collect 3 fish"')
+        expect(buttonOf(html)).toContain('aria-label="Daily Food: collect 3 fish"')
     })
 
     it('shows the claimed state after today is collected', () => {
         const html = questFor('shiba', '2026-10-10')
-        expect(buttonOf(html)).toContain('aria-label="Quest done today"')
+        expect(buttonOf(html)).toContain('aria-label="Daily Food done today"')
         expect(buttonOf(html)).toContain('aria-disabled="true"')
     })
 
     it('shows the nothing-yet state on the first day', () => {
         const html = questFor('shiba', '2026-10-10', '2026-10-10')
-        expect(buttonOf(html)).toContain('aria-label="Quest: nothing to collect yet"')
+        expect(buttonOf(html)).toContain('aria-label="Daily Food: nothing to collect yet"')
         expect(buttonOf(html)).toContain('aria-disabled="true"')
     })
 
-    it('shows the backlog note once', () => {
-        expect(render().match(/Up to 14 days can be collected. Older days are not kept./g)?.length).toBe(1)
+    it('does not show the backlog note', () => {
+        expect(render()).not.toContain('Up to 14 days can be collected')
     })
 })
