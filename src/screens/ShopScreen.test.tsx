@@ -230,7 +230,7 @@ describe('ShopScreen lays out the item grid as a centred row', () => {
 describe('ShopScreen header, sign and section label', () => {
     it('keeps the welcome sign and labels the grid without a visible section strip', () => {
         const html = render()
-        expect(html).toMatch(/<h1>Welcome to the Stride Shop!<\/h1>/)
+        expect(html).toMatch(/<h1>Welcome to the Chase Shop!<\/h1>/)
         expect(html).toContain('aria-label="Accessories"')
         expect(html).not.toContain('class="shop-strip"')
     })

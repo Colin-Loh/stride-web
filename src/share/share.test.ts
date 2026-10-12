@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { shareOrDownload, type ShareNavigator } from './share'
 
-const file = new File(['png'], 'stride-session.png', { type: 'image/png' })
+const file = new File(['png'], 'chase-session.png', { type: 'image/png' })
 
 describe('shareOrDownload', () => {
     it('shares the file when the browser can share files', async () => {

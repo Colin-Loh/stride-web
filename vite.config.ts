@@ -9,15 +9,17 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: [
-        'favicon.svg',
+        'favicon.png',
+        'apple-touch-icon.png',
+        'icon-maskable-512.png',
         'icon-192.png',
         'icon-512.png',
         'celebration.wav',
         'sprites/*.png',
       ],
       manifest: {
-        name: 'Stride',
-        short_name: 'Stride',
+        name: 'Chase',
+        short_name: 'Chase',
         description: 'Structured threshold, interval, repetition, and long runs in the browser.',
         theme_color: '#0b1f18',
         background_color: '#0b1f18',
@@ -35,6 +37,12 @@ export default defineConfig({
             sizes: '512x512',
             type: 'image/png',
             purpose: 'any',
+          },
+          {
+            src: 'icon-maskable-512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'maskable',
           },
         ],
       },

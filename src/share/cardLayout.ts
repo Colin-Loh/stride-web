@@ -39,7 +39,7 @@ export interface CardData {
     includeCalories: boolean
 }
 
-export const BRAND = 'stride'
+export const BRAND = 'chase'
 export const ESTIMATE_NOTE = 'Distance from logged speed × time · no GPS'
 export const TAGLINE = 'A little stronger. One session at a time.'
 
@@ -69,7 +69,7 @@ export const zoneLegend = (summary: SessionSummary): string =>
 export function shareText(data: CardData): string {
     const { summary } = data
     const parts = [
-        `Stride · ${data.sessionName}.`,
+        `Chase · ${data.sessionName}.`,
         summary.distanceKm === null ? 'Distance not recorded.' : `Estimated ${formatKm(summary.distanceKm)} km;`,
         `active ${formatClock(summary.activeSeconds)};`,
         summary.paceSecondsPerKm === null ? null : `average estimated pace ${formatPace(summary.paceSecondsPerKm)}/km.`,

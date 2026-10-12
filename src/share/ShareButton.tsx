@@ -3,7 +3,7 @@ import { renderCardPng } from './cardRender'
 import { shareText, type CardData } from './cardLayout'
 import { shareOrDownload } from './share'
 
-const FILE_NAME = 'stride-session.png'
+const FILE_NAME = 'chase-session.png'
 
 /** Draws the share card to a PNG and hands it to the share sheet, or saves it when sharing files is unavailable. */
 export function ShareButton({ data, onIncludeCalories }: { data: CardData; onIncludeCalories: (include: boolean) => void }) {
@@ -15,7 +15,7 @@ export function ShareButton({ data, onIncludeCalories }: { data: CardData; onInc
         setStatus('')
         try {
             const png = await renderCardPng(data)
-            const outcome = await shareOrDownload(new File([png], FILE_NAME, { type: 'image/png' }), shareText(data), 'Stride session')
+            const outcome = await shareOrDownload(new File([png], FILE_NAME, { type: 'image/png' }), shareText(data), 'Chase session')
             setStatus(outcome === 'shared' ? 'Shared.' : outcome === 'downloaded' ? 'Picture saved to your downloads.' : '')
         } catch {
             setStatus('The picture could not be created. Try again.')

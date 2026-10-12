@@ -171,7 +171,7 @@ export function ShopScreen({ character, progression, onBuy, onEquip, onUnequip }
             <header className="shop-header">
                 <BrickWall />
                 <div className="shop-sign">
-                    <h1>Welcome to the Stride Shop!</h1>
+                    <h1>Welcome to the Chase Shop!</h1>
                 </div>
                 <p className="shop-balance" aria-label={`${count} ${wordFor(character, count)}`}>
                     <CurrencyIcon character={character} />
