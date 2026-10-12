@@ -98,7 +98,7 @@ describe('barSegments', () => {
 
 describe('text', () => {
     it('summarises the card for the share sheet, without calories unless included', () => {
-        expect(shareText(DATA)).toBe('Stride · Steady treadmill. Estimated 5.20 km; active 40:12; average estimated pace 7:44/km. Distance from logged speed × time · no GPS.')
+        expect(shareText(DATA)).toBe('Chase · Steady treadmill. Estimated 5.20 km; active 40:12; average estimated pace 7:44/km. Distance from logged speed × time · no GPS.')
         expect(shareText({ ...DATA, includeCalories: true })).toContain('Approximate active energy 312 kcal.')
         expect(shareText({ ...DATA, summary: { ...SUMMARY, distanceKm: null, paceSecondsPerKm: null } })).toContain('Distance not recorded.')
     })

@@ -34,7 +34,7 @@ export function NameScreen({
 
   return (
     <section className="card">
-      <p className="eyebrow">Stride</p>
+      <p className="eyebrow">Chase</p>
       <h1>What is your name?</h1>
       <form
         className="stack"
