@@ -4,7 +4,7 @@ import type { Progression } from '../domain/types'
 import { itemsFor, nothingWorn, type Cosmetic, type CosmeticId, type Slot } from '../cosmetics/catalog'
 import { canAfford } from '../cosmetics/shop'
 import { CharacterStill } from '../components/CharacterStill'
-import { ShopBunting, ShopCrest, ShopCurrencyIcon, ShopDoorIcon, ShopGlint, ShopMascot, ShopMirror, ShopOrnament, ShopStool, ShopVine } from '../components/ShopArt'
+import { ShopBunting, ShopCrest, ShopCurrencyIcon, ShopDoorIcon, ShopGlint, ShopVine } from '../components/ShopArt'
 
 /** Each character's currency, singular and plural, as used on screen. */
 const CURRENCY: Record<Character, { singular: string; plural: string }> = {
@@ -176,18 +176,15 @@ export function ShopScreen({ character, progression, onBuy, onEquip, onUnequip }
                 <ShopGlint className="shop-glint shop-glint-b" />
                 <ShopGlint className="shop-glint shop-glint-c" />
                 <div className="shop-marquee">
-                    <ShopMascot character={character} className="shop-mascot shop-mascot-left" />
                     <div className="shop-sign">
                         <ShopCrest />
-                        <h1>Welcome to the Chase Shop!</h1>
+                        <h1>CHASE YOUR DREAM!</h1>
                     </div>
-                    <ShopMascot character={character} className="shop-mascot shop-mascot-right" />
                 </div>
                 <ShopBunting character={character} className="shop-bunting" />
                 <p className="shop-balance" aria-label={`${count} ${wordFor(character, count)}`}>
                     <ShopCurrencyIcon character={character} />
                     <span aria-hidden="true">{count}</span>
-                    <span className="shop-balance-word" aria-hidden="true">{wordFor(character, count)}</span>
                 </p>
             </header>
             <ul className="shop-grid" aria-label="Accessories">
@@ -257,10 +254,6 @@ export function ShopScreen({ character, progression, onBuy, onEquip, onUnequip }
             {fittingOpen && (
                 <section id={fittingPanelId} className="shop-fitting" aria-label="Fitting room">
                     <ShopBunting character={character} className="shop-fitting-bunting" />
-                    <ShopOrnament className="shop-fitting-ornament shop-fitting-ornament-a" />
-                    <ShopOrnament className="shop-fitting-ornament shop-fitting-ornament-b" />
-                    <ShopMirror className="shop-fitting-mirror" />
-                    <ShopStool className="shop-fitting-stool" />
                     <ShopVine className="shop-vine shop-fitting-vine shop-fitting-vine-left" />
                     <ShopVine className="shop-vine shop-fitting-vine shop-fitting-vine-right" />
                     <CharacterStill character={character} status="healthy" equipped={progression.equipped[character]} />

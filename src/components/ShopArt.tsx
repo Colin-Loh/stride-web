@@ -11,48 +11,6 @@ const CREAM = '#fff4e8'
 const GOLD = '#f2c35e'
 const ORANGE = '#e0622d'
 
-/** Chef-hat shopkeeper heads. The hat is shared; the face is the selected character. */
-const HAT = [
-    '....kkkkkk....',
-    '...kwwwwwwk...',
-    '..kwwwwwwwwk..',
-    '..kggggggggk..',
-]
-
-const SHIBA_HEAD = [
-    ...HAT,
-    '.kdkooooookdk.',
-    '.kdoooooooodk.',
-    '.kooeooooeook.',
-    '.kowwoooowwok.',
-    '.kwwwwkkwwwwk.',
-    '.kwwwwwppwwwk.',
-    '..kwwwwwwwwk..',
-    '...kkkkkkkk...',
-]
-
-const SHIBA_PALETTE: Palette = { k: INK, w: CREAM, g: '#cbdbfc', o: '#e8913f', d: '#b5601f', e: INK, p: '#e87566' }
-
-const CAT_HEAD = [
-    ...HAT,
-    '.kbakaaaaakabk',
-    '.kaaaaaaaaaak.',
-    '.kaayaaaayaak.',
-    '.kaaaaaaaaaak.',
-    '.kaaaappaaaak.',
-    '.kawaaaaaawak.',
-    '..kaaaaaaaak..',
-    '...kkkkkkkk...',
-]
-
-const CAT_PALETTE: Palette = { k: INK, w: CREAM, g: '#cbdbfc', a: '#6d7285', b: '#4a4e60', y: GOLD, p: '#e87566' }
-
-export function ShopMascot({ character, className }: { character: Character; className?: string }) {
-    return character === 'shiba'
-        ? <PixelArt rows={SHIBA_HEAD} palette={SHIBA_PALETTE} className={className} />
-        : <PixelArt rows={CAT_HEAD} palette={CAT_PALETTE} className={className} />
-}
-
 const BONE = [
     'kkk.......kkk',
     'kwwkkkkkkkwwk',
@@ -164,50 +122,4 @@ export function ShopDoorIcon() {
     return <PixelArt rows={DOOR} palette={DOOR_PALETTE} className="shop-door-icon" />
 }
 
-const MIRROR = [
-    '..kkkk..',
-    '.kllllk.',
-    'kllhhllk',
-    'klhhlllk',
-    'kllllllk',
-    'kllllllk',
-    '.kllllk.',
-    '..kkkk..',
-    '...kk...',
-    '..kddk..',
-    '.kd..dk.',
-    'kd....dk',
-]
 
-const MIRROR_PALETTE: Palette = { k: INK, l: '#7fb5d6', h: '#dff1fb', d: '#b5601f' }
-
-export function ShopMirror({ className }: { className?: string }) {
-    return <PixelArt rows={MIRROR} palette={MIRROR_PALETTE} className={className} />
-}
-
-/** Hanging ornaments for the fitting room wall. */
-const ORNAMENT = [
-    '..k..',
-    '.kok.',
-    'kooyk',
-    'kooyk',
-    '.kkk.',
-]
-
-export function ShopOrnament({ className }: { className?: string }) {
-    return <PixelArt rows={ORNAMENT} palette={{ k: INK, o: ORANGE, y: GOLD }} className={className} />
-}
-
-const STOOL = [
-    'kkkkkkkkkk',
-    'kooooooook',
-    'kddddddddk',
-    '.kd....dk.',
-    '.kd....dk.',
-    '.kd....dk.',
-    'kkk....kkk',
-]
-
-export function ShopStool({ className }: { className?: string }) {
-    return <PixelArt rows={STOOL} palette={{ k: INK, o: '#e0622d', d: '#b5601f' }} className={className} />
-}

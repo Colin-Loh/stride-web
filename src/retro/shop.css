@@ -1,5 +1,5 @@
 /*
- * Shop scene: marquee sign, mascots, bunting, wallet plaque, framed cards, Fitting Room stage.
+ * Shop scene: marquee sign, bunting, wallet plaque, framed cards, Fitting Room stage.
  * Layered on the retro theme (retro.css) and loaded after it. Art comes from
  * src/components/ShopArt.tsx as crisp SVG pixel grids. Contrast figures are in
  * docs/shop-redesign/README.md.
@@ -26,19 +26,9 @@
 [data-theme='retro'] .shop-marquee {
   position: relative;
   display: grid;
-  grid-template-columns: 44px minmax(0, 1fr) 44px;
+  grid-template-columns: minmax(0, 1fr);
   align-items: end;
   gap: var(--px-1);
-}
-
-[data-theme='retro'] .shop-mascot {
-  width: 44px;
-  height: auto;
-  align-self: center;
-}
-
-[data-theme='retro'] .shop-mascot-right {
-  transform: scaleX(-1);
 }
 
 /* The sign: gold bevel over a wood face, dark under-edge, stepped drop shadow. */
@@ -120,11 +110,24 @@
   animation: shop-twinkle 2.4s steps(2, end) infinite;
 }
 
-[data-theme='retro'] .shop-glint-a { top: 46px; left: 12%; }
-[data-theme='retro'] .shop-glint-b { top: 40px; right: 30%; animation-delay: 0.8s; }
-[data-theme='retro'] .shop-glint-c { top: 150px; right: 8%; animation-delay: 1.6s; }
+[data-theme='retro'] .shop-glint-a {
+  top: 46px;
+  left: 12%;
+}
 
-/* Wallet plaque: gold-trimmed plate with the currency icon, count and word. */
+[data-theme='retro'] .shop-glint-b {
+  top: 40px;
+  right: 30%;
+  animation-delay: 0.8s;
+}
+
+[data-theme='retro'] .shop-glint-c {
+  top: 150px;
+  right: 8%;
+  animation-delay: 1.6s;
+}
+
+/* Wallet plaque: gold-trimmed plate with the currency icon and count. */
 [data-theme='retro'] .shop-balance {
   top: 8px;
   right: var(--px-3);
@@ -144,11 +147,6 @@
   width: 28px;
   height: auto;
   color: inherit;
-}
-
-[data-theme='retro'] .shop-balance-word {
-  font-size: 1rem;
-  color: var(--px-white);
 }
 
 /* Cards: metallic frame, rivet corners, stepped inner shade. */
@@ -177,8 +175,13 @@
   pointer-events: none;
 }
 
-[data-theme='retro'] .shop-card::before { left: 6px; }
-[data-theme='retro'] .shop-card::after { right: 6px; }
+[data-theme='retro'] .shop-card::before {
+  left: 6px;
+}
+
+[data-theme='retro'] .shop-card::after {
+  right: 6px;
+}
 
 [data-theme='retro'] .shop-card-owned {
   border-style: solid;
@@ -297,39 +300,19 @@
   pointer-events: none;
 }
 
-[data-theme='retro'] .shop-fitting-ornament {
-  position: absolute;
-  top: 40px;
-  width: 20px;
-  height: 20px;
-}
-
-[data-theme='retro'] .shop-fitting-ornament-a { right: 22%; }
-[data-theme='retro'] .shop-fitting-ornament-b { right: 9%; top: 52px; }
-
-[data-theme='retro'] .shop-fitting-mirror {
-  position: absolute;
-  left: 7%;
-  bottom: 28px;
-  width: 48px;
-  height: auto;
-}
-
-[data-theme='retro'] .shop-fitting-stool {
-  position: absolute;
-  right: 7%;
-  bottom: 24px;
-  width: 40px;
-  height: auto;
-}
-
 [data-theme='retro'] .shop-fitting-vine {
   top: 6px;
   width: 44px;
 }
 
-[data-theme='retro'] .shop-fitting-vine-left { left: 6px; }
-[data-theme='retro'] .shop-fitting-vine-right { right: 6px; transform: scaleX(-1); }
+[data-theme='retro'] .shop-fitting-vine-left {
+  left: 6px;
+}
+
+[data-theme='retro'] .shop-fitting-vine-right {
+  right: 6px;
+  transform: scaleX(-1);
+}
 
 [data-theme='retro'] .shop-fitting .still-frame {
   position: relative;
@@ -338,18 +321,41 @@
 
 /* Motion: stepped and low-cost. */
 @keyframes shop-twinkle {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.25; transform: scale(0.6); }
+
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.25;
+    transform: scale(0.6);
+  }
 }
 
 @keyframes shop-sign-glow {
-  0%, 100% { filter: brightness(1); }
-  50% { filter: brightness(1.12); }
+
+  0%,
+  100% {
+    filter: brightness(1);
+  }
+
+  50% {
+    filter: brightness(1.12);
+  }
 }
 
 @keyframes shop-sway {
-  0%, 100% { transform: translateX(0); }
-  50% { transform: translateX(4px); }
+
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+
+  50% {
+    transform: translateX(4px);
+  }
 }
 
 [data-theme='retro'] .shop-bunting,
@@ -358,6 +364,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+
   [data-theme='retro'] .shop-sign,
   [data-theme='retro'] .shop-glint,
   [data-theme='retro'] .shop-bunting,
@@ -368,14 +375,6 @@
 
 /* 320px: keep the sign readable and the plaque clear of it. */
 @media (max-width: 359px) {
-  [data-theme='retro'] .shop-marquee {
-    grid-template-columns: 32px minmax(0, 1fr) 32px;
-  }
-
-  [data-theme='retro'] .shop-mascot {
-    width: 32px;
-  }
-
   [data-theme='retro'] .shop-sign h1 {
     font-size: 1.15rem;
   }
