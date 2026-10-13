@@ -458,3 +458,517 @@ body:has([data-theme='retro']) {
 [data-theme='retro'] .card:has(.shop-confirm-scrim) {
   clip-path: none;
 }
+
+/*
+ * Remaining screens: name, questions, plan, workout, run and complete. The legacy custom
+ * properties are re-pointed at retro tokens inside the theme, so the charts, tables and any rule
+ * still written against them draw in the retro palette.
+ */
+[data-theme='retro'] {
+  --text: var(--px-white);
+  --text-h: var(--px-white);
+  --muted: var(--px-light);
+  --accent: var(--px-mint);
+  --accent-dim: var(--px-edge);
+  --danger: var(--px-danger);
+  --bar: var(--px-well);
+  --rule: var(--px-edge-soft);
+  --sans: var(--px-font);
+}
+
+[data-theme='retro'] h3,
+[data-theme='retro'] .card h3 {
+  font-family: var(--px-font);
+  font-size: 1.2rem;
+  color: var(--px-white);
+}
+
+[data-theme='retro'] .card h2 {
+  font-size: 1.4rem;
+}
+
+[data-theme='retro'] .card > h2,
+[data-theme='retro'] .question > h2 {
+  margin-top: var(--px-5);
+  padding-top: var(--px-3);
+  border-top: 2px solid var(--px-edge);
+}
+
+[data-theme='retro'] .lede,
+[data-theme='retro'] .next {
+  color: var(--px-light);
+}
+
+[data-theme='retro'] .question > h2 {
+  font-size: 1.2rem;
+}
+
+/* Primary action: mint plate, dark text, pressed shade. */
+[data-theme='retro'] .primary {
+  min-height: 48px;
+  padding: var(--px-2) var(--px-3);
+  border: var(--px-stroke) solid var(--px-white);
+  border-radius: 0;
+  background: var(--px-mint);
+  color: var(--px-night);
+  font-family: var(--px-font);
+  font-size: var(--px-text-body);
+  font-weight: 700;
+  box-shadow: inset 0 calc(-1 * var(--px-stroke)) 0 var(--px-mint-dark);
+}
+
+[data-theme='retro'] .primary:hover:not(:disabled) {
+  background: var(--px-white);
+}
+
+[data-theme='retro'] .primary:active:not(:disabled) {
+  background: var(--px-mint-dark);
+  box-shadow: inset 0 var(--px-stroke) 0 var(--px-shade);
+}
+
+[data-theme='retro'] .primary:disabled {
+  opacity: 1;
+  background: var(--px-well);
+  color: var(--px-disabled);
+  border-color: var(--px-edge-soft);
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+/* Text link: an underlined button with a full-size target. */
+[data-theme='retro'] .link {
+  min-height: var(--px-target);
+  color: var(--px-light);
+  font-family: var(--px-font);
+  font-size: var(--px-text-body);
+}
+
+[data-theme='retro'] .link:hover {
+  color: var(--px-white);
+  background: var(--px-hover);
+}
+
+[data-theme='retro'] .link:active {
+  background: var(--px-pressed);
+}
+
+/* Focus on every control the earlier stage did not list. */
+[data-theme='retro'] :is(.primary, .link, .choice, .character, .step, .week-toggle, summary, .check input):focus-visible,
+[data-theme='retro'] .field :is(input, select):focus-visible {
+  outline: var(--px-focus-ring);
+  outline-offset: 3px;
+}
+
+[data-theme='retro'] :is(.primary, .character, .choice):focus-visible {
+  border-color: var(--px-mint);
+}
+
+/* Form fields */
+[data-theme='retro'] .field {
+  color: var(--px-light);
+}
+
+[data-theme='retro'] .field input,
+[data-theme='retro'] .field select {
+  min-height: 48px;
+  padding: var(--px-2) var(--px-3);
+  border: var(--px-stroke) solid var(--px-edge);
+  border-radius: 0;
+  background: var(--px-well);
+  color: var(--px-white);
+  font-family: var(--px-font);
+  font-size: var(--px-text-body);
+  box-shadow: inset 0 var(--px-stroke) 0 var(--px-shade);
+}
+
+[data-theme='retro'] .field input::placeholder {
+  color: var(--px-disabled);
+}
+
+[data-theme='retro'] .field input:hover:not(:disabled),
+[data-theme='retro'] .field select:hover:not(:disabled) {
+  border-color: var(--px-light);
+}
+
+[data-theme='retro'] .field input:disabled,
+[data-theme='retro'] .field select:disabled {
+  color: var(--px-disabled);
+  border-color: var(--px-edge-soft);
+  cursor: not-allowed;
+}
+
+[data-theme='retro'] .field input[aria-invalid='true'] {
+  border-color: var(--px-danger);
+}
+
+[data-theme='retro'] .field-error {
+  color: var(--px-danger);
+  font-size: var(--px-text-small);
+}
+
+[data-theme='retro'] .check {
+  min-height: var(--px-target);
+  color: var(--px-light);
+}
+
+[data-theme='retro'] .check input {
+  width: 24px;
+  height: 24px;
+  accent-color: var(--px-mint);
+}
+
+/* Choice rows (questions, plan sessions) and character picker */
+[data-theme='retro'] .choice,
+[data-theme='retro'] .character {
+  min-height: 48px;
+  border: var(--px-stroke) solid var(--px-edge);
+  border-radius: 0;
+  background: var(--px-well);
+  color: var(--px-white);
+  font-family: var(--px-font);
+  font-size: var(--px-text-body);
+  box-shadow: inset 0 calc(-1 * var(--px-stroke)) 0 var(--px-shade);
+}
+
+[data-theme='retro'] .choice strong {
+  color: var(--px-white);
+}
+
+[data-theme='retro'] .choice:hover,
+[data-theme='retro'] .character:hover {
+  background: var(--px-hover);
+  border-color: var(--px-light);
+}
+
+[data-theme='retro'] .choice:active,
+[data-theme='retro'] .character:active {
+  background: var(--px-pressed);
+  box-shadow: inset 0 var(--px-stroke) 0 var(--px-shade);
+}
+
+[data-theme='retro'] .choice.selected,
+[data-theme='retro'] .character.selected {
+  border-color: var(--px-mint);
+  box-shadow: inset 0 0 0 2px var(--px-well), inset 0 0 0 4px var(--px-mint-dark);
+}
+
+[data-theme='retro'] .character {
+  padding: var(--px-3);
+}
+
+/* One column: the purpose text needs the full row width to avoid mid-word breaks. */
+[data-theme='retro'] .choice.workout {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas: "workout" "pace" "purpose";
+  padding: var(--px-2) var(--px-3);
+  gap: var(--px-1) var(--px-3);
+}
+
+
+[data-theme='retro'] .choice.workout .muted {
+  font-size: var(--px-text-small);
+}
+
+[data-theme='retro'] .session-purpose {
+  font-size: var(--px-text-small);
+  color: var(--px-light);
+}
+
+/* Zone marker on each session row: a coloured left edge, with the zone named in the text. */
+[data-theme='retro'] .choice.workout {
+  border-left-width: 9px;
+}
+
+[data-theme='retro'] .choice.workout[data-zone='E'] { border-left-color: #81e8c2; }
+[data-theme='retro'] .choice.workout[data-zone='M'] { border-left-color: #9fb6ff; }
+[data-theme='retro'] .choice.workout[data-zone='T'] { border-left-color: #ffd27a; }
+[data-theme='retro'] .choice.workout[data-zone='I'] { border-left-color: #ff9f8a; }
+[data-theme='retro'] .choice.workout[data-zone='R'] { border-left-color: #e69cff; }
+
+/* Plan */
+[data-theme='retro'] .week {
+  border: var(--px-stroke) solid var(--px-edge);
+  border-radius: 0;
+  background: var(--px-well);
+  padding: var(--px-2) var(--px-3);
+}
+
+[data-theme='retro'] .week.current {
+  border-width: var(--px-stroke);
+  border-color: var(--px-mint);
+}
+
+[data-theme='retro'] .week-toggle {
+  min-height: var(--px-target);
+  font-family: var(--px-font);
+  font-size: var(--px-text-body);
+  font-weight: 700;
+  color: var(--px-white);
+  border-radius: 0;
+}
+
+[data-theme='retro'] .week-toggle:hover {
+  background: var(--px-hover);
+}
+
+[data-theme='retro'] .week-toggle::after {
+  transition: none;
+}
+
+[data-theme='retro'] .week-badge {
+  display: inline-block;
+  margin-left: var(--px-2);
+  padding: 0 var(--px-1);
+  border: 2px solid var(--px-mint);
+  border-radius: 0;
+  color: var(--px-mint);
+  font-size: var(--px-text-small);
+  vertical-align: 2px;
+}
+
+[data-theme='retro'] .week-badge.taper {
+  border-color: var(--px-gold);
+  color: var(--px-gold);
+}
+
+[data-theme='retro'] .fitness-facts strong {
+  color: var(--px-gold);
+}
+
+/* Notices on content screens (plan notes, workout adjustments, validation) */
+[data-theme='retro'] .card .notice {
+  padding: var(--px-3);
+  border-color: var(--px-gold);
+  font-size: var(--px-text-small);
+}
+
+[data-theme='retro'] .reasons {
+  color: var(--px-light);
+  font-size: var(--px-text-small);
+}
+
+/* Workout editor */
+[data-theme='retro'] .plan-step {
+  border: var(--px-stroke) solid var(--px-edge);
+  border-radius: 0;
+  background: var(--px-well);
+  padding: var(--px-3);
+}
+
+[data-theme='retro'] .plan-step .muted {
+  font-size: var(--px-text-small);
+}
+
+/* Run */
+[data-theme='retro'] .stat-label {
+  color: var(--px-light);
+  font-size: 0.8rem;
+  letter-spacing: 1px;
+}
+
+[data-theme='retro'] .stat-value {
+  color: var(--px-gold);
+  font-size: 1.8rem;
+  letter-spacing: 0;
+}
+
+[data-theme='retro'] .stat-line,
+[data-theme='retro'] .bar {
+  height: 20px;
+  border: 2px solid var(--px-edge);
+  border-radius: 0;
+  background: var(--px-well);
+}
+
+[data-theme='retro'] .stat-line span,
+[data-theme='retro'] .bar span {
+  border-radius: 0;
+  background: var(--px-mint);
+}
+
+[data-theme='retro'] .bar.segment span {
+  background: var(--px-gold);
+}
+
+[data-theme='retro'] .progress-label {
+  color: var(--px-light);
+  font-size: var(--px-text-small);
+}
+
+[data-theme='retro'] .milestones li {
+  border: 2px solid var(--px-edge-soft);
+  border-radius: 0;
+  background: var(--px-well);
+  color: var(--px-light);
+  font-size: var(--px-text-small);
+}
+
+[data-theme='retro'] .milestones li.current {
+  border-color: var(--px-white);
+  background: var(--px-mint);
+  color: var(--px-night);
+}
+
+[data-theme='retro'] .milestones li.done {
+  border-color: var(--px-mint-dark);
+  background: var(--px-mint-dark);
+  color: var(--px-night);
+}
+
+/* The speed stepper: 56px square targets. */
+[data-theme='retro'] .speed-adjust .step {
+  height: 56px;
+  border: var(--px-stroke) solid var(--px-edge);
+  border-radius: 0;
+  background: var(--px-well);
+  color: var(--px-white);
+  font-family: var(--px-font);
+  font-size: 1.8rem;
+  box-shadow: inset 0 calc(-1 * var(--px-stroke)) 0 var(--px-shade);
+}
+
+[data-theme='retro'] .speed-adjust .step:hover:not(:disabled) {
+  background: var(--px-hover);
+  border-color: var(--px-light);
+}
+
+[data-theme='retro'] .speed-adjust .step:active:not(:disabled) {
+  background: var(--px-pressed);
+  box-shadow: inset 0 var(--px-stroke) 0 var(--px-shade);
+}
+
+[data-theme='retro'] .speed-adjust .step:disabled {
+  opacity: 1;
+  color: var(--px-disabled);
+  border-color: var(--px-edge-soft);
+}
+
+[data-theme='retro'] .speed-value {
+  font-size: 1.3rem;
+  color: var(--px-gold);
+}
+
+/* Completion */
+[data-theme='retro'] .hero strong {
+  color: var(--px-gold);
+  font-size: 3.2rem;
+}
+
+[data-theme='retro'] .hero .unit {
+  color: var(--px-mint);
+}
+
+[data-theme='retro'] .tile {
+  border: var(--px-stroke) solid var(--px-edge);
+  border-radius: 0;
+  background: var(--px-well);
+}
+
+[data-theme='retro'] .tile dt,
+[data-theme='retro'] .tile dd small,
+[data-theme='retro'] .tile dd.empty {
+  color: var(--px-light);
+  font-size: var(--px-text-small);
+}
+
+[data-theme='retro'] .tile dd {
+  color: var(--px-gold);
+  font-weight: 700;
+}
+
+[data-theme='retro'] .tile dd.empty {
+  font-weight: 400;
+  color: var(--px-light);
+}
+
+[data-theme='retro'] .zone-bar {
+  height: 24px;
+  border: 2px solid var(--px-edge);
+  border-radius: 0;
+}
+
+[data-theme='retro'] .zone-swatch {
+  border-radius: 0;
+}
+
+[data-theme='retro'] .zone-legend {
+  padding-left: var(--px-4);
+  margin: 0 0 var(--px-3);
+}
+
+[data-theme='retro'] .section-table {
+  font-size: var(--px-text-small);
+}
+
+[data-theme='retro'] .section-table th,
+[data-theme='retro'] .section-table td {
+  border-bottom: 2px solid var(--px-edge-soft);
+}
+
+[data-theme='retro'] .chart {
+  image-rendering: pixelated;
+  shape-rendering: crispEdges;
+  border: 2px solid var(--px-edge-soft);
+  background: var(--px-well);
+}
+
+[data-theme='retro'] details {
+  margin: var(--px-3) 0;
+  border: 2px solid var(--px-edge-soft);
+  padding: 0 var(--px-3);
+}
+
+[data-theme='retro'] summary {
+  min-height: var(--px-target);
+  display: flex;
+  align-items: center;
+  color: var(--px-white);
+  cursor: pointer;
+}
+
+[data-theme='retro'] summary:hover {
+  background: var(--px-hover);
+}
+
+[data-theme='retro'] .card > .ghost,
+[data-theme='retro'] .card > .primary,
+[data-theme='retro'] .share .ghost {
+  margin-top: var(--px-2);
+}
+
+[data-theme='retro'] .share .ghost:disabled {
+  cursor: progress;
+}
+
+@media (max-width: 359px) {
+  [data-theme='retro'] .stat-value {
+    font-size: 1.4rem;
+  }
+
+  [data-theme='retro'] .hero strong {
+    font-size: 2.6rem;
+  }
+
+  [data-theme='retro'] .milestones {
+    flex-wrap: wrap;
+  }
+
+  [data-theme='retro'] .character-options {
+    gap: var(--px-2);
+  }
+
+  [data-theme='retro'] .stat-tiles {
+    gap: var(--px-2);
+  }
+
+  /* The five-column recap fits 320px by dropping the cell padding and letting headers wrap. */
+  [data-theme='retro'] .section-table {
+    font-size: 0.85rem;
+  }
+
+  [data-theme='retro'] .section-table th,
+  [data-theme='retro'] .section-table td {
+    padding-inline: 2px;
+    overflow-wrap: anywhere;
+  }
+}
