@@ -4,7 +4,7 @@ import type { Progression } from '../domain/types'
 import { itemsFor, nothingWorn, type Cosmetic, type CosmeticId, type Slot } from '../cosmetics/catalog'
 import { canAfford } from '../cosmetics/shop'
 import { CharacterStill } from '../components/CharacterStill'
-import { CurrencyIcon } from '../components/CurrencyIcon'
+import { ShopBunting, ShopCrest, ShopCurrencyIcon, ShopDoorIcon, ShopGlint, ShopMascot, ShopMirror, ShopOrnament, ShopStool, ShopVine } from '../components/ShopArt'
 
 /** Each character's currency, singular and plural, as used on screen. */
 const CURRENCY: Record<Character, { singular: string; plural: string }> = {
@@ -59,7 +59,7 @@ function ShopItem({ item, progression, onRequestBuy, onEquip, onUnequip }: Omit<
                     <CharacterStill character={character} status="healthy" equipped={preview} scale={0.5} />
                 </div>
                 <span className="shop-price" aria-hidden="true">
-                    <CurrencyIcon character={character} />
+                    <ShopCurrencyIcon character={character} />
                     {price}
                 </span>
             </button>
@@ -85,15 +85,6 @@ function BrickWall() {
                 </pattern>
             </defs>
             <rect width="100%" height="100%" fill="url(#shop-brick)" />
-        </svg>
-    )
-}
-
-/** Pixel mirror glyph for the fitting room button. Decorative: the button text names it. */
-function MirrorIcon() {
-    return (
-        <svg className="shop-mirror-icon" viewBox="0 0 8 8" width="16" height="16" aria-hidden="true" focusable="false" shapeRendering="crispEdges">
-            <path fill="currentColor" d="M2 0h4v1h1v5H6v1H5v1H3V7H2V6H1V1h1z M2 1v4h1V4h1V3h1V1z" fillRule="evenodd" />
         </svg>
     )
 }
@@ -179,12 +170,24 @@ export function ShopScreen({ character, progression, onBuy, onEquip, onUnequip }
         <section className="card shop">
             <header className="shop-header">
                 <BrickWall />
-                <div className="shop-sign">
-                    <h1>Welcome to the Chase Shop!</h1>
+                <ShopVine className="shop-vine shop-vine-left" />
+                <ShopVine className="shop-vine shop-vine-right" />
+                <ShopGlint className="shop-glint shop-glint-a" />
+                <ShopGlint className="shop-glint shop-glint-b" />
+                <ShopGlint className="shop-glint shop-glint-c" />
+                <div className="shop-marquee">
+                    <ShopMascot character={character} className="shop-mascot shop-mascot-left" />
+                    <div className="shop-sign">
+                        <ShopCrest />
+                        <h1>Welcome to the Chase Shop!</h1>
+                    </div>
+                    <ShopMascot character={character} className="shop-mascot shop-mascot-right" />
                 </div>
+                <ShopBunting character={character} className="shop-bunting" />
                 <p className="shop-balance" aria-label={`${count} ${wordFor(character, count)}`}>
-                    <CurrencyIcon character={character} />
+                    <ShopCurrencyIcon character={character} />
                     <span aria-hidden="true">{count}</span>
+                    <span className="shop-balance-word" aria-hidden="true">{wordFor(character, count)}</span>
                 </p>
             </header>
             <ul className="shop-grid" aria-label="Accessories">
@@ -249,10 +252,17 @@ export function ShopScreen({ character, progression, onBuy, onEquip, onUnequip }
                 aria-controls={fittingPanelId}
                 onClick={() => setFittingOpen((open) => !open)}
             >
-                <MirrorIcon /> Fitting Room
+                <ShopDoorIcon /> Fitting Room
             </button>
             {fittingOpen && (
                 <section id={fittingPanelId} className="shop-fitting" aria-label="Fitting room">
+                    <ShopBunting character={character} className="shop-fitting-bunting" />
+                    <ShopOrnament className="shop-fitting-ornament shop-fitting-ornament-a" />
+                    <ShopOrnament className="shop-fitting-ornament shop-fitting-ornament-b" />
+                    <ShopMirror className="shop-fitting-mirror" />
+                    <ShopStool className="shop-fitting-stool" />
+                    <ShopVine className="shop-vine shop-fitting-vine shop-fitting-vine-left" />
+                    <ShopVine className="shop-vine shop-fitting-vine shop-fitting-vine-right" />
                     <CharacterStill character={character} status="healthy" equipped={progression.equipped[character]} />
                 </section>
             )}
