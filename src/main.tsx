@@ -6,6 +6,7 @@ import { createLocalStorageRepositories } from './storage/localStorage'
 import './index.css'
 import './retro/tokens.css'
 import './retro/retro.css'
+import './retro/shop.css'
 
 registerSW({ immediate: true })
 

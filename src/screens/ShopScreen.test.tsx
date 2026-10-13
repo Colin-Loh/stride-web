@@ -97,11 +97,11 @@ describe('ShopScreen visual card contents', () => {
     it('marks owned items with a check and equipped items with a highlighted frame and check', () => {
         const owned = itemFor(render({ progression: progression({ inventory: { shiba: ['chase-sushi-hat'], shooshy: [] } }) }), 'Sushi hat')
         expect(owned).toContain('shop-card-owned')
-        expect(owned).toContain('class="shop-owned-mark"')
+        expect(owned).toContain('class="shop-owned-mark" aria-hidden="true">✔</span>')
         expect(owned).not.toContain('shop-card-equipped')
         const equipped = itemFor(render({ progression: progression({ inventory: { shiba: ['chase-sushi-hat'], shooshy: [] }, equipped: { shiba: { face: null, head: 'chase-sushi-hat', body: null }, shooshy: { face: null, head: null, body: null } } }) }), 'Sushi hat')
         expect(equipped).toContain('shop-card-equipped')
-        expect(equipped).toContain('class="shop-owned-mark"')
+        expect(equipped).toContain('class="shop-owned-mark" aria-hidden="true">✔</span>')
         expect(equipped).not.toMatch(/>Worn<|>Owned</)
     })
 })
@@ -184,6 +184,7 @@ describe('ShopScreen fitting room', () => {
 
         const fittingRoom = screen.getByRole('region', { name: 'Fitting room' })
         expect(fittingRoom).toBeTruthy()
+        expect(fittingRoom.querySelector('.shop-fitting-ornament')).toBeNull()
         expect(container.querySelector('.shop-fitting .cosmetic-overlay')?.getAttribute('src')).toBe(cosmeticUrl('chase-sushi-hat'))
         expect(within(fittingRoom).queryByRole('button')).toBeNull()
         fireEvent.click(screen.getByRole('button', { name: 'Fitting Room' }))
@@ -228,9 +229,10 @@ describe('ShopScreen lays out the item grid as a centred row', () => {
 })
 
 describe('ShopScreen header, sign and section label', () => {
-    it('keeps the welcome sign and labels the grid without a visible section strip', () => {
+    it('labels the store sign and grid without a visible section strip', () => {
         const html = render()
-        expect(html).toMatch(/<h1>Welcome to the Chase Shop!<\/h1>/)
+        expect(html).toMatch(/<h1>Store<\/h1>/)
+        expect(html).not.toContain('shop-mascot')
         expect(html).toContain('aria-label="Accessories"')
         expect(html).not.toContain('class="shop-strip"')
     })
@@ -250,6 +252,7 @@ describe('ShopScreen currency pill', () => {
         const pill = html.slice(html.indexOf('class="shop-balance"'), html.indexOf('</p>', html.indexOf('class="shop-balance"')))
         expect(pill).toContain('aria-label="3 fish"')
         expect(pill).toContain('<span aria-hidden="true">3</span>')
+        expect(pill).not.toContain('shop-balance-word')
         expect(pill).not.toContain('7 bones')
         expect(pill).toContain('<svg')
         expect(html.match(/class="shop-balance"/g)).toHaveLength(1)

@@ -1,0 +1,385 @@
+/*
+ * Shop scene: marquee sign, bunting, wallet plaque, framed cards, Fitting Room stage.
+ * Layered on the retro theme (retro.css) and loaded after it. Art comes from
+ * src/components/ShopArt.tsx as crisp SVG pixel grids. Contrast figures are in
+ * docs/shop-redesign/README.md.
+ */
+[data-theme='retro'] {
+  --shop-gold: #f2c35e;
+  --shop-gold-deep: #c98a2b;
+  --shop-orange: #e0622d;
+  --shop-orange-deep: #8f3a17;
+  --shop-wood: #5a3a22;
+  --shop-wood-light: #7a5233;
+  --shop-ink: #2b1810;
+}
+
+/* Header: brick wall under the marquee. */
+[data-theme='retro'] .shop-header {
+  display: grid;
+  gap: var(--px-2);
+  justify-items: stretch;
+  padding: 58px var(--px-3) 40px;
+  overflow: hidden;
+}
+
+[data-theme='retro'] .shop-marquee {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: end;
+  gap: var(--px-1);
+}
+
+/* The sign: gold bevel over a wood face, dark under-edge, stepped drop shadow. */
+[data-theme='retro'] .shop-sign {
+  position: relative;
+  display: block;
+  margin-top: 22px;
+  padding: var(--px-3) var(--px-2) var(--px-2);
+  border: var(--px-stroke) solid var(--shop-ink);
+  border-radius: 0;
+  background: linear-gradient(var(--shop-wood-light) 0 50%, var(--shop-wood) 50% 100%);
+  box-shadow:
+    inset 0 0 0 3px var(--shop-gold),
+    inset 0 0 0 6px var(--shop-gold-deep),
+    0 var(--px-drop) 0 var(--shop-ink),
+    var(--px-drop) var(--px-drop) 0 var(--px-shade);
+  animation: shop-sign-glow 3.2s steps(2, end) infinite;
+}
+
+[data-theme='retro'] .shop-crest {
+  position: absolute;
+  left: 50%;
+  top: -22px;
+  width: 132px;
+  height: auto;
+  transform: translateX(-50%);
+}
+
+/* Dimensional lettering: pale gold face, orange extrusion, dark outline. */
+[data-theme='retro'] .shop-sign h1 {
+  margin: 0;
+  padding: var(--px-1) var(--px-1) 0;
+  font-size: clamp(1.2rem, 6.4vw, 1.75rem);
+  line-height: 1.05;
+  text-transform: uppercase;
+  text-align: center;
+  color: #ffe9a8;
+  text-shadow:
+    1px 1px 0 var(--shop-orange),
+    2px 2px 0 var(--shop-orange),
+    3px 3px 0 var(--shop-orange-deep),
+    4px 4px 0 var(--shop-ink),
+    -1px 0 0 var(--shop-ink),
+    0 -1px 0 var(--shop-ink);
+}
+
+[data-theme='retro'] .shop-bunting {
+  position: absolute;
+  left: -4px;
+  bottom: 0;
+  width: calc(100% + 8px);
+  max-width: none;
+  height: 32px;
+  pointer-events: none;
+}
+
+[data-theme='retro'] .shop-vine {
+  position: absolute;
+  top: 0;
+  width: 60px;
+  height: auto;
+  pointer-events: none;
+}
+
+[data-theme='retro'] .shop-vine-left {
+  left: 0;
+}
+
+[data-theme='retro'] .shop-vine-right {
+  right: 0;
+  transform: scaleX(-1);
+}
+
+[data-theme='retro'] .shop-glint {
+  position: absolute;
+  width: 15px;
+  height: 15px;
+  pointer-events: none;
+  animation: shop-twinkle 2.4s steps(2, end) infinite;
+}
+
+[data-theme='retro'] .shop-glint-a {
+  top: 46px;
+  left: 12%;
+}
+
+[data-theme='retro'] .shop-glint-b {
+  top: 40px;
+  right: 30%;
+  animation-delay: 0.8s;
+}
+
+[data-theme='retro'] .shop-glint-c {
+  top: 150px;
+  right: 8%;
+  animation-delay: 1.6s;
+}
+
+/* Wallet plaque: gold-trimmed plate with the currency icon and count. */
+[data-theme='retro'] .shop-balance {
+  top: 8px;
+  right: var(--px-3);
+  z-index: 2;
+  gap: var(--px-2);
+  padding: var(--px-1) var(--px-3);
+  min-height: 40px;
+  border: var(--px-stroke) solid var(--shop-ink);
+  background: linear-gradient(var(--shop-wood-light) 0 50%, var(--shop-wood) 50% 100%);
+  box-shadow: inset 0 0 0 2px var(--shop-gold), 0 var(--px-drop) 0 var(--shop-ink);
+  color: #ffe9a8;
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+[data-theme='retro'] .shop-balance .home-currency-icon {
+  width: 28px;
+  height: auto;
+  color: inherit;
+}
+
+/* Cards: metallic frame, rivet corners, stepped inner shade. */
+[data-theme='retro'] .shop-grid {
+  gap: var(--px-3);
+}
+
+[data-theme='retro'] .shop-card {
+  border: var(--px-stroke) solid var(--shop-ink);
+  background: radial-gradient(circle at 50% 38%, #3a4a66 0 40%, #2c3850 40% 70%, #222c42 70%);
+  box-shadow:
+    inset 0 0 0 3px #aab4c8,
+    inset 0 0 0 6px #6b7488,
+    inset 0 -9px 0 6px rgba(11, 16, 27, 0.35);
+}
+
+[data-theme='retro'] .shop-card::before,
+[data-theme='retro'] .shop-card::after {
+  content: '';
+  position: absolute;
+  top: 6px;
+  width: 6px;
+  height: 6px;
+  background: #e6ecf7;
+  box-shadow: inset -2px -2px 0 #6b7488;
+  pointer-events: none;
+}
+
+[data-theme='retro'] .shop-card::before {
+  left: 6px;
+}
+
+[data-theme='retro'] .shop-card::after {
+  right: 6px;
+}
+
+[data-theme='retro'] .shop-card-owned {
+  border-style: solid;
+  box-shadow:
+    inset 0 0 0 3px #cbdbfc,
+    inset 0 0 0 6px #6b7488,
+    inset 0 -9px 0 6px rgba(11, 16, 27, 0.35);
+}
+
+[data-theme='retro'] .shop-card-equipped {
+  box-shadow:
+    inset 0 0 0 3px var(--px-mint),
+    inset 0 0 0 6px var(--px-mint-dark),
+    inset 0 -9px 0 6px rgba(11, 16, 27, 0.35);
+}
+
+[data-theme='retro'] .shop-card-unaffordable {
+  border-color: var(--shop-ink);
+  filter: saturate(0.6);
+}
+
+[data-theme='retro'] .shop-card:has(.shop-action:hover:not(:disabled)) {
+  filter: brightness(1.15);
+}
+
+/* Price tag: icon and number, gold on dark. */
+[data-theme='retro'] .shop-price {
+  gap: var(--px-2);
+  min-width: 64px;
+  min-height: 34px;
+  padding: 2px var(--px-3);
+  border: var(--px-stroke) solid var(--shop-ink);
+  background: #101b2d;
+  box-shadow: inset 0 0 0 2px var(--shop-gold-deep), 0 3px 0 var(--shop-ink);
+  color: var(--shop-gold);
+  font-size: 1.25rem;
+}
+
+[data-theme='retro'] .shop-price .home-currency-icon {
+  width: 22px;
+  height: auto;
+  color: inherit;
+}
+
+[data-theme='retro'] .shop-card-unaffordable .shop-price {
+  border-color: var(--shop-ink);
+  box-shadow: inset 0 0 0 2px var(--px-edge-soft), 0 3px 0 var(--shop-ink);
+  color: var(--px-disabled);
+}
+
+/* Fitting Room: a warm beveled call-to-action. */
+[data-theme='retro'] .shop-fitting-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--px-3);
+  min-height: 56px;
+  border: var(--px-stroke) solid var(--shop-ink);
+  background: linear-gradient(#c04c1c 0 50%, #b3461a 50% 100%);
+  box-shadow:
+    inset 0 3px 0 #e8854f,
+    inset 0 -4px 0 var(--shop-orange-deep),
+    0 var(--px-drop) 0 var(--shop-ink);
+  color: #fff4e8;
+  font-size: 1.4rem;
+  text-shadow: 2px 2px 0 var(--shop-orange-deep);
+}
+
+[data-theme='retro'] .shop-fitting-toggle:hover:not(:disabled) {
+  background: linear-gradient(#bd4a1b 0 50%, #a63f16 50% 100%);
+  border-color: var(--shop-ink);
+}
+
+[data-theme='retro'] .shop-fitting-toggle:active:not(:disabled) {
+  transform: translateY(2px);
+  box-shadow: inset 0 3px 0 var(--shop-orange-deep), 0 2px 0 var(--shop-ink);
+}
+
+[data-theme='retro'] .shop-fitting-toggle[aria-expanded='true'] {
+  border-color: var(--shop-ink);
+  box-shadow: inset 0 0 0 3px var(--px-mint), inset 0 -4px 0 var(--shop-orange-deep), 0 var(--px-drop) 0 var(--shop-ink);
+}
+
+[data-theme='retro'] .shop-fitting-toggle:focus-visible {
+  border-color: var(--shop-ink);
+}
+
+[data-theme='retro'] .shop-door-icon {
+  width: 24px;
+  height: auto;
+  flex: none;
+}
+
+/* Fitting room stage: back wall, floorboards, mirror, stool, bunting, leafy frame. */
+[data-theme='retro'] .shop-fitting {
+  position: relative;
+  display: grid;
+  place-items: end center;
+  min-height: 260px;
+  padding: 44px var(--px-3) 28px;
+  border: var(--px-stroke) solid var(--shop-ink);
+  background:
+    repeating-linear-gradient(90deg, transparent 0 47px, rgba(43, 24, 16, 0.55) 47px 49px) bottom / 100% 36% no-repeat,
+    linear-gradient(#26324a 0 62%, #8a5a34 62% 64%, #a8693a 64% 100%);
+  box-shadow: inset 0 0 0 4px #3f8f3a, inset 0 0 0 7px #1f5a2a;
+  overflow: hidden;
+}
+
+[data-theme='retro'] .shop-fitting-bunting {
+  position: absolute;
+  top: 8px;
+  left: -4px;
+  width: calc(100% + 8px);
+  max-width: none;
+  height: 30px;
+  pointer-events: none;
+}
+
+[data-theme='retro'] .shop-fitting-vine {
+  top: 6px;
+  width: 44px;
+}
+
+[data-theme='retro'] .shop-fitting-vine-left {
+  left: 6px;
+}
+
+[data-theme='retro'] .shop-fitting-vine-right {
+  right: 6px;
+  transform: scaleX(-1);
+}
+
+[data-theme='retro'] .shop-fitting .still-frame {
+  position: relative;
+  z-index: 1;
+}
+
+/* Motion: stepped and low-cost. */
+@keyframes shop-twinkle {
+
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.25;
+    transform: scale(0.6);
+  }
+}
+
+@keyframes shop-sign-glow {
+
+  0%,
+  100% {
+    filter: brightness(1);
+  }
+
+  50% {
+    filter: brightness(1.12);
+  }
+}
+
+@keyframes shop-sway {
+
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+
+  50% {
+    transform: translateX(4px);
+  }
+}
+
+[data-theme='retro'] .shop-bunting,
+[data-theme='retro'] .shop-fitting-bunting {
+  animation: shop-sway 4s steps(4, end) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  [data-theme='retro'] .shop-sign,
+  [data-theme='retro'] .shop-glint,
+  [data-theme='retro'] .shop-bunting,
+  [data-theme='retro'] .shop-fitting-bunting {
+    animation: none;
+  }
+}
+
+/* 320px: keep the sign readable and the plaque clear of it. */
+@media (max-width: 359px) {
+  [data-theme='retro'] .shop-sign h1 {
+    font-size: 1.15rem;
+  }
+
+  [data-theme='retro'] .shop-vine {
+    width: 40px;
+  }
+}
