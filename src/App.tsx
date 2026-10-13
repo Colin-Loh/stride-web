@@ -16,7 +16,9 @@ export default function App({ repositories }: { repositories: Repositories }) {
   const { preferences, view, session, plan, open } = flow
   if (!flow.ready) return <main className="shell" aria-busy="true" />
   const name = preferences.name ?? ''
-  return <main className="shell">
+  // The retro-pixel theme covers the screens migrated so far: status (home) and shop.
+  const retro = (view === 'home' || view === 'status' || view === 'shop') && flow.progression !== null
+  return <main className="shell" data-theme={retro ? 'retro' : undefined}>
     {flow.notice && <div className="notice" role="status">{flow.notice}<button type="button" className="link" onClick={flow.dismissNotice}>Dismiss</button></div>}
     {view === 'name' && <NameScreen initialName={name} initialCharacter={preferences.character} initialWeightKg={preferences.weightKg}
       storedCharacter={preferences.name ? preferences.character : undefined}

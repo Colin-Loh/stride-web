@@ -89,6 +89,15 @@ function BrickWall() {
     )
 }
 
+/** Pixel mirror glyph for the fitting room button. Decorative: the button text names it. */
+function MirrorIcon() {
+    return (
+        <svg className="shop-mirror-icon" viewBox="0 0 8 8" width="16" height="16" aria-hidden="true" focusable="false" shapeRendering="crispEdges">
+            <path fill="currentColor" d="M2 0h4v1h1v5H6v1H5v1H3V7H2V6H1V1h1z M2 1v4h1V4h1V3h1V1z" fillRule="evenodd" />
+        </svg>
+    )
+}
+
 /** The balance as a number with its currency word, e.g. "9 bones" or "1 fish". */
 const balanceText = (character: Character, count: number) => `${count} ${wordFor(character, count)}`
 
@@ -240,7 +249,7 @@ export function ShopScreen({ character, progression, onBuy, onEquip, onUnequip }
                 aria-controls={fittingPanelId}
                 onClick={() => setFittingOpen((open) => !open)}
             >
-                <span aria-hidden="true">🪞</span> Fitting Room
+                <MirrorIcon /> Fitting Room
             </button>
             {fittingOpen && (
                 <section id={fittingPanelId} className="shop-fitting" aria-label="Fitting room">
