@@ -27,6 +27,7 @@ body:has([data-theme='retro']) {
 }
 
 [data-theme='retro'] h1 {
+  font-family: var(--px-display);
   font-size: var(--px-text-title);
   line-height: 1.1;
 }

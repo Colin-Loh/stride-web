@@ -1,0 +1,263 @@
+/*
+ * Status scene: brick header with hanging sign, a framed pixel room behind the character
+ * (cat tree and perch for Shooshy, dog house and ball for Chase). Layered on the retro theme and
+ * loaded after shop.css. Room art comes from src/components/StatusArt.tsx; every decorative
+ * element sits inside .status-decor, which never takes pointer events or focus.
+ */
+[data-theme='retro'] .status-header {
+  position: relative;
+  overflow: hidden;
+  width: calc(100% + 2 * var(--px-4));
+  margin: calc(-1 * var(--px-5)) calc(-1 * var(--px-4)) var(--px-3);
+  padding: 44px var(--px-4) var(--px-3);
+  border-bottom: var(--px-stroke) solid var(--px-edge);
+}
+
+[data-theme='retro'] .status-header > :not(.shop-wall) {
+  position: relative;
+}
+
+/* A solid plate behind the text keeps it legible over the bricks. */
+[data-theme='retro'] .status-header .eyebrow,
+[data-theme='retro'] .status-header h1,
+[data-theme='retro'] .status-header .daily-goal,
+[data-theme='retro'] .status-header > .muted {
+  text-shadow: 0 2px 0 var(--px-shade);
+}
+
+[data-theme='retro'] .status-header .eyebrow {
+  margin: 0;
+}
+
+[data-theme='retro'] .status-header h1 {
+  margin: 0 0 var(--px-2);
+  color: var(--shop-gold);
+  text-shadow: 0 3px 0 var(--shop-orange-deep), 0 5px 0 var(--px-shade);
+  overflow-wrap: anywhere;
+}
+
+[data-theme='retro'] .status-header .daily-goal {
+  padding-bottom: 0;
+  border-bottom: 0;
+  margin-bottom: 0;
+}
+
+[data-theme='retro'] .status-header > .muted {
+  margin: 0;
+  color: #9fc4f0;
+}
+
+/* The hanging plaque: two cords and a gold-framed plate holding the currency glyph. */
+[data-theme='retro'] .status-hang {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  display: grid;
+  place-items: center;
+  width: 112px;
+  height: 36px;
+  transform: translateX(-50%);
+  border: var(--px-stroke) solid var(--shop-gold);
+  border-top: 0;
+  background: var(--px-panel);
+  box-shadow: 0 var(--px-drop) 0 var(--px-shade);
+  pointer-events: none;
+}
+
+[data-theme='retro'] .status-hang .home-currency-icon {
+  width: 36px;
+  height: 22px;
+}
+
+/* Room: wall, wainscot line, floorboards, framed with a leafy border like the fitting room. */
+[data-theme='retro'] .status-stage.status-room {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  place-items: end center;
+  min-height: 340px;
+  margin: 0 var(--px-1);
+  padding: 44px var(--px-2) var(--px-4);
+  border: var(--px-stroke) solid var(--shop-ink);
+  overflow: hidden;
+  background:
+    repeating-linear-gradient(90deg, transparent 0 47px, rgba(43, 24, 16, 0.55) 47px 49px) bottom / 100% 38% no-repeat,
+    linear-gradient(#d9a574 0 60%, #8a5a34 60% 62%, #a8693a 62% 100%);
+  box-shadow: inset 0 0 0 4px #3f8f3a, inset 0 0 0 7px #1f5a2a;
+}
+
+[data-theme='retro'] .status-room-shooshy {
+  background:
+    repeating-linear-gradient(90deg, transparent 0 47px, rgba(43, 24, 16, 0.55) 47px 49px) bottom / 100% 38% no-repeat,
+    linear-gradient(#d49a6a 0 60%, #8a5a34 60% 62%, #a8693a 62% 100%);
+}
+
+[data-theme='retro'] .status-room-shiba {
+  background:
+    repeating-linear-gradient(90deg, transparent 0 47px, rgba(43, 24, 16, 0.55) 47px 49px) bottom / 100% 38% no-repeat,
+    linear-gradient(#c8a37c 0 60%, #8a5a34 60% 62%, #a8693a 62% 100%);
+}
+
+[data-theme='retro'] .status-decor {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  user-select: none;
+}
+
+[data-theme='retro'] .status-decor * {
+  pointer-events: none;
+}
+
+[data-theme='retro'] .status-room .still-frame {
+  position: relative;
+  z-index: 1;
+}
+
+[data-theme='retro'] .status-room-bunting {
+  position: absolute;
+  top: 10px;
+  left: -4px;
+  width: calc(100% + 8px);
+  max-width: none;
+  height: 30px;
+  animation: shop-sway 4s steps(4, end) infinite;
+}
+
+[data-theme='retro'] .status-room-vine {
+  position: absolute;
+  top: 40px;
+  width: 36px;
+}
+
+[data-theme='retro'] .status-room-vine-left {
+  left: 8px;
+}
+
+[data-theme='retro'] .status-room-vine-right {
+  right: 8px;
+  transform: scaleX(-1);
+}
+
+[data-theme='retro'] .status-room-star {
+  position: absolute;
+  top: 60px;
+  width: 15px;
+  height: auto;
+  animation: shop-twinkle 2.4s steps(3, end) infinite;
+}
+
+[data-theme='retro'] .status-room-star-left {
+  left: 12px;
+}
+
+[data-theme='retro'] .status-room-star-right {
+  right: 12px;
+  animation-delay: 1.2s;
+}
+
+[data-theme='retro'] .status-room-item {
+  position: absolute;
+  height: auto;
+}
+
+[data-theme='retro'] .status-room-tree {
+  left: 5%;
+  bottom: 84px;
+  width: 74px;
+}
+
+[data-theme='retro'] .status-room-perch {
+  right: 6%;
+  top: 96px;
+  width: 64px;
+}
+
+[data-theme='retro'] .status-room-bowl {
+  right: 6%;
+  bottom: 70px;
+  width: 52px;
+}
+
+[data-theme='retro'] .status-room-house {
+  left: 5%;
+  bottom: 96px;
+  width: 96px;
+}
+
+[data-theme='retro'] .status-room-ball {
+  right: 8%;
+  bottom: 84px;
+  width: 30px;
+}
+
+[data-theme='retro'] .status-room-floor-bone {
+  left: 40%;
+  bottom: 74px;
+  width: 44px;
+}
+
+[data-theme='retro'] .status-card {
+  padding-top: var(--px-1);
+}
+
+[data-theme='retro'] .status-card > h2 {
+  padding: var(--px-1) var(--px-2);
+  color: var(--shop-gold);
+  overflow-wrap: anywhere;
+}
+
+/* Wallet: balance plaque on the left, Daily Food on the right. Wraps instead of overflowing. */
+[data-theme='retro'] .status-wallet {
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+[data-theme='retro'] .status-wallet-balance {
+  min-height: 48px;
+  padding: 0 var(--px-3);
+  border: 2px solid var(--shop-gold);
+  background: var(--px-well);
+}
+
+[data-theme='retro'] .status-wallet-balance .home-currency-icon {
+  width: 28px;
+  height: 18px;
+}
+
+[data-theme='retro'] .status-actions {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+[data-theme='retro'] .status-actions .ghost {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 359px) {
+  [data-theme='retro'] .status-room-house {
+    width: 76px;
+  }
+
+  [data-theme='retro'] .status-room-tree {
+    width: 58px;
+  }
+
+  [data-theme='retro'] .status-room-perch {
+    width: 48px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  [data-theme='retro'] .status-room-bunting,
+  [data-theme='retro'] .status-room-star {
+    animation: none;
+  }
+}
+
+[data-theme='retro'] .quest-button .home-currency-icon {
+  width: 26px;
+  height: auto;
+  color: inherit;
+}

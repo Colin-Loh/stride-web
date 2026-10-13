@@ -10,7 +10,6 @@ import { generateTrainingPlan } from '../plan/trainingPlan'
 import type { AnswerValues } from '../plan/questions'
 
 const noop = async () => 0
-const changeCharacter = () => { }
 const editAnswers = () => { }
 const showPastRun = () => { }
 const STAMP = '2026-10-01T00:00:00.000Z'
@@ -36,7 +35,7 @@ const run = (id: string, characterId: CompletedRun['characterId'], planSessionId
 
 const render = (props: Partial<Parameters<typeof StatusScreen>[0]> = {}) =>
     renderToStaticMarkup(
-        <StatusScreen character="shiba" progression={progression()} runs={[]} plan={PLAN} now={NOW} onCollect={noop} onChangeCharacter={changeCharacter} onEditAnswers={editAnswers} hasPastRun={false} onShowPastRun={showPastRun} {...props} />,
+        <StatusScreen character="shiba" progression={progression()} runs={[]} plan={PLAN} now={NOW} onCollect={noop} onEditAnswers={editAnswers} hasPastRun={false} onShowPastRun={showPastRun} {...props} />,
     )
 
 const buttonOf = (html: string) => html.match(/<button[^>]*quest-button[^>]*>/)?.[0] ?? ''
@@ -46,7 +45,7 @@ describe('StatusScreen one character', () => {
         const html = render({ character: 'shiba' })
         expect(html).toContain('<h1>How is Chase?</h1>')
         expect(html).toContain('Chase is obese')
-        expect(html).toContain('Switch to Shooshy')
+        expect(html).not.toContain('Switch to')
         expect(html).not.toContain('Shooshy is')
         expect(html).not.toContain('Fish')
         expect(html).not.toContain('fish')
@@ -56,7 +55,7 @@ describe('StatusScreen one character', () => {
         const html = render({ character: 'shooshy', progression: progression({ wallets: { shiba: 4, shooshy: 2 } }) })
         expect(html).toContain('<h1>How is Shooshy?</h1>')
         expect(html).toContain('Shooshy is obese')
-        expect(html).toContain('Switch to Chase')
+        expect(html).not.toContain('Switch to')
         expect(html).not.toContain('Chase is')
         expect(html).not.toContain('shiba')
         expect(html).not.toContain('Bones')
@@ -67,9 +66,9 @@ describe('StatusScreen one character', () => {
         expect(render().match(/<article/g)?.length).toBe(1)
     })
 
-    it('offers buttons to switch character and update answers', () => {
+    it('offers Update answers and no switch-character control', () => {
         const html = render()
-        expect(html).toContain('>Switch to Shooshy</button>')
+        expect(html).not.toContain('Switch to')
         expect(html).toContain('>Update answers</button>')
     })
 
@@ -244,5 +243,26 @@ describe('StatusScreen quest button', () => {
 
     it('does not show the backlog note', () => {
         expect(render()).not.toContain('Up to 14 days can be collected')
+    })
+})
+
+describe('StatusScreen room', () => {
+    it('draws a decorative cat room for Shooshy and a dog room for Chase', () => {
+        const cat = render({ character: 'shooshy' })
+        expect(cat).toContain('status-room-shooshy')
+        expect(cat).toContain('status-room-tree')
+        expect(cat).not.toContain('status-room-house')
+        const dog = render({ character: 'shiba' })
+        expect(dog).toContain('status-room-shiba')
+        expect(dog).toContain('status-room-house')
+        expect(dog).not.toContain('status-room-tree')
+    })
+
+    it('hides every decorative room object from assistive tech and keeps it out of the tab order', () => {
+        const html = render()
+        const decor = html.match(/<div class="status-decor"[^>]*>/)?.[0] ?? ''
+        expect(decor).toContain('aria-hidden="true"')
+        expect(html.match(/<svg[^>]*>/g)?.every((svg) => svg.includes('aria-hidden="true"'))).toBe(true)
+        expect(html).not.toMatch(/tabindex="0"/)
     })
 })

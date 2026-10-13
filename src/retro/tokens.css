@@ -5,6 +5,22 @@
  * each colour sits on (WCAG 2.x relative luminance) and listed in docs/retro-ui/README.md.
  */
 @font-face {
+  font-family: 'Atkinson Hyperlegible';
+  src: url('./atkinson-hyperlegible-latin-400-normal.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Atkinson Hyperlegible';
+  src: url('./atkinson-hyperlegible-latin-700-normal.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
   font-family: 'Pixelify Sans';
   src: url('./PixelifySans.ttf') format('truetype');
   font-weight: 400 700;
@@ -49,7 +65,11 @@
   --px-target: 44px;
 
   /* Type */
-  --px-font: 'Pixelify Sans', 'Courier New', monospace;
+  /* UI face (body, numerals, nav, cards, forms, controls): Atkinson Hyperlegible, OFL 1.1, self-hosted
+     from @fontsource/atkinson-hyperlegible 5.3.0 (OFL-AtkinsonHyperlegible.txt). Fallback: system UI. */
+  --px-font: 'Atkinson Hyperlegible', system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+  /* Display face, short h1 headings only: Pixelify Sans, OFL 1.1 (OFL.txt). */
+  --px-display: 'Pixelify Sans', 'Atkinson Hyperlegible', system-ui, sans-serif;
   --px-text-body: 1.125rem;
   --px-text-small: 1rem;
   --px-text-title: 1.75rem;

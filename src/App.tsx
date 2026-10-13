@@ -25,7 +25,7 @@ export default function App({ repositories }: { repositories: Repositories }) {
     {(view === 'home' || view === 'status') && flow.progression && <StatusScreen character={preferences.character} progression={flow.progression} runs={flow.runLog} now={new Date()}
       plan={flow.plan}
       hasPastRun={flow.runLog.some(run => run.characterId === preferences.character && run.session !== undefined)}
-      onCollect={flow.collectIncome} onChangeCharacter={flow.changeCharacter} onEditAnswers={flow.editAnswers} onShowPastRun={flow.showPastRun} />}
+      onCollect={flow.collectIncome} onEditAnswers={flow.editAnswers} onShowPastRun={flow.showPastRun} />}
     {(view === 'home' || view === 'status') && flow.progression && <HomeNav current="status" onPlan={flow.showPlan} onShop={flow.openShop} onStatus={flow.openStatus} />}
     {view === 'past-complete' && flow.pastRunSession && <CompleteScreen name={name} session={flow.pastRunSession}
       character={flow.pastRunSession.characterId ?? preferences.character} weightKg={preferences.weightKg}
