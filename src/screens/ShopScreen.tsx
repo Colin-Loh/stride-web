@@ -54,7 +54,7 @@ function ShopItem({ item, progression, onRequestBuy, onEquip, onUnequip }: Omit<
     return (
         <li className={`shop-card shop-card-${state}`}>
             <button type="button" className="shop-action" aria-label={label} disabled={state === 'unaffordable'} onClick={action}>
-                {(state === 'owned' || state === 'equipped') && <span className="shop-owned-mark" aria-hidden="true">✓</span>}
+                {(state === 'owned' || state === 'equipped') && <span className="shop-owned-mark" aria-hidden="true">✔</span>}
                 <div className="shop-preview" aria-hidden="true">
                     <CharacterStill character={character} status="healthy" equipped={preview} scale={0.5} />
                 </div>
@@ -178,7 +178,7 @@ export function ShopScreen({ character, progression, onBuy, onEquip, onUnequip }
                 <div className="shop-marquee">
                     <div className="shop-sign">
                         <ShopCrest />
-                        <h1>CHASE YOUR DREAM!</h1>
+                        <h1>Store</h1>
                     </div>
                 </div>
                 <ShopBunting character={character} className="shop-bunting" />
