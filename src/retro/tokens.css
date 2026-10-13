@@ -1,0 +1,60 @@
+/*
+ * Retro-pixel design tokens. Every value used by the retro theme (src/retro/retro.css) comes from
+ * here. The theme applies where an ancestor carries data-theme="retro".
+ * Palette: compact DB32-inspired indexed set. Contrast ratios are measured against the surface
+ * each colour sits on (WCAG 2.x relative luminance) and listed in docs/retro-ui/README.md.
+ */
+@font-face {
+  font-family: 'Pixelify Sans';
+  src: url('./PixelifySans.ttf') format('truetype');
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+[data-theme='retro'] {
+  /* Palette */
+  --px-night: #101b2d;
+  --px-panel: #222034;
+  --px-well: #171b2a;
+  --px-shade: #0b101b;
+  --px-edge: #7b7d86;
+  --px-edge-soft: #4b5362;
+  --px-light: #cbdbfc;
+  --px-white: #fff4e8;
+  --px-mint: #99e550;
+  --px-mint-dark: #37946e;
+  --px-gold: #f2c35e;
+  --px-danger: #e87566;
+  /* Text that is intentionally quieter than --px-light, still above 4.5:1 on panel and well. */
+  --px-disabled: #8a8d99;
+
+  /* State fills */
+  --px-hover: #2d2a45;
+  --px-pressed: #0f1320;
+  --px-selected: var(--px-mint);
+
+  /* Grid: an 8px rhythm. */
+  --px-1: 4px;
+  --px-2: 8px;
+  --px-3: 12px;
+  --px-4: 16px;
+  --px-5: 24px;
+  --px-6: 32px;
+
+  /* Borders and stepped corners */
+  --px-stroke: 3px;
+  --px-corner: 9px;
+  --px-drop: 4px;
+  --px-target: 44px;
+
+  /* Type */
+  --px-font: 'Pixelify Sans', 'Courier New', monospace;
+  --px-text-body: 1.125rem;
+  --px-text-small: 1rem;
+  --px-text-title: 1.75rem;
+
+  /* Field tile, a 16 x 16 native pixel tile drawn at an integer scale. */
+  --px-field: url('./field-tile.png');
+  --px-focus-ring: 3px solid var(--px-gold);
+}

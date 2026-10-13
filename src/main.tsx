@@ -4,6 +4,8 @@ import { registerSW } from 'virtual:pwa-register'
 import App from './App.tsx'
 import { createLocalStorageRepositories } from './storage/localStorage'
 import './index.css'
+import './retro/tokens.css'
+import './retro/retro.css'
 
 registerSW({ immediate: true })
 

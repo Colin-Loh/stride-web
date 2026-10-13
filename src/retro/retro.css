@@ -1,0 +1,460 @@
+/*
+ * Retro-pixel theme for the Status and Shop screens. Scoped to [data-theme='retro'] so other
+ * screens keep their current look until they are migrated. Values come from tokens.css.
+ */
+body:has([data-theme='retro']) {
+  background-color: #101b2d;
+  background-image: url('./field-tile.png');
+  background-size: 32px 32px;
+  image-rendering: pixelated;
+}
+
+[data-theme='retro'] {
+  font-family: var(--px-font);
+  font-size: var(--px-text-body);
+  line-height: 1.3;
+  color: var(--px-white);
+  padding-inline: var(--px-4);
+  overflow-wrap: break-word;
+}
+
+[data-theme='retro'] h1,
+[data-theme='retro'] h2 {
+  font-family: var(--px-font);
+  font-weight: 700;
+  letter-spacing: 0;
+  color: var(--px-white);
+}
+
+[data-theme='retro'] h1 {
+  font-size: var(--px-text-title);
+  line-height: 1.1;
+}
+
+/* Panel: 3px outline, inset well line and stepped 9px corners. */
+[data-theme='retro'] .card {
+  position: relative;
+  padding: var(--px-5) var(--px-4) var(--px-5);
+  background: var(--px-panel);
+  border: var(--px-stroke) solid var(--px-edge);
+  border-radius: 0;
+  box-shadow: inset 0 0 0 var(--px-stroke) var(--px-well);
+  backdrop-filter: none;
+  clip-path: polygon(
+    0 var(--px-corner), var(--px-corner) var(--px-corner), var(--px-corner) 0,
+    calc(100% - var(--px-corner)) 0, calc(100% - var(--px-corner)) var(--px-corner), 100% var(--px-corner),
+    100% calc(100% - var(--px-corner)), calc(100% - var(--px-corner)) calc(100% - var(--px-corner)),
+    calc(100% - var(--px-corner)) 100%, var(--px-corner) 100%, var(--px-corner) calc(100% - var(--px-corner)),
+    0 calc(100% - var(--px-corner))
+  );
+}
+
+[data-theme='retro'] .card h2 {
+  border-top: 0;
+  padding-top: 0;
+  margin-top: 0;
+  font-size: var(--px-text-title);
+  line-height: 1.1;
+}
+
+[data-theme='retro'] .eyebrow {
+  color: var(--px-mint);
+  font-size: var(--px-text-small);
+  letter-spacing: 1px;
+}
+
+[data-theme='retro'] .muted {
+  color: var(--px-light);
+}
+
+/* Buttons: rectangular, 3px outline, pressed shade, 48px target. */
+[data-theme='retro'] .ghost,
+[data-theme='retro'] .quest-button {
+  min-height: 48px;
+  padding: var(--px-2) var(--px-3);
+  border: var(--px-stroke) solid var(--px-edge);
+  border-radius: 0;
+  background: var(--px-well);
+  color: var(--px-white);
+  font-family: var(--px-font);
+  font-size: var(--px-text-body);
+  box-shadow: inset 0 calc(-1 * var(--px-stroke)) 0 var(--px-shade);
+  cursor: pointer;
+}
+
+[data-theme='retro'] .ghost:hover:not(:disabled),
+[data-theme='retro'] .quest-button:hover:not(.is-disabled) {
+  background: var(--px-hover);
+  border-color: var(--px-light);
+}
+
+[data-theme='retro'] .ghost:active:not(:disabled),
+[data-theme='retro'] .quest-button:active:not(.is-disabled) {
+  background: var(--px-pressed);
+  box-shadow: inset 0 var(--px-stroke) 0 var(--px-shade);
+}
+
+[data-theme='retro'] .ghost:disabled,
+[data-theme='retro'] .quest-button.is-disabled {
+  opacity: 1;
+  color: var(--px-disabled);
+  border-color: var(--px-edge-soft);
+  background: var(--px-well);
+  cursor: not-allowed;
+}
+
+/* Focus: gold ring outside a mint border, on every interactive control. */
+[data-theme='retro'] :is(.ghost, .quest-button, .shop-action, .home-nav-button):focus-visible {
+  outline: var(--px-focus-ring);
+  outline-offset: 3px;
+}
+
+[data-theme='retro'] :is(.ghost, .quest-button):focus-visible {
+  border-color: var(--px-mint);
+}
+
+/* Status */
+[data-theme='retro'] .daily-goal {
+  padding-bottom: var(--px-4);
+  border-bottom: 2px solid var(--px-edge);
+  margin-bottom: 0;
+}
+
+[data-theme='retro'] .daily-goal-summary {
+  font-size: var(--px-text-body);
+}
+
+[data-theme='retro'] .daily-goal-summary strong {
+  color: var(--px-gold);
+  font-weight: 700;
+}
+
+[data-theme='retro'] .daily-goal-progress,
+[data-theme='retro'] .daily-goal-progress::-webkit-progress-bar {
+  border-radius: 0;
+  background: var(--px-well);
+}
+
+[data-theme='retro'] .daily-goal-progress {
+  height: 20px;
+  border: 2px solid var(--px-edge);
+  box-shadow: none;
+}
+
+[data-theme='retro'] .daily-goal-progress::-webkit-progress-value {
+  border-radius: 0;
+  background: var(--px-mint);
+}
+
+[data-theme='retro'] .daily-goal-progress::-moz-progress-bar {
+  border-radius: 0;
+  background: var(--px-mint);
+}
+
+[data-theme='retro'] .status-card {
+  gap: var(--px-3);
+  padding: 0 0 var(--px-4);
+  border-top: 0;
+}
+
+[data-theme='retro'] .status-stage {
+  min-height: 214px;
+  align-items: center;
+  padding: var(--px-3) 0;
+  border-bottom: 2px solid var(--px-edge);
+}
+
+[data-theme='retro'] .status-card h2 {
+  font-size: 1.6rem;
+  text-align: center;
+}
+
+[data-theme='retro'] .status-wallet {
+  gap: var(--px-2);
+  flex-wrap: wrap;
+}
+
+[data-theme='retro'] .status-wallet-balance {
+  color: var(--px-gold);
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+[data-theme='retro'] .home-currency-icon,
+[data-theme='retro'] .quest-icon {
+  color: var(--px-gold);
+}
+
+[data-theme='retro'] .quest-count {
+  border-radius: 0;
+  background: var(--px-mint);
+  color: var(--px-night);
+}
+
+[data-theme='retro'] .quest-status {
+  color: var(--px-light);
+  font-size: var(--px-text-small);
+}
+
+[data-theme='retro'] .status-actions {
+  gap: var(--px-2);
+}
+
+/* Shop */
+[data-theme='retro'] .shop {
+  gap: var(--px-4);
+}
+
+[data-theme='retro'] .shop-header {
+  width: calc(100% + 2 * var(--px-4));
+  margin: calc(-1 * var(--px-5)) calc(-1 * var(--px-4)) 0;
+  border-radius: 0;
+  border-bottom: var(--px-stroke) solid var(--px-edge);
+}
+
+[data-theme='retro'] .shop-sign {
+  border: var(--px-stroke) solid var(--px-gold);
+  border-radius: 0;
+  background: var(--px-panel);
+  box-shadow: var(--px-drop) var(--px-drop) 0 var(--px-shade);
+}
+
+[data-theme='retro'] .shop-sign h1 {
+  font-size: 1.5rem;
+}
+
+[data-theme='retro'] .shop-balance {
+  border: 2px solid var(--px-gold);
+  border-radius: 0;
+  background: var(--px-well);
+  color: var(--px-gold);
+  font-size: 1.2rem;
+}
+
+[data-theme='retro'] .shop-card {
+  aspect-ratio: auto;
+  min-height: 176px;
+  border: var(--px-stroke) solid var(--px-edge);
+  border-radius: 0;
+  background: var(--px-well);
+  box-shadow: inset 0 calc(-1 * var(--px-stroke)) 0 var(--px-shade);
+}
+
+[data-theme='retro'] .shop-card-owned {
+  border-style: dashed;
+  border-color: var(--px-light);
+}
+
+[data-theme='retro'] .shop-card-equipped {
+  border-color: var(--px-mint);
+  box-shadow: inset 0 0 0 2px var(--px-well), inset 0 0 0 4px var(--px-mint-dark);
+}
+
+[data-theme='retro'] .shop-card:has(.shop-action:hover:not(:disabled)) {
+  background: var(--px-hover);
+}
+
+[data-theme='retro'] .shop-card:has(.shop-action:active:not(:disabled)) {
+  background: var(--px-pressed);
+}
+
+[data-theme='retro'] .shop-card-unaffordable {
+  border-color: var(--px-edge-soft);
+}
+
+[data-theme='retro'] .shop-action {
+  min-height: 170px;
+  border-radius: 0;
+  color: var(--px-white);
+  font-family: var(--px-font);
+}
+
+[data-theme='retro'] .shop-action:disabled {
+  opacity: 1;
+  color: var(--px-disabled);
+}
+
+[data-theme='retro'] .shop-card-unaffordable .shop-preview {
+  opacity: 0.55;
+}
+
+[data-theme='retro'] .shop-price {
+  min-height: 28px;
+  border: 2px solid var(--px-gold);
+  border-radius: 0;
+  background: var(--px-night);
+  color: var(--px-gold);
+  font-size: var(--px-text-body);
+}
+
+[data-theme='retro'] .shop-card-unaffordable .shop-price {
+  border-color: var(--px-edge);
+  color: var(--px-disabled);
+}
+
+[data-theme='retro'] .shop-owned-mark {
+  top: 4px;
+  right: 4px;
+  width: 24px;
+  height: 24px;
+  border-radius: 0;
+  background: var(--px-mint);
+  color: var(--px-night);
+}
+
+[data-theme='retro'] .shop-fitting-toggle {
+  width: 100%;
+}
+
+[data-theme='retro'] .shop-fitting-toggle[aria-expanded='true'] {
+  border-color: var(--px-mint);
+}
+
+[data-theme='retro'] .shop-fitting {
+  width: 100%;
+  min-height: 190px;
+  align-content: center;
+  border: var(--px-stroke) solid var(--px-mint);
+  border-radius: 0;
+  background: var(--px-well);
+  overflow: hidden;
+}
+
+/* Purchase confirmation */
+[data-theme='retro'] .shop-confirm-scrim {
+  background: rgba(11, 16, 27, 0.82);
+}
+
+[data-theme='retro'] .shop-confirm {
+  max-width: 340px;
+  padding: var(--px-4);
+  border: var(--px-stroke) solid var(--px-gold);
+  border-radius: 0;
+  background: var(--px-panel);
+  box-shadow: var(--px-drop) var(--px-drop) 0 var(--px-shade);
+  font-family: var(--px-font);
+  text-align: left;
+}
+
+[data-theme='retro'] .shop-confirm h2 {
+  font-size: 1.4rem;
+}
+
+[data-theme='retro'] .shop-confirm-sums dt {
+  color: var(--px-light);
+}
+
+[data-theme='retro'] .shop-confirm-sums dd {
+  color: var(--px-gold);
+}
+
+[data-theme='retro'] .shop-confirm-actions button {
+  min-height: 48px;
+}
+
+/* Navigation: active tab is light-filled with dark text. */
+[data-theme='retro'] .home-nav {
+  gap: 3px;
+  padding: 5px 6px;
+  border: 0;
+  border-top: var(--px-stroke) solid var(--px-edge);
+  border-radius: 0;
+  background: var(--px-panel);
+  font-family: var(--px-font);
+}
+
+[data-theme='retro'] .home-nav-button {
+  min-height: 48px;
+  border: 2px solid transparent;
+  border-radius: 0;
+  color: var(--px-light);
+  font-family: var(--px-font);
+  font-size: 1.1rem;
+}
+
+[data-theme='retro'] .home-nav-button:hover:not([aria-current='page']) {
+  background: var(--px-hover);
+  border-color: var(--px-edge);
+}
+
+[data-theme='retro'] .home-nav-button:active:not([aria-current='page']) {
+  background: var(--px-pressed);
+}
+
+[data-theme='retro'] .home-nav-button[aria-current='page'] {
+  background: var(--px-mint);
+  color: var(--px-night);
+  border-color: var(--px-white);
+  box-shadow: inset 0 calc(-1 * var(--px-stroke)) 0 var(--px-mint-dark);
+  font-weight: 700;
+}
+
+/* Notices (save errors) use the danger token. */
+[data-theme='retro'] .notice {
+  border: var(--px-stroke) solid var(--px-danger);
+  border-radius: 0;
+  background: var(--px-panel);
+  color: var(--px-white);
+  font-size: var(--px-text-small);
+}
+
+[data-theme='retro'] .notice .link {
+  color: var(--px-light);
+  min-height: var(--px-target);
+}
+
+[data-theme='retro'] [aria-busy='true'] {
+  cursor: progress;
+}
+
+[data-theme='retro'] .quest-button[aria-disabled='true']:not(.is-disabled) {
+  opacity: 0.7;
+  cursor: progress;
+}
+
+/* Narrow screens down to 320px. */
+@media (max-width: 359px) {
+  [data-theme='retro'] {
+    padding-inline: var(--px-2);
+    font-size: 1rem;
+  }
+
+  [data-theme='retro'] h1 {
+    font-size: 1.5rem;
+  }
+
+  [data-theme='retro'] .card {
+    padding-inline: var(--px-3);
+  }
+
+  [data-theme='retro'] .shop-header {
+    width: calc(100% + 2 * var(--px-3));
+    margin-inline: calc(-1 * var(--px-3));
+  }
+
+  [data-theme='retro'] .shop-sign h1 {
+    font-size: 1.2rem;
+  }
+
+  [data-theme='retro'] .shop-grid {
+    gap: var(--px-2);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  [data-theme='retro'] .ghost,
+  [data-theme='retro'] .home-nav-button {
+    transition: none;
+  }
+}
+
+[data-theme='retro'] .shop-mirror-icon {
+  display: inline-block;
+  vertical-align: -2px;
+  margin-right: var(--px-1);
+}
+
+/* clip-path would crop the fixed confirm scrim, so the stepped corners are dropped while it is open. */
+[data-theme='retro'] .card:has(.shop-confirm-scrim) {
+  clip-path: none;
+}
