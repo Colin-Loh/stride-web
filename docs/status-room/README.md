@@ -14,8 +14,8 @@ The Status screen is a brick header with a hanging currency plaque, a framed pix
 
 | Role | Face | Source and license | Fallback |
 | --- | --- | --- | --- |
-| Body, numerals, nav, cards, forms, controls (`--px-font`) | Atkinson Hyperlegible 400 and 700 | `@fontsource/atkinson-hyperlegible` 5.3.0, self-hosted woff2 in `src/retro/`, SIL OFL 1.1 (`OFL-AtkinsonHyperlegible.txt`) | system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif |
-| Short `h1` headings only (`--px-display`) | Pixelify Sans | `src/retro/PixelifySans.ttf`, SIL OFL 1.1 (`OFL.txt`) | Atkinson Hyperlegible, system-ui |
+| Body, numerals, nav, cards, forms, controls (`--px-font`) | Greybeard 18px and Bold | `src/retro/Greybeard-18px*.woff2` | monospace |
+| Short `h1` headings only (`--px-display`) | Pixelify Sans | `src/retro/PixelifySans.ttf`, SIL OFL 1.1 (`OFL.txt`) | monospace |
 
 Sizes and line height are unchanged: body 1.125rem, small 1rem, title 1.75rem, line height 1.3. Both faces use `font-display: swap`.
 
