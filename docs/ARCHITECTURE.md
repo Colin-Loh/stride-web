@@ -35,7 +35,7 @@ Keys use the `stride.` prefix. Loaders validate with `src/domain/guards.ts` and 
 
 - Compatibility and migration code stays while stored data of that shape can exist.
 - An export is public only if another module or test imports it. Everything else is module-private.
-- Assets are removed when no source file, stylesheet, test or manifest references them. Overlay and sprite files under `public/` are loaded by computed name (`runOverlay.ts`, `sprites.ts`) and are guarded by `src/cosmetics/art-files.test.ts`.
+- Assets are removed when no source file, stylesheet, test or manifest references them. Run overlay and sprite files under `public/` are loaded by computed name (`runOverlay.ts`, `sprites.ts`), so no source reference names them and they are kept by hand. `src/cosmetics/art-files.test.ts` checks only the catalog overlays (`public/cosmetics/<id>.png`), shop icons (`public/cosmetics/icons/<id>.png`) and catalog `artPath` files; it does not cover the computed run overlay or sprite filenames.
 
 ## Cleanup record
 
