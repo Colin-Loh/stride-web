@@ -492,7 +492,7 @@ export function planWeekCount(weeksToGoal: number | null): number {
  * marathon) and 0.60 (5K, 10K) are unverified defaults.
  * A focus without a race, such as Base, has no taper.
  */
-export const TAPER_FRACTIONS: Readonly<Record<string, readonly number[]>> = {
+const TAPER_FRACTIONS: Readonly<Record<string, readonly number[]>> = {
     base: [],
     '5k': [0.6],
     '10k': [0.6],
