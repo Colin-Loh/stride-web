@@ -383,3 +383,33 @@
     width: 40px;
   }
 }
+/*
+ * Phone fit. The preview keeps the whole sprite inside its card on narrow screens, and the shop
+ * tightens its vertical rhythm so the header, cards and Fitting Room button share one phone
+ * screen. Heights stay natural; short or enlarged-text viewports scroll the page.
+ */
+[data-theme='retro'] .shop {
+  gap: var(--px-3);
+}
+
+[data-theme='retro'] .shop-preview .still-frame {
+  zoom: 0.85;
+}
+
+@media (max-width: 359px) {
+  [data-theme='retro'] .shop-preview .still-frame {
+    zoom: 0.7;
+  }
+}
+
+@media (max-height: 700px) {
+  [data-theme='retro'] .shop-header {
+    padding-top: 52px;
+    padding-bottom: 34px;
+  }
+
+  [data-theme='retro'] .shop-card {
+    aspect-ratio: auto;
+    min-height: 160px;
+  }
+}
