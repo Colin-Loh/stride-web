@@ -14,7 +14,7 @@ export type WornSlots = Record<Slot, string | null>
 export const nothingWorn = (): WornSlots => ({ face: null, head: null, body: null })
 
 /** Every cosmetic id. Each item belongs to exactly one character and one slot. */
-export const COSMETIC_IDS = [
+const COSMETIC_IDS = [
     'chase-black-sunglasses',
     'chase-sushi-hat',
     'shooshy-black-sunglasses',

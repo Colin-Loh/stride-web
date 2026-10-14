@@ -6,7 +6,7 @@ export interface ShareNavigator {
     canShare?: (data: ShareData) => boolean
 }
 
-export function downloadFile(file: File): void {
+function downloadFile(file: File): void {
     const url = URL.createObjectURL(file)
     const link = document.createElement('a')
     link.href = url

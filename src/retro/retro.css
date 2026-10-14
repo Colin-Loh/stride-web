@@ -36,11 +36,6 @@ body:has([data-theme='retro']) {
   text-transform: uppercase;
 }
 
-[data-theme='retro'] .plan-weeks-title {
-  font-family: var(--px-display);
-  text-transform: uppercase;
-}
-
 [data-theme='retro'] button {
   font-family: var(--px-display);
   font-weight: 500;
@@ -191,8 +186,7 @@ body:has([data-theme='retro']) {
   font-weight: 700;
 }
 
-[data-theme='retro'] .home-currency-icon,
-[data-theme='retro'] .quest-icon {
+[data-theme='retro'] .home-currency-icon {
   color: var(--px-gold);
 }
 
@@ -458,12 +452,6 @@ body:has([data-theme='retro']) {
   [data-theme='retro'] .home-nav-button {
     transition: none;
   }
-}
-
-[data-theme='retro'] .shop-mirror-icon {
-  display: inline-block;
-  vertical-align: -2px;
-  margin-right: var(--px-1);
 }
 
 /* clip-path would crop the fixed confirm scrim, so the stepped corners are dropped while it is open. */
