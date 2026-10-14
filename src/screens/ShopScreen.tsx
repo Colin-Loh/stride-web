@@ -71,6 +71,15 @@ function ShopItem({ item, progression, onRequestBuy, onEquip, onUnequip }: Omit<
 /** The balance as a number with its currency word, e.g. "9 bones" or "1 fish". */
 const balanceText = (character: Character, count: number) => `${count} ${wordFor(character, count)}`
 
+function CurrencyAmount({ character, count }: { character: Character; count: number }) {
+    return (
+        <dd className="shop-confirm-amount" aria-label={balanceText(character, count)}>
+            <span aria-hidden="true">{count}</span>
+            <ShopCurrencyIcon character={character} />
+        </dd>
+    )
+}
+
 export function ShopScreen({ character, progression, onBuy, onEquip, onUnequip }: Props) {
     const count = progression.wallets[character]
 
@@ -186,15 +195,15 @@ export function ShopScreen({ character, progression, onBuy, onEquip, onUnequip }
                         <dl className="shop-confirm-sums">
                             <div>
                                 <dt>Price</dt>
-                                <dd>{priceText(character, pendingItem.price)}</dd>
+                                <CurrencyAmount character={character} count={pendingItem.price} />
                             </div>
                             <div>
                                 <dt>Balance before</dt>
-                                <dd>{balanceText(character, count)}</dd>
+                                <CurrencyAmount character={character} count={count} />
                             </div>
                             <div>
                                 <dt>Balance after</dt>
-                                <dd>{balanceText(character, count - pendingItem.price)}</dd>
+                                <CurrencyAmount character={character} count={count - pendingItem.price} />
                             </div>
                         </dl>
                         <div className="shop-confirm-actions">

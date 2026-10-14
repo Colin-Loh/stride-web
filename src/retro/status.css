@@ -4,6 +4,49 @@
  * loaded after shop.css. Room art comes from src/components/StatusArt.tsx; every decorative
  * element sits inside .status-decor, which never takes pointer events or focus.
  */
+[data-theme='retro'][data-screen='status'] {
+  line-height: 1.65;
+}
+
+[data-theme='retro'][data-screen='status'] .status-card h2 {
+  font-size: calc(1rem + 5px);
+  line-height: 1.6;
+}
+
+[data-theme='retro'][data-screen='status'] .status-wallet-balance {
+  font-size: calc(1.125rem + 5px);
+}
+
+[data-theme='retro'][data-screen='status'] .home-nav-button {
+  font-size: calc(1rem + 5px);
+}
+
+[data-theme='retro'][data-screen='status'] .quest-count {
+  font-size: calc(0.75rem + 5px);
+}
+
+[data-theme='retro'][data-screen='status'] .status-header h1 {
+  font-size: var(--px-text-title);
+  line-height: 1.5;
+  text-align: center;
+}
+
+[data-theme='retro'][data-screen='status'] .daily-goal-summary {
+  justify-content: center;
+  font-size: calc(0.75rem + 5px);
+  white-space: nowrap;
+}
+
+[data-theme='retro'][data-screen='status'] .daily-goal-summary span {
+  font-family: var(--px-font);
+  font-size: calc(var(--px-text-small) + 3px);
+  font-weight: 700;
+}
+
+[data-theme='retro'][data-screen='status'] :is(.status-actions .ghost, .home-nav-button, .quest-button) {
+  text-transform: uppercase;
+}
+
 [data-theme='retro'] .status-header {
   position: relative;
   overflow: hidden;
@@ -13,7 +56,7 @@
   border-bottom: var(--px-stroke) solid var(--px-edge);
 }
 
-[data-theme='retro'] .status-header > :not(.shop-wall) {
+[data-theme='retro'] .status-header> :not(.shop-wall) {
   position: relative;
 }
 
@@ -21,18 +64,20 @@
 [data-theme='retro'] .status-header .eyebrow,
 [data-theme='retro'] .status-header h1,
 [data-theme='retro'] .status-header .daily-goal,
-[data-theme='retro'] .status-header > .muted {
+[data-theme='retro'] .status-header>.muted {
   text-shadow: 0 2px 0 var(--px-shade);
 }
 
 [data-theme='retro'] .status-header .eyebrow {
-  margin: 0;
+  margin: 0 0 var(--px-3);
+  font-weight: 700;
+  letter-spacing: 0.06em;
 }
 
 [data-theme='retro'] .status-header h1 {
-  margin: 0 0 var(--px-2);
+  margin: 0 0 var(--px-4);
   color: var(--shop-gold);
-  text-shadow: 0 3px 0 var(--shop-orange-deep), 0 5px 0 var(--px-shade);
+  text-shadow: 0 2px 0 var(--px-shade);
   overflow-wrap: anywhere;
 }
 
@@ -42,31 +87,9 @@
   margin-bottom: 0;
 }
 
-[data-theme='retro'] .status-header > .muted {
+[data-theme='retro'] .status-header>.muted {
   margin: 0;
   color: #9fc4f0;
-}
-
-/* The hanging plaque: two cords and a gold-framed plate holding the currency glyph. */
-[data-theme='retro'] .status-hang {
-  position: absolute;
-  top: 0;
-  left: 50%;
-  display: grid;
-  place-items: center;
-  width: 112px;
-  height: 36px;
-  transform: translateX(-50%);
-  border: var(--px-stroke) solid var(--shop-gold);
-  border-top: 0;
-  background: var(--px-panel);
-  box-shadow: 0 var(--px-drop) 0 var(--px-shade);
-  pointer-events: none;
-}
-
-[data-theme='retro'] .status-hang .home-currency-icon {
-  width: 36px;
-  height: 22px;
 }
 
 /* Room: wall, wainscot line, floorboards, framed with a leafy border like the fitting room. */
@@ -183,7 +206,7 @@
 [data-theme='retro'] .status-room-house {
   left: 5%;
   bottom: 96px;
-  width: 96px;
+  width: 112px;
 }
 
 [data-theme='retro'] .status-room-ball {
@@ -202,7 +225,7 @@
   padding-top: var(--px-1);
 }
 
-[data-theme='retro'] .status-card > h2 {
+[data-theme='retro'] .status-card>h2 {
   padding: var(--px-1) var(--px-2);
   color: var(--shop-gold);
   overflow-wrap: anywhere;
@@ -236,7 +259,7 @@
 
 @media (max-width: 359px) {
   [data-theme='retro'] .status-room-house {
-    width: 76px;
+    width: 88px;
   }
 
   [data-theme='retro'] .status-room-tree {
@@ -260,4 +283,18 @@
   width: 26px;
   height: auto;
   color: inherit;
+}
+
+#root [data-theme='retro'] button {
+  font-family: var(--px-display);
+  text-transform: uppercase;
+}
+
+#root [data-theme='retro'] h2 {
+  font-family: var(--px-display);
+}
+
+#root [data-theme='retro'] .week.current .week-toggle {
+  font-family: var(--px-font);
+  font-size: calc(var(--px-text-body) + 5px);
 }

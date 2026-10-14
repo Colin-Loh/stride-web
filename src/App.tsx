@@ -17,7 +17,7 @@ export default function App({ repositories }: { repositories: Repositories }) {
   if (!flow.ready) return <main className="shell" data-theme="retro" aria-busy="true" />
   const name = preferences.name ?? ''
   // The retro-pixel theme covers every screen.
-  return <main className="shell" data-theme="retro">
+  return <main className="shell" data-theme="retro" data-screen={view === 'home' || view === 'status' ? 'status' : undefined}>
     {flow.notice && <div className="notice" role="status">{flow.notice}<button type="button" className="link" onClick={flow.dismissNotice}>Dismiss</button></div>}
     {view === 'name' && <NameScreen initialName={name} initialCharacter={preferences.character} initialWeightKg={preferences.weightKg}
       storedCharacter={preferences.name ? preferences.character : undefined}
@@ -25,7 +25,7 @@ export default function App({ repositories }: { repositories: Repositories }) {
     {(view === 'home' || view === 'status') && flow.progression && <StatusScreen character={preferences.character} progression={flow.progression} runs={flow.runLog} now={new Date()}
       plan={flow.plan}
       hasPastRun={flow.runLog.some(run => run.characterId === preferences.character && run.session !== undefined)}
-      onCollect={flow.collectIncome} onEditAnswers={flow.editAnswers} onShowPastRun={flow.showPastRun} />}
+      onCollect={flow.collectIncome} onEditAnswers={flow.editAnswers} onSwitchToChase={flow.switchToChase} onSwitchToShooshy={flow.switchToShooshy} onShowPastRun={flow.showPastRun} />}
     {(view === 'home' || view === 'status') && flow.progression && <HomeNav current="status" onPlan={flow.showPlan} onShop={flow.openShop} onStatus={flow.openStatus} />}
     {view === 'past-complete' && flow.pastRunSession && <CompleteScreen name={name} session={flow.pastRunSession}
       character={flow.pastRunSession.characterId ?? preferences.character} weightKg={preferences.weightKg}

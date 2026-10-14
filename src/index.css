@@ -9,7 +9,7 @@
   --accent-dim: #1f7a52;
   --danger: #f0a39a;
   --bar: #1a4638;
-  --sans: 'Segoe UI', system-ui, sans-serif;
+  --sans: 'Greybeard', monospace;
   font: 16px/1.45 var(--sans);
   background: radial-gradient(1200px 600px at 50% -10%, #1a4a38, var(--bg));
   color: var(--text);
@@ -1172,6 +1172,18 @@ select {
   margin: 0;
   font-weight: 700;
   text-align: right;
+}
+
+.shop-confirm-amount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.shop-confirm-amount .home-currency-icon {
+  width: 26px;
+  height: 14px;
 }
 
 .shop-confirm-actions {

@@ -32,7 +32,9 @@ describe('card layout', () => {
     })
 
     it('shows distance, active time and pace with units and the estimate label', () => {
-        const all = texts(buildCardLayout(DATA))
+        const layout = buildCardLayout(DATA)
+        const all = texts(layout)
+        expect(layout.find((item) => item.kind === 'text' && item.text === '5.20')).toMatchObject({ size: 159 })
         expect(all).toEqual(expect.arrayContaining(['5.20', 'KILOMETRES · ESTIMATED', '40:12', '7:44', 'ACTIVE TIME', 'AVG EST. PACE']))
         expect(all).toContain('Distance from logged speed × time · no GPS')
         expect(all).toContain('COLIN · SESSION COMPLETE')

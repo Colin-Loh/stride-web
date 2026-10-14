@@ -45,9 +45,9 @@ export function WorkoutScreen({ workout, onChange, onStart, onBack, backLabel }:
 
 
     return (
-        <section className="card">
+        <section className="card workout-screen">
             <p className="eyebrow">{workout.categoryName} · tailored</p>
-            <h1>Your workout</h1>
+            <h1>YOUR WORKOUT</h1>
 
             <ul className="reasons">
                 {workout.explanation.map((line) => {
@@ -69,7 +69,7 @@ export function WorkoutScreen({ workout, onChange, onStart, onBack, backLabel }:
             <div className="plan-steps">{workout.sections.map(item => <PlanSectionEditor key={item.id} section={item} onChange={replace}
                 onValidity={valid => setInvalidInputs(current => ({ ...current, [item.id]: !valid }))} />)}</div>
 
-            <h2>Totals</h2>
+            <h2>TOTALS</h2>
             <ul className="reasons">
                 <li>
                     Total time:{' '}

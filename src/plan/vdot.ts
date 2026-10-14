@@ -234,9 +234,9 @@ interface TrainingEffort {
 }
 
 export const TRAINING_EFFORTS: readonly TrainingEffort[] = [
-    { id: 'base', label: 'Base: easy running only', qualitySessions: 0 },
-    { id: 'base_quality', label: 'Base Quality: easy running and one speed day', qualitySessions: 1 },
-    { id: 'advanced_quality', label: 'Advanced Quality: easy running and two speed days', qualitySessions: 2 },
+    { id: 'base', label: 'ONLY EASY RUNS', qualitySessions: 0 },
+    { id: 'base_quality', label: '1 SPEED DAY', qualitySessions: 1 },
+    { id: 'advanced_quality', label: '2 SPEED DAY', qualitySessions: 2 },
 ]
 
 /** TODO(verify): the official focus list is unpublished; these are the common race distances plus Base. */

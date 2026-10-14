@@ -68,6 +68,7 @@ const DOG_HOUSE = [
     '.kwwwkkkkkkkkkkwwwk.',
     '.kwwwkkkkkkkkkkwwwk.',
     '.kwwwkkkkkkkkkkwwwk.',
+    '.kwwwkkkkkkkkkkwwwk.',
     '.kkkkkkkkkkkkkkkkkk.',
 ]
 
