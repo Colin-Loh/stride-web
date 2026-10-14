@@ -7,7 +7,23 @@
 @font-face {
   font-family: 'Pixelify Sans';
   src: url('./PixelifySans.ttf') format('truetype');
-  font-weight: 400 700;
+  font-weight: 500 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Greybeard';
+  src: url('./Greybeard-18px.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Greybeard';
+  src: url('./Greybeard-18px-Bold.woff2') format('woff2');
+  font-weight: 700;
   font-style: normal;
   font-display: swap;
 }
@@ -49,10 +65,12 @@
   --px-target: 44px;
 
   /* Type */
-  --px-font: 'Pixelify Sans', 'Courier New', monospace;
-  --px-text-body: 1.125rem;
-  --px-text-small: 1rem;
-  --px-text-title: 1.75rem;
+  --px-font: 'Greybeard', monospace;
+  --px-display: 'Pixelify Sans', sans-serif;
+  --sans: var(--px-font);
+  --px-text-body: calc(0.875rem + 5px);
+  --px-text-small: calc(0.75rem + 5px);
+  --px-text-title: calc(1.375rem + 5px);
 
   /* Field tile, a 16 x 16 native pixel tile drawn at an integer scale. */
   --px-field: url('./field-tile.png');

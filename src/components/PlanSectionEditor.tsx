@@ -30,6 +30,5 @@ export function PlanSectionEditor({ section, onChange, onValidity }: Props) {
         onChange={v => onChange({ ...section, runWalk: { ...section.runWalk!, walkSpeedKmh: v === undefined ? null : roundSpeedUp(v) } })} />
     </>}
     <p className="muted">{metrics.durationSeconds === null ? 'Duration unknown' : formatSpan(metrics.durationSeconds)} · {metrics.distanceKm === null ? 'Distance unknown' : `${metrics.distanceKm.toFixed(2)} km estimated`}</p>
-    <p className="muted">{section.effort}</p>
   </div>
 }

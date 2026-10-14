@@ -1,7 +1,9 @@
 import { CHARACTER_NAMES, type Character } from '../domain/preferences'
 import type { CompletedRun, Progression } from '../domain/types'
-import { CurrencyIcon } from '../components/CurrencyIcon'
 import { deriveHealth } from '../progression/health'
+import { StatusRoom } from '../components/StatusArt'
+import { BrickWall } from '../components/BrickWall'
+import { ShopCurrencyIcon } from '../components/ShopArt'
 import { CharacterStill } from '../components/CharacterStill'
 import { QuestBadge } from '../components/QuestBadge'
 import { CURRENCY } from '../progression/questState'
@@ -18,14 +20,15 @@ interface Props {
     now: Date
     /** Claims the character's pending daily currency through the quest. Resolves with the number claimed. */
     onCollect: (character: Character) => Promise<number>
-    onChangeCharacter?: (character: Character) => void
     onEditAnswers?: () => void
+    onSwitchToChase?: () => void
+    onSwitchToShooshy?: () => void
     hasPastRun?: boolean
     onShowPastRun?: () => void
     onBack?: () => void
 }
 
-export function StatusScreen({ character, progression, runs, plan, now, onCollect, onChangeCharacter, onEditAnswers, hasPastRun, onShowPastRun }: Props) {
+export function StatusScreen({ character, progression, runs, plan, now, onCollect, onEditAnswers, onSwitchToChase, onSwitchToShooshy, hasPastRun, onShowPastRun }: Props) {
     const health = deriveHealth(runs, now)[character]
     const weekIndex = plan ? currentWeekIndex(plan.startDate, plan.weeks.length, now) : -1
     const currentWeek = plan?.weeks[weekIndex] ?? null
@@ -43,51 +46,50 @@ export function StatusScreen({ character, progression, runs, plan, now, onCollec
     const progressKm = goalKm === null ? 0 : Math.min(completedKm, goalKm)
     const wallet = progression.wallets[character]
     const currencyName = wallet === 1 ? CURRENCY[character].singular : CURRENCY[character].plural
-    const otherCharacter = character === 'shiba' ? 'shooshy' : 'shiba'
     const characterName = CHARACTER_NAMES[character]
+    const healthLabel = health.status === 'obese' ? `${characterName} is Fat` : health.label
     return (
         <section className="card status">
-            <p className="eyebrow">My status</p>
-            <h1>{`How is ${characterName}?`}</h1>
-            <div className="daily-goal">
-                {currentWeek && goalKm !== null && remainingKm !== null ? (
-                    <>
-                        <div className="daily-goal-summary">
-                            <span>{`${completedKm.toFixed(1)} / ${goalKm.toFixed(1)} km`}</span>
-                            <strong>{remainingKm === 0 ? 'Goal complete' : `${remainingKm.toFixed(1)} km left this week`}</strong>
-                        </div>
-                        <div className="daily-goal-controls">
-                            <progress
-                                className="daily-goal-progress"
-                                value={progressKm}
-                                max={goalKm}
-                                aria-label={`${characterName}'s week ${currentWeek.number} ${goalKm.toFixed(1)} km plan goal`}
-                            />
-                        </div>
-                    </>
-                ) : <p className="muted">No active training plan</p>}
-            </div>
+            <header className="status-header">
+                <BrickWall />
+                <h1>MY STATUS</h1>
+                <div className="daily-goal">
+                    {currentWeek && goalKm !== null && remainingKm !== null ? (
+                        <>
+                            <div className="daily-goal-summary">
+                                <span>{`${completedKm.toFixed(1)} / ${goalKm.toFixed(1)} km left this week`}</span>
+                            </div>
+                            <div className="daily-goal-controls">
+                                <progress
+                                    className="daily-goal-progress"
+                                    value={progressKm}
+                                    max={goalKm}
+                                    aria-label={`${characterName}'s week ${currentWeek.number} ${goalKm.toFixed(1)} km plan goal`}
+                                />
+                            </div>
+                        </>
+                    ) : <p className="muted">No active training plan</p>}
+                </div>
+            </header>
             <article className="status-card" aria-labelledby="status-character">
-                <div className="status-stage">
+                <div className={`status-stage status-room status-room-${character}`}>
+                    <StatusRoom character={character} />
                     <CharacterStill character={character} status={health.status} equipped={progression.equipped[character]} />
                 </div>
-                <h2 id="status-character">{health.label}</h2>
+                <h2 id="status-character">{healthLabel}</h2>
                 <div className="status-wallet">
                     <span className="status-wallet-balance" role="img" aria-label={`${wallet} ${currencyName}`}>
-                        <CurrencyIcon character={character} />
+                        <ShopCurrencyIcon character={character} />
                         <span aria-hidden="true">{wallet}</span>
                     </span>
                     <QuestBadge progression={progression} character={character} now={now} onCollect={onCollect} />
                 </div>
             </article>
-            {(onChangeCharacter || onEditAnswers || (hasPastRun && onShowPastRun)) ? (
+            {(onEditAnswers || (character === 'shooshy' && onSwitchToChase) || (character === 'shiba' && onSwitchToShooshy) || (hasPastRun && onShowPastRun)) ? (
                 <div className="status-actions">
-                    {onChangeCharacter ? (
-                        <button type="button" className="ghost" onClick={() => onChangeCharacter(otherCharacter)}>
-                            {`Switch to ${CHARACTER_NAMES[otherCharacter]}`}
-                        </button>
-                    ) : null}
                     {onEditAnswers ? <button type="button" className="ghost" onClick={onEditAnswers}>Update answers</button> : null}
+                    {character === 'shooshy' && onSwitchToChase ? <button type="button" className="ghost" onClick={onSwitchToChase}>Switch to Chase</button> : null}
+                    {character === 'shiba' && onSwitchToShooshy ? <button type="button" className="ghost" onClick={onSwitchToShooshy}>Switch to Shooshy</button> : null}
                     <button type="button" className="ghost" onClick={onShowPastRun} disabled={!hasPastRun || !onShowPastRun}>View past run</button>
                 </div>
             ) : null}

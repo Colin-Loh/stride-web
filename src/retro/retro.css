@@ -18,12 +18,12 @@ body:has([data-theme='retro']) {
   overflow-wrap: break-word;
 }
 
-[data-theme='retro'] h1,
-[data-theme='retro'] h2 {
-  font-family: var(--px-font);
+[data-theme='retro'] :is(h1, h2, h3, h4, h5, h6) {
+  font-family: 'Press Start 2P', monospace;
   font-weight: 700;
   letter-spacing: 0;
   color: var(--px-white);
+  text-transform: uppercase;
 }
 
 [data-theme='retro'] h1 {
@@ -31,7 +31,21 @@ body:has([data-theme='retro']) {
   line-height: 1.1;
 }
 
-/* Panel: 3px outline, inset well line and stepped 9px corners. */
+[data-theme='retro'] .plan-screen-title {
+  font-family: 'Press Start 2P', monospace;
+  text-transform: uppercase;
+}
+
+[data-theme='retro'] .plan-weeks-title {
+  font-family: var(--px-display);
+  text-transform: uppercase;
+}
+
+[data-theme='retro'] button {
+  font-family: var(--px-display);
+  font-weight: 500;
+}
+
 [data-theme='retro'] .card {
   position: relative;
   padding: var(--px-5) var(--px-4) var(--px-5);
@@ -40,13 +54,11 @@ body:has([data-theme='retro']) {
   border-radius: 0;
   box-shadow: inset 0 0 0 var(--px-stroke) var(--px-well);
   backdrop-filter: none;
-  clip-path: polygon(
-    0 var(--px-corner), var(--px-corner) var(--px-corner), var(--px-corner) 0,
-    calc(100% - var(--px-corner)) 0, calc(100% - var(--px-corner)) var(--px-corner), 100% var(--px-corner),
-    100% calc(100% - var(--px-corner)), calc(100% - var(--px-corner)) calc(100% - var(--px-corner)),
-    calc(100% - var(--px-corner)) 100%, var(--px-corner) 100%, var(--px-corner) calc(100% - var(--px-corner)),
-    0 calc(100% - var(--px-corner))
-  );
+  clip-path: polygon(0 var(--px-corner), var(--px-corner) var(--px-corner), var(--px-corner) 0,
+      calc(100% - var(--px-corner)) 0, calc(100% - var(--px-corner)) var(--px-corner), 100% var(--px-corner),
+      100% calc(100% - var(--px-corner)), calc(100% - var(--px-corner)) calc(100% - var(--px-corner)),
+      calc(100% - var(--px-corner)) 100%, var(--px-corner) 100%, var(--px-corner) calc(100% - var(--px-corner)),
+      0 calc(100% - var(--px-corner)));
 }
 
 [data-theme='retro'] .card h2 {
@@ -60,7 +72,6 @@ body:has([data-theme='retro']) {
 [data-theme='retro'] .eyebrow {
   color: var(--px-mint);
   font-size: var(--px-text-small);
-  letter-spacing: 1px;
 }
 
 [data-theme='retro'] .muted {
@@ -76,7 +87,7 @@ body:has([data-theme='retro']) {
   border-radius: 0;
   background: var(--px-well);
   color: var(--px-white);
-  font-family: var(--px-font);
+  font-family: var(--px-display);
   font-size: var(--px-text-body);
   box-shadow: inset 0 calc(-1 * var(--px-stroke)) 0 var(--px-shade);
   cursor: pointer;
@@ -165,7 +176,7 @@ body:has([data-theme='retro']) {
 }
 
 [data-theme='retro'] .status-card h2 {
-  font-size: 1.6rem;
+  font-size: var(--px-text-title);
   text-align: center;
 }
 
@@ -176,7 +187,7 @@ body:has([data-theme='retro']) {
 
 [data-theme='retro'] .status-wallet-balance {
   color: var(--px-gold);
-  font-size: 1.4rem;
+  font-size: calc(1.125rem + 5px);
   font-weight: 700;
 }
 
@@ -220,7 +231,7 @@ body:has([data-theme='retro']) {
 }
 
 [data-theme='retro'] .shop-sign h1 {
-  font-size: 1.5rem;
+  font-size: var(--px-text-title);
 }
 
 [data-theme='retro'] .shop-balance {
@@ -228,7 +239,7 @@ body:has([data-theme='retro']) {
   border-radius: 0;
   background: var(--px-well);
   color: var(--px-gold);
-  font-size: 1.2rem;
+  font-size: calc(1.125rem + 5px);
 }
 
 [data-theme='retro'] .shop-card {
@@ -266,7 +277,7 @@ body:has([data-theme='retro']) {
   min-height: 170px;
   border-radius: 0;
   color: var(--px-white);
-  font-family: var(--px-font);
+  font-family: var(--px-display);
 }
 
 [data-theme='retro'] .shop-action:disabled {
@@ -337,7 +348,7 @@ body:has([data-theme='retro']) {
 }
 
 [data-theme='retro'] .shop-confirm h2 {
-  font-size: 1.4rem;
+  font-size: var(--px-text-title);
 }
 
 [data-theme='retro'] .shop-confirm-sums dt {
@@ -368,8 +379,8 @@ body:has([data-theme='retro']) {
   border: 2px solid transparent;
   border-radius: 0;
   color: var(--px-light);
-  font-family: var(--px-font);
-  font-size: 1.1rem;
+  font-family: var(--px-display);
+  font-size: calc(1rem + 5px);
 }
 
 [data-theme='retro'] .home-nav-button:hover:not([aria-current='page']) {
@@ -416,11 +427,11 @@ body:has([data-theme='retro']) {
 @media (max-width: 359px) {
   [data-theme='retro'] {
     padding-inline: var(--px-2);
-    font-size: 1rem;
+    font-size: var(--px-text-body);
   }
 
   [data-theme='retro'] h1 {
-    font-size: 1.5rem;
+    font-size: var(--px-text-title);
   }
 
   [data-theme='retro'] .card {
@@ -433,7 +444,7 @@ body:has([data-theme='retro']) {
   }
 
   [data-theme='retro'] .shop-sign h1 {
-    font-size: 1.2rem;
+    font-size: var(--px-text-title);
   }
 
   [data-theme='retro'] .shop-grid {
@@ -442,6 +453,7 @@ body:has([data-theme='retro']) {
 }
 
 @media (prefers-reduced-motion: no-preference) {
+
   [data-theme='retro'] .ghost,
   [data-theme='retro'] .home-nav-button {
     transition: none;
@@ -478,17 +490,18 @@ body:has([data-theme='retro']) {
 
 [data-theme='retro'] h3,
 [data-theme='retro'] .card h3 {
-  font-family: var(--px-font);
-  font-size: 1.2rem;
+  font-family: 'Press Start 2P', monospace;
+  font-size: calc(1rem + 5px);
   color: var(--px-white);
+  text-transform: uppercase;
 }
 
 [data-theme='retro'] .card h2 {
-  font-size: 1.4rem;
+  font-size: var(--px-text-title);
 }
 
-[data-theme='retro'] .card > h2,
-[data-theme='retro'] .question > h2 {
+[data-theme='retro'] .card>h2,
+[data-theme='retro'] .question>h2 {
   margin-top: var(--px-5);
   padding-top: var(--px-3);
   border-top: 2px solid var(--px-edge);
@@ -499,8 +512,8 @@ body:has([data-theme='retro']) {
   color: var(--px-light);
 }
 
-[data-theme='retro'] .question > h2 {
-  font-size: 1.2rem;
+[data-theme='retro'] .question>h2 {
+  font-size: calc(1rem + 5px);
 }
 
 /* Primary action: mint plate, dark text, pressed shade. */
@@ -511,7 +524,7 @@ body:has([data-theme='retro']) {
   border-radius: 0;
   background: var(--px-mint);
   color: var(--px-night);
-  font-family: var(--px-font);
+  font-family: var(--px-display);
   font-size: var(--px-text-body);
   font-weight: 700;
   box-shadow: inset 0 calc(-1 * var(--px-stroke)) 0 var(--px-mint-dark);
@@ -539,7 +552,7 @@ body:has([data-theme='retro']) {
 [data-theme='retro'] .link {
   min-height: var(--px-target);
   color: var(--px-light);
-  font-family: var(--px-font);
+  font-family: var(--px-display);
   font-size: var(--px-text-body);
 }
 
@@ -625,7 +638,7 @@ body:has([data-theme='retro']) {
   border-radius: 0;
   background: var(--px-well);
   color: var(--px-white);
-  font-family: var(--px-font);
+  font-family: var(--px-display);
   font-size: var(--px-text-body);
   box-shadow: inset 0 calc(-1 * var(--px-stroke)) 0 var(--px-shade);
 }
@@ -659,9 +672,67 @@ body:has([data-theme='retro']) {
 /* One column: the purpose text needs the full row width to avoid mid-word breaks. */
 [data-theme='retro'] .choice.workout {
   grid-template-columns: minmax(0, 1fr);
-  grid-template-areas: "workout" "pace" "purpose";
+  grid-template-areas: "workout" "metrics";
   padding: var(--px-2) var(--px-3);
   gap: var(--px-1) var(--px-3);
+  font-family: var(--px-font);
+}
+
+[data-theme='retro'] .session-metrics {
+  grid-area: metrics;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--px-2);
+  min-width: 0;
+}
+
+[data-theme='retro'] .session-metric {
+  display: grid;
+  align-content: space-between;
+  justify-items: center;
+  gap: var(--px-2);
+  min-width: 0;
+  min-height: 76px;
+  padding: var(--px-2) var(--px-1);
+  border: 2px solid var(--px-edge);
+  background: var(--px-panel);
+  text-align: center;
+}
+
+[data-theme='retro'] .session-metric:nth-child(1) {
+  border-color: var(--px-gold);
+}
+
+[data-theme='retro'] .session-metric:nth-child(2) {
+  border-color: var(--px-mint);
+}
+
+[data-theme='retro'] .session-metric:nth-child(3) {
+  border-color: var(--px-danger);
+}
+
+[data-theme='retro'] .session-metric-label {
+  color: var(--px-light);
+  font-family: var(--px-display);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+[data-theme='retro'] .fitness-value {
+  color: var(--px-white);
+  font-family: var(--px-font);
+  font-size: var(--px-text-body);
+  overflow-wrap: anywhere;
+  font-variant-numeric: tabular-nums;
+}
+
+[data-theme='retro'] .session-metric-value {
+  color: var(--px-white);
+  font-family: var(--px-font);
+  font-size: 0.875rem;
+  overflow-wrap: anywhere;
+  font-variant-numeric: tabular-nums;
 }
 
 
@@ -669,21 +740,30 @@ body:has([data-theme='retro']) {
   font-size: var(--px-text-small);
 }
 
-[data-theme='retro'] .session-purpose {
-  font-size: var(--px-text-small);
-  color: var(--px-light);
-}
-
 /* Zone marker on each session row: a coloured left edge, with the zone named in the text. */
 [data-theme='retro'] .choice.workout {
   border-left-width: 9px;
 }
 
-[data-theme='retro'] .choice.workout[data-zone='E'] { border-left-color: #81e8c2; }
-[data-theme='retro'] .choice.workout[data-zone='M'] { border-left-color: #9fb6ff; }
-[data-theme='retro'] .choice.workout[data-zone='T'] { border-left-color: #ffd27a; }
-[data-theme='retro'] .choice.workout[data-zone='I'] { border-left-color: #ff9f8a; }
-[data-theme='retro'] .choice.workout[data-zone='R'] { border-left-color: #e69cff; }
+[data-theme='retro'] .choice.workout[data-zone='E'] {
+  border-left-color: #81e8c2;
+}
+
+[data-theme='retro'] .choice.workout[data-zone='M'] {
+  border-left-color: #9fb6ff;
+}
+
+[data-theme='retro'] .choice.workout[data-zone='T'] {
+  border-left-color: #ffd27a;
+}
+
+[data-theme='retro'] .choice.workout[data-zone='I'] {
+  border-left-color: #ff9f8a;
+}
+
+[data-theme='retro'] .choice.workout[data-zone='R'] {
+  border-left-color: #e69cff;
+}
 
 /* Plan */
 [data-theme='retro'] .week {
@@ -698,10 +778,14 @@ body:has([data-theme='retro']) {
   border-color: var(--px-mint);
 }
 
+[data-theme='retro'] .week.is-collapsed:not(.current) {
+  display: none;
+}
+
 [data-theme='retro'] .week-toggle {
   min-height: var(--px-target);
-  font-family: var(--px-font);
-  font-size: var(--px-text-body);
+  font-family: 'Press Start 2P', monospace;
+  font-size: calc(var(--px-text-body) + 5px);
   font-weight: 700;
   color: var(--px-white);
   border-radius: 0;
@@ -713,6 +797,45 @@ body:has([data-theme='retro']) {
 
 [data-theme='retro'] .week-toggle::after {
   transition: none;
+}
+
+[data-theme='retro'] .week-toggle-all {
+  margin-bottom: var(--px-4);
+  text-transform: uppercase;
+}
+
+[data-theme='retro'] .week-heading-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--px-2);
+  padding-right: 28px;
+}
+
+[data-theme='retro'] .week-heading-row .week-toggle {
+  width: auto;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+[data-theme='retro'] .week-heading-row .week-toggle::after {
+  content: none;
+}
+
+[data-theme='retro'] .week-heading-row::after {
+  content: '';
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: translateY(-75%) rotate(45deg);
+}
+
+[data-theme='retro'] .week-heading-row[data-expanded='true']::after {
+  transform: translateY(-25%) rotate(225deg);
 }
 
 [data-theme='retro'] .week-badge {
@@ -731,8 +854,64 @@ body:has([data-theme='retro']) {
   color: var(--px-gold);
 }
 
+[data-theme='retro'] :is(.week-badge, .quest-count, .milestones li) {
+  font-family: var(--px-display);
+  font-weight: 700;
+}
+
 [data-theme='retro'] .fitness-facts strong {
   color: var(--px-gold);
+}
+
+[data-theme='retro'] .fitness-facts li {
+  font-family: var(--px-font);
+  font-weight: 500;
+}
+
+[data-theme='retro'] .session-workout {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: var(--px-2);
+}
+
+[data-theme='retro'] .session-workout>strong {
+  grid-column: 1;
+  font-family: var(--px-display);
+}
+
+[data-theme='retro'] .session-workout>.session-distance {
+  grid-column: 2;
+  color: var(--px-gold);
+  font-family: var(--px-font);
+  font-size: var(--px-text-body);
+  white-space: nowrap;
+}
+
+[data-theme='retro'] .session-pixel-icon {
+  display: block;
+  width: 48px;
+  height: 48px;
+  image-rendering: pixelated;
+  object-fit: contain;
+}
+
+[data-theme='retro'] .session-workout>.session-pixel-icon {
+  grid-row: 1;
+  grid-column: 1;
+}
+
+[data-theme='retro'] .session-metric {
+  min-height: 100px;
+  gap: var(--px-1);
+}
+
+[data-theme='retro'] .session-metric-label {
+  font-size: 0.625rem;
+  white-space: nowrap;
+}
+
+[data-theme='retro'] .weeks .stack {
+  gap: var(--px-4);
 }
 
 /* Notices on content screens (plan notes, workout adjustments, validation) */
@@ -759,16 +938,39 @@ body:has([data-theme='retro']) {
   font-size: var(--px-text-small);
 }
 
+[data-theme='retro'] .workout-screen :is(p, .reasons, .plan-step .muted) {
+  font-family: var(--px-font);
+  font-size: 17px;
+}
+
+[data-theme='retro'] .workout-screen h1 {
+  font-family: 'Press Start 2P', monospace;
+  text-transform: uppercase;
+}
+
+[data-theme='retro'] .workout-screen h2 {
+  font-family: var(--px-display);
+  text-transform: uppercase;
+}
+
+[data-theme='retro'] .baseline-screen .choice strong {
+  font-family: var(--px-font);
+}
+
+[data-theme='retro'] .workout-screen .plan-step-head strong {
+  font-family: var(--px-display);
+}
+
 /* Run */
 [data-theme='retro'] .stat-label {
   color: var(--px-light);
-  font-size: 0.8rem;
+  font-size: 0.875rem;
   letter-spacing: 1px;
 }
 
 [data-theme='retro'] .stat-value {
   color: var(--px-gold);
-  font-size: 1.8rem;
+  font-size: var(--px-text-title);
   letter-spacing: 0;
 }
 
@@ -800,7 +1002,8 @@ body:has([data-theme='retro']) {
   border-radius: 0;
   background: var(--px-well);
   color: var(--px-light);
-  font-size: var(--px-text-small);
+  font-family: var(--px-display);
+  font-size: 0.875rem;
 }
 
 [data-theme='retro'] .milestones li.current {
@@ -822,8 +1025,8 @@ body:has([data-theme='retro']) {
   border-radius: 0;
   background: var(--px-well);
   color: var(--px-white);
-  font-family: var(--px-font);
-  font-size: 1.8rem;
+  font-family: var(--px-display);
+  font-size: var(--px-text-title);
   box-shadow: inset 0 calc(-1 * var(--px-stroke)) 0 var(--px-shade);
 }
 
@@ -844,14 +1047,14 @@ body:has([data-theme='retro']) {
 }
 
 [data-theme='retro'] .speed-value {
-  font-size: 1.3rem;
+  font-size: var(--px-text-title);
   color: var(--px-gold);
 }
 
 /* Completion */
 [data-theme='retro'] .hero strong {
   color: var(--px-gold);
-  font-size: 3.2rem;
+  font-size: var(--px-text-title);
 }
 
 [data-theme='retro'] .hero .unit {
@@ -900,6 +1103,10 @@ body:has([data-theme='retro']) {
   font-size: var(--px-text-small);
 }
 
+[data-theme='retro'] .section-table th {
+  font-size: calc(var(--px-text-small) - 5px);
+}
+
 [data-theme='retro'] .section-table th,
 [data-theme='retro'] .section-table td {
   border-bottom: 2px solid var(--px-edge-soft);
@@ -930,8 +1137,8 @@ body:has([data-theme='retro']) {
   background: var(--px-hover);
 }
 
-[data-theme='retro'] .card > .ghost,
-[data-theme='retro'] .card > .primary,
+[data-theme='retro'] .card>.ghost,
+[data-theme='retro'] .card>.primary,
 [data-theme='retro'] .share .ghost {
   margin-top: var(--px-2);
 }
@@ -942,11 +1149,11 @@ body:has([data-theme='retro']) {
 
 @media (max-width: 359px) {
   [data-theme='retro'] .stat-value {
-    font-size: 1.4rem;
+    font-size: var(--px-text-title);
   }
 
   [data-theme='retro'] .hero strong {
-    font-size: 2.6rem;
+    font-size: var(--px-text-title);
   }
 
   [data-theme='retro'] .milestones {
@@ -963,7 +1170,7 @@ body:has([data-theme='retro']) {
 
   /* The five-column recap fits 320px by dropping the cell padding and letting headers wrap. */
   [data-theme='retro'] .section-table {
-    font-size: 0.85rem;
+    font-size: var(--px-text-small);
   }
 
   [data-theme='retro'] .section-table th,

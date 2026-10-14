@@ -10,7 +10,6 @@ import { generateTrainingPlan } from '../plan/trainingPlan'
 import type { AnswerValues } from '../plan/questions'
 
 const noop = async () => 0
-const changeCharacter = () => { }
 const editAnswers = () => { }
 const showPastRun = () => { }
 const STAMP = '2026-10-01T00:00:00.000Z'
@@ -36,7 +35,7 @@ const run = (id: string, characterId: CompletedRun['characterId'], planSessionId
 
 const render = (props: Partial<Parameters<typeof StatusScreen>[0]> = {}) =>
     renderToStaticMarkup(
-        <StatusScreen character="shiba" progression={progression()} runs={[]} plan={PLAN} now={NOW} onCollect={noop} onChangeCharacter={changeCharacter} onEditAnswers={editAnswers} hasPastRun={false} onShowPastRun={showPastRun} {...props} />,
+        <StatusScreen character="shiba" progression={progression()} runs={[]} plan={PLAN} now={NOW} onCollect={noop} onEditAnswers={editAnswers} hasPastRun={false} onShowPastRun={showPastRun} {...props} />,
     )
 
 const buttonOf = (html: string) => html.match(/<button[^>]*quest-button[^>]*>/)?.[0] ?? ''
@@ -44,9 +43,10 @@ const buttonOf = (html: string) => html.match(/<button[^>]*quest-button[^>]*>/)?
 describe('StatusScreen one character', () => {
     it('shows Chase only when Chase is the locked character', () => {
         const html = render({ character: 'shiba' })
-        expect(html).toContain('<h1>How is Chase?</h1>')
-        expect(html).toContain('Chase is obese')
-        expect(html).toContain('Switch to Shooshy')
+        expect(html).toContain('<h1>MY STATUS</h1>')
+        expect(html).toContain('Chase is Fat')
+        expect(html).not.toContain('class="eyebrow">My status')
+        expect(html).not.toContain('Switch to')
         expect(html).not.toContain('Shooshy is')
         expect(html).not.toContain('Fish')
         expect(html).not.toContain('fish')
@@ -54,9 +54,8 @@ describe('StatusScreen one character', () => {
 
     it('shows Shooshy only when Shooshy is the locked character', () => {
         const html = render({ character: 'shooshy', progression: progression({ wallets: { shiba: 4, shooshy: 2 } }) })
-        expect(html).toContain('<h1>How is Shooshy?</h1>')
-        expect(html).toContain('Shooshy is obese')
-        expect(html).toContain('Switch to Chase')
+        expect(html).toContain('<h1>MY STATUS</h1>')
+        expect(html).toContain('Shooshy is Fat')
         expect(html).not.toContain('Chase is')
         expect(html).not.toContain('shiba')
         expect(html).not.toContain('Bones')
@@ -67,15 +66,26 @@ describe('StatusScreen one character', () => {
         expect(render().match(/<article/g)?.length).toBe(1)
     })
 
-    it('offers buttons to switch character and update answers', () => {
+    it('offers Update answers without a character switch while Chase is selected', () => {
         const html = render()
-        expect(html).toContain('>Switch to Shooshy</button>')
+        expect(html).not.toContain('Switch to')
         expect(html).toContain('>Update answers</button>')
     })
 
-    it('places Daily Food at the far right of the wallet row when enabled', () => {
+    it('offers a switch to Chase while Shooshy is selected', () => {
+        const html = render({ character: 'shooshy', onSwitchToChase: () => { } })
+        expect(html).toContain('>Switch to Chase</button>')
+    })
+
+    it('offers a switch to Shooshy while Chase is selected', () => {
+        const html = render({ onSwitchToShooshy: () => { } })
+        expect(html).toContain('>Switch to Shooshy</button>')
+    })
+
+    it('places Collect at the far right of the wallet row when enabled', () => {
         const html = render({ hasPastRun: true })
         expect(html.indexOf('class="status-wallet-balance"')).toBeLessThan(html.indexOf('class="quest-panel"'))
+        expect(html).toContain('>Collect</span>')
         expect(html).toContain('>View past run</button>')
         expect(render()).toMatch(/<button[^>]*disabled=""[^>]*>View past run<\/button>/)
     })
@@ -83,6 +93,7 @@ describe('StatusScreen one character', () => {
     it('does not show a redundant Back button', () => {
         const html = render()
         expect(html).not.toContain('>Back<')
+        expect(html).not.toContain('status-hang')
     })
 })
 
@@ -111,7 +122,7 @@ describe('StatusScreen health', () => {
 
     it('ignores a qualifying run credited to the other character', () => {
         const html = render({ character: 'shooshy', runs: [run('r1', 'shiba')] })
-        expect(html).toContain('Shooshy is obese')
+        expect(html).toContain('Shooshy is Fat')
     })
 
     it('omits the verbose plan-session count while retaining health status', () => {
@@ -155,15 +166,14 @@ describe('StatusScreen plan-week distance goal', () => {
         })
 
         expect(PLAN.weeks[0].targetKm).toBe(15)
-        expect(html).toContain('2.0 / 15.0 km')
-        expect(html).toContain('13.0 km left this week')
+        expect(html).toContain('2.0 / 15.0 km left this week')
+        expect(html).not.toContain('13.0 km left this week')
         expect(html).toContain('value="2" max="15"')
     })
 
     it('personalizes weekly progress for Shooshy', () => {
         const html = render({ character: 'shooshy', runs: [run('r1', 'shooshy', null, 2)] })
-        expect(html).toContain('2.0 / 15.0 km')
-        expect(html).toContain('13.0 km left this week')
+        expect(html).toContain('2.0 / 15.0 km left this week')
     })
 
     it('updates the goal to the current week target, including week 5', () => {
@@ -171,14 +181,13 @@ describe('StatusScreen plan-week distance goal', () => {
         const weekFiveStart = new Date(`${PLAN.weeks[4].startDate}T12:00:00`)
         const html = render({ now: weekFiveStart, runs: [run('r1', 'shiba', null, 2, weekFiveStart.toISOString())] })
 
-        expect(html).toContain('2.0 / 19.8 km')
-        expect(html).toContain('17.8 km left this week')
+        expect(html).toContain('2.0 / 19.8 km left this week')
         expect(html).toContain('value="2" max="19.8"')
     })
 
     it('reports completion at the weekly target', () => {
         const html = render({ runs: [run('r1', 'shiba', null, 15.2)] })
-        expect(html).toContain('Goal complete')
+        expect(html).toContain('15.2 / 15.0 km left this week')
         expect(html).toContain('value="15" max="15"')
     })
 
@@ -221,13 +230,14 @@ describe('StatusScreen quest button', () => {
     it('is on this screen, with the ready name when one unit is pending', () => {
         const html = questFor('shiba', '2026-10-09')
         expect(buttonOf(html)).toContain('aria-label="Daily Food: collect 1 bone"')
-        expect(html).toContain('>Daily Food</span>')
+        expect(html).toContain('>Collect</span>')
         expect(buttonOf(html)).toContain('aria-disabled="false"')
     })
 
     it('uses the fish name for Shooshy when units are pending', () => {
         const html = questFor('shooshy', '2026-10-07')
         expect(buttonOf(html)).toContain('aria-label="Daily Food: collect 3 fish"')
+        expect(html).toContain('>Collect</span>')
     })
 
     it('shows the claimed state after today is collected', () => {
@@ -244,5 +254,26 @@ describe('StatusScreen quest button', () => {
 
     it('does not show the backlog note', () => {
         expect(render()).not.toContain('Up to 14 days can be collected')
+    })
+})
+
+describe('StatusScreen room', () => {
+    it('draws a decorative cat room for Shooshy and a dog room for Chase', () => {
+        const cat = render({ character: 'shooshy' })
+        expect(cat).toContain('status-room-shooshy')
+        expect(cat).toContain('status-room-tree')
+        expect(cat).not.toContain('status-room-house')
+        const dog = render({ character: 'shiba' })
+        expect(dog).toContain('status-room-shiba')
+        expect(dog).toContain('status-room-house')
+        expect(dog).not.toContain('status-room-tree')
+    })
+
+    it('hides every decorative room object from assistive tech and keeps it out of the tab order', () => {
+        const html = render()
+        const decor = html.match(/<div class="status-decor"[^>]*>/)?.[0] ?? ''
+        expect(decor).toContain('aria-hidden="true"')
+        expect(html.match(/<svg[^>]*>/g)?.every((svg) => svg.includes('aria-hidden="true"'))).toBe(true)
+        expect(html).not.toMatch(/tabindex="0"/)
     })
 })

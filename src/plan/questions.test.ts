@@ -24,6 +24,33 @@ describe('question list', () => {
         for (const q of QUESTIONS) expect(q.label.length).toBeGreaterThan(5)
     })
 
+    it('uses the requested fitness question labels and choice copy', () => {
+        const question = (id: string) => QUESTIONS.find((item) => item.id === id)!
+        expect(question('fitness_method').label).toBe('Current Running Fitness?')
+        expect(question('recent_race_distance').label).toBe('TOTAL DISTANCE YOU RAN?')
+        expect(question('estimated_distance_time').label).toBe('DISTANCE AND TIME YOU COULD RUN?')
+        expect(question('conversational_easy_pace').label).toBe('WHAT IS YOUR TYPICAL PACE?')
+        expect(question('recent_race_time').label).toBe('TOTAL ELAPSED RUN TIME?')
+        expect(question('running_days').label).toBe('TOTAL DAYS PER WEEK YOU RUN?')
+        expect(question('training_effort').label).toBe('QUALITY WORKOUT DAYS?')
+        expect(question('goal_race_date').label).toBe('WHEN IS YOUR RACE?')
+        expect(question('fitness_method').input).toMatchObject({
+            options: expect.arrayContaining([
+                { value: 'estimated_race', label: 'MY ESTIMATED PACE I CAN RUN' },
+                { value: 'easy_pace', label: 'MY CONVERSATIONAL PACE' },
+            ]),
+        })
+        expect(question('conversational_easy_pace')).not.toHaveProperty('hint')
+        expect(question('goal_race_date')).not.toHaveProperty('hint')
+        expect(question('training_effort').input).toMatchObject({
+            options: [
+                { value: 'base', label: 'ONLY EASY RUN' },
+                { value: 'base_quality', label: '1 SPEED DAY' },
+                { value: 'advanced_quality', label: '2 SPEED DAY' },
+            ],
+        })
+    })
+
     it('offers Base fitness as a training-focus choice', () => {
         const focus = QUESTIONS.find((question) => question.id === 'training_focus')!
         expect(focus.input.type).toBe('choice')

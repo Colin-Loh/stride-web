@@ -61,7 +61,7 @@
 [data-theme='retro'] .shop-sign h1 {
   margin: 0;
   padding: var(--px-1) var(--px-1) 0;
-  font-size: clamp(1.2rem, 6.4vw, 1.75rem);
+  font-size: var(--px-text-title);
   line-height: 1.05;
   text-transform: uppercase;
   text-align: center;
@@ -139,7 +139,7 @@
   background: linear-gradient(var(--shop-wood-light) 0 50%, var(--shop-wood) 50% 100%);
   box-shadow: inset 0 0 0 2px var(--shop-gold), 0 var(--px-drop) 0 var(--shop-ink);
   color: #ffe9a8;
-  font-size: 1.25rem;
+  font-size: calc(1.125rem + 5px);
   line-height: 1;
 }
 
@@ -217,7 +217,7 @@
   background: #101b2d;
   box-shadow: inset 0 0 0 2px var(--shop-gold-deep), 0 3px 0 var(--shop-ink);
   color: var(--shop-gold);
-  font-size: 1.25rem;
+  font-size: calc(1.125rem + 5px);
 }
 
 [data-theme='retro'] .shop-price .home-currency-icon {
@@ -246,7 +246,7 @@
     inset 0 -4px 0 var(--shop-orange-deep),
     0 var(--px-drop) 0 var(--shop-ink);
   color: #fff4e8;
-  font-size: 1.4rem;
+  font-size: var(--px-text-body);
   text-shadow: 2px 2px 0 var(--shop-orange-deep);
 }
 
@@ -376,7 +376,7 @@
 /* 320px: keep the sign readable and the plaque clear of it. */
 @media (max-width: 359px) {
   [data-theme='retro'] .shop-sign h1 {
-    font-size: 1.15rem;
+    font-size: var(--px-text-title);
   }
 
   [data-theme='retro'] .shop-vine {

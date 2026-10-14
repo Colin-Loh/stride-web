@@ -23,7 +23,8 @@ describe('drawCard', () => {
     const items: CardItem[] = [
         { kind: 'rect', x: 0, y: 0, width: 1080, height: 1350, fill: '#101a24', decor: true },
         { kind: 'circle', x: 920, y: 250, radius: 310, fill: '#19342f', decor: true },
-        { kind: 'text', x: 80, y: 130, text: 'chase', size: 48, weight: 800, fill: '#fff', suffix: { text: '.', size: 48, fill: '#81e8c2' } },
+        { kind: 'text', x: 80, y: 130, text: 'chase', size: 48, weight: 800, fill: '#fff', font: 'display', suffix: { text: '.', size: 48, fill: '#81e8c2' } },
+        { kind: 'text', x: 80, y: 190, text: 'Easy run', size: 19, weight: 400, fill: '#fff' },
         { kind: 'character', x: 620, y: 360, width: 380, height: 300 },
     ]
 
@@ -32,8 +33,9 @@ describe('drawCard', () => {
         drawCard(ctx, items, null)
         expect(calls).toContain('roundRect [0,0,1080,1350,0]')
         expect(calls).toContain('arc 920,250,310')
-        expect(calls).toContain('fillText chase 80 130 [800 48px system-ui, "Segoe UI", sans-serif] #fff')
-        expect(calls).toContain('fillText . 180 130 [800 48px system-ui, "Segoe UI", sans-serif] #81e8c2')
+        expect(calls).toContain('fillText chase 80 130 [800 48px "Pixelify Sans", sans-serif] #fff')
+        expect(calls).toContain('fillText . 180 130 [800 48px "Pixelify Sans", sans-serif] #81e8c2')
+        expect(calls).toContain('fillText Easy run 80 190 [400 19px "Greybeard", monospace] #fff')
         expect(calls.some((call) => call.startsWith('drawImage'))).toBe(false)
     })
 

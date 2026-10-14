@@ -59,13 +59,13 @@ const RACE_FOCUSES = TRAINING_FOCUSES.filter((focus) => focus.id !== 'base').map
 export const QUESTIONS = [
     {
         id: 'fitness_method',
-        label: 'How should we estimate your current running fitness?',
+        label: 'Current Running Fitness?',
         input: {
             type: 'choice',
             options: [
                 { value: 'recent_race', label: 'A recent race or time trial' },
-                { value: 'estimated_race', label: 'My estimate of a race I could run today' },
-                { value: 'easy_pace', label: 'My typical conversational easy pace' },
+                { value: 'estimated_race', label: 'MY ESTIMATED PACE I CAN RUN' },
+                { value: 'easy_pace', label: 'MY CONVERSATIONAL PACE' },
             ],
         },
         units: null,
@@ -73,7 +73,7 @@ export const QUESTIONS = [
     },
     {
         id: 'recent_race_distance',
-        label: 'What distance did you race or time-trial?',
+        label: 'TOTAL DISTANCE YOU RAN?',
         input: { type: 'distance' },
         units: 'km',
         required: true,
@@ -81,7 +81,7 @@ export const QUESTIONS = [
     },
     {
         id: 'recent_race_time',
-        label: 'What was your elapsed finish time?',
+        label: 'TOTAL ELAPSED RUN TIME?',
         input: { type: 'duration' },
         units: 'h:mm:ss',
         required: true,
@@ -89,7 +89,7 @@ export const QUESTIONS = [
     },
     {
         id: 'estimated_distance_time',
-        label: 'What distance and time could you race today?',
+        label: 'DISTANCE AND TIME YOU COULD RUN?',
         input: { type: 'distanceTime' },
         units: 'km, h:mm:ss',
         required: true,
@@ -97,13 +97,11 @@ export const QUESTIONS = [
     },
     {
         id: 'conversational_easy_pace',
-        label: 'If you cannot estimate a race, what is your typical conversational easy pace?',
+        label: 'WHAT IS YOUR TYPICAL PACE?',
         input: { type: 'pace' },
         units: 'min/km',
         required: true,
         askWhen: { id: 'fitness_method', in: ['easy_pace'] },
-        // TODO(verify): the easy-pace to VDOT mapping is unpublished, so no VDOT is derived from it.
-        hint: 'A pace you could hold while talking in full sentences. It sets easy running only; speed sessions need a race result.',
     },
     {
         id: 'training_focus',
@@ -121,7 +119,7 @@ export const QUESTIONS = [
     },
     {
         id: 'running_days',
-        label: 'How many days per week do you run?',
+        label: 'TOTAL DAYS PER WEEK YOU RUN?',
         // TODO(verify): official bounds are unpublished; 1-7 is the spec's sensible UI range.
         input: { type: 'number', min: 1, max: 7, integer: true, step: 1 },
         units: 'days/week',
@@ -129,20 +127,18 @@ export const QUESTIONS = [
     },
     {
         id: 'training_effort',
-        label: 'How many quality workouts are appropriate now?',
+        label: 'QUALITY WORKOUT DAYS?',
         input: { type: 'choice', options: toOptions(TRAINING_EFFORTS) },
         units: null,
         required: true,
     },
     {
         id: 'goal_race_date',
-        label: 'When is your goal race?',
+        label: 'WHEN IS YOUR RACE?',
         input: { type: 'date', future: true },
         units: 'YYYY-MM-DD',
         required: false,
         askWhen: { id: 'training_focus', in: RACE_FOCUSES },
-        // TODO(verify): plan-length constraints for a goal date are unpublished.
-        hint: 'Sets your plan length and taper timing. Leave blank if you have no goal race date.',
     },
 ] as const satisfies readonly Question[]
 

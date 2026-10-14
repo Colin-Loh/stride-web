@@ -102,10 +102,6 @@ export function useAppFlow(repositories: Repositories) {
         remember(repositories.preferences.save(next))
     }
 
-    function changeCharacter(character: Character) {
-        persistPreferences({ ...preferences, character })
-    }
-
     /** Replaces any earlier plan: there is one current plan. */
     function persistPlan(next: TrainingPlan) {
         const previous = plan
@@ -256,10 +252,18 @@ export function useAppFlow(repositories: Repositories) {
         if (muted) { stopCue(); stopCelebration() } else prepareRunAudio()
     }
 
+    function switchToChase() {
+        persistPreferences({ ...preferences, character: 'shiba' })
+    }
+
+    function switchToShooshy() {
+        persistPreferences({ ...preferences, character: 'shooshy' })
+    }
+
     return {
         ready, preferences, plan, session, pastRunSession, answers, open, notice, view, setView, showPlan,
         finishAnswers, persistSession, changeWorkout, openSession, startWorkout, handleComplete, quitRun, toggleMute,
-        progression, runLog, openStatus, showPastRun, closePastRun, collectIncome, openShop, buyCosmetic, equipCosmetic, unequipCosmetic, changeCharacter,
+        progression, runLog, openStatus, showPastRun, closePastRun, collectIncome, openShop, buyCosmetic, equipCosmetic, unequipCosmetic, switchToChase, switchToShooshy,
         persistName: (name: string, character: Character, weightKg: number | null) => persistPreferences({ ...preferences, name, character, weightKg }),
         dismissNotice: () => { clearStorageNotice(); setNotice('') },
         submitAction: (pending?.kind ?? 'edit') as AnswersSubmitAction,

@@ -14,7 +14,7 @@ export const WORKOUT_NAMES: Record<WorkoutId, string> = {
   threshold: 'Threshold run',
   interval: 'Interval run',
   repetition: 'Repetition run',
-  marathon: 'Marathon-pace run',
+  marathon: 'Marathon run',
 }
 
 export const WORKOUTS: { id: PickableWorkoutId; name: string; blurb: string }[] = [

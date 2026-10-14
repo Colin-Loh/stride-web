@@ -1,5 +1,7 @@
-import { describe, expect, it } from 'vitest'
+// @vitest-environment jsdom
+import { afterEach, describe, expect, it } from 'vitest'
 import { renderToStaticMarkup } from 'react-dom/server'
+import { cleanup, fireEvent, render as rtl, screen } from '@testing-library/react'
 import { PlanScreen } from './PlanScreen'
 import { derivePersonalBaseline } from '../plan/baseline'
 import { formatPaceSeconds } from '../plan/convert'
@@ -18,6 +20,8 @@ const render = (answers: AnswerValues, today = NOW) => {
 const RACE: AnswerValues = { fitness_method: 'recent_race', recent_race_distance: 5, recent_race_time: 35 * 60 }
 const SESSION_ZONES = { long: 'E', easyRun: 'E', threshold: 'T', interval: 'I', repetition: 'R', marathon: 'M' } as const
 
+afterEach(() => cleanup())
+
 describe('weekly workout paces', () => {
     it('shows each session pace in its weekly card instead of standalone pace cards', () => {
         const answers = { ...BASE, ...RACE, training_effort: 'advanced_quality' as const, running_days: 5 }
@@ -27,13 +31,20 @@ describe('weekly workout paces', () => {
 
         expect(html).not.toContain('Recommended Training Paces')
         expect(html).not.toContain('pace-cards')
+        expect(html).toContain('<h1 class="plan-screen-title">YOUR PLAN</h1>')
+        expect(html).not.toContain('Week by week')
         expect(cards.map((card) => card[1])).toEqual(plan.weeks[0].sessions.map((session) => SESSION_ZONES[session.kind]))
         for (const [, zone, body] of cards) {
             const pace = plan.paces.zones[zone as Zone]!
-            expect(body).toContain(`Pace: ${formatPaceSeconds(pace.paceSecondsPerKm)} min/km`)
-            expect(body).toContain(`Treadmill: ${pace.speedKmh.toFixed(1)}km/h`)
-            expect(body).toMatch(/Dist: \d+\.\d km/)
-            expect(body).toMatch(/class="session-purpose">[^<]+<\/span>/)
+            expect(body).toContain('<span class="session-metric-label">Duration</span>')
+            expect(body).toContain('<span class="session-metric-label">Pace</span>')
+            expect(body).toContain('<span class="session-metric-label">Treadmill</span>')
+            expect(body.match(/class="session-pixel-icon"/g)).toHaveLength(3)
+            expect(body).not.toMatch(/class="session-workout"><img/)
+            expect(body).toContain(`>${formatPaceSeconds(pace.paceSecondsPerKm)} min/km</strong>`)
+            expect(body).toContain(`>${pace.speedKmh.toFixed(1)} km/h</strong>`)
+            expect(body).not.toContain('session-purpose')
+            expect(body).toMatch(/class="session-distance">\d+\.\d km<\/strong>/)
             expect(body).toContain('class="session-workout"')
         }
     })
@@ -43,10 +54,10 @@ describe('weekly workout paces', () => {
         const html = render(answers)
 
         expect(html).toContain('7:00 min/km')
-        expect(html).toContain('Treadmill: 8.6km/h')
-        expect(html).toContain('Pace: Run by effort')
-        expect(html).toContain('Treadmill: unavailable')
-        expect(html).toContain('Add a race result to estimate pace.')
+        expect(html).toContain('<span class="session-metric-label">Treadmill</span><strong class="session-metric-value" aria-label="Treadmill speed 8.6 kilometers per hour">8.6 km/h</strong>')
+        expect(html).toContain('>Run by effort</strong>')
+        expect(html).toContain('aria-label="Treadmill speed unavailable">N/A</strong>')
+        expect(html).not.toContain('Based on your reported easy pace')
     })
 })
 
@@ -61,11 +72,12 @@ describe('fitness summary', () => {
         const html = renderToStaticMarkup(<PlanScreen plan={plan} today={NOW} onOpenSession={noop} />)
 
         expect(html).not.toContain('Your Running Fitness &amp; Training Paces')
-        expect(html).toContain('Your Current Fitness')
+        expect(html).not.toContain('Your Current Fitness')
         expect(html).not.toContain('Recommended Training Paces')
-        expect(html).toContain('<strong>5 km time:</strong> 35:00')
-        expect(html).toContain('<strong>Average pace:</strong> 7:00 min/km')
-        expect(html).toContain('<strong>Estimated VDOT:</strong> 25.6')
+        expect(html).not.toContain('Based on your')
+        expect(html).toContain('<strong>5 km time:</strong> <span class="fitness-value">35:00</span>')
+        expect(html).toContain('<strong>Average pace:</strong> <span class="fitness-value">7:00 min/km</span>')
+        expect(html).toContain('<strong>Estimated VDOT:</strong> <span class="fitness-value">25.6</span>')
         expect(html).not.toContain('old saved text')
         expect(html).not.toContain('old saved warning')
     })
@@ -76,7 +88,9 @@ describe('week by week', () => {
         const html = render(RACE, new Date(2026, 10, 12))
         expect(html.match(/<li class="week/g)).toHaveLength(12)
         expect(html.match(/aria-current="date"/g)).toHaveLength(1)
-        expect(html).toMatch(/class="week current"[^>]*aria-current="date"><h3><button[^>]*>Week 6 /)
+        expect(html).toMatch(/class="week current"[^>]*aria-current="date"><h3 class="week-heading-row"[^>]*><button[^>]*>Week 6/)
+        expect(html).not.toContain('class="week-distance"')
+        expect(html).not.toMatch(/Week \d+ · \d+\.\d km/)
     })
 
     it('shows the current Easy run label even when a saved session has the old name', () => {
@@ -118,7 +132,8 @@ describe('collapsible weeks', () => {
         expect(expandedWeeks(html)).toEqual([5])
         expect(html.match(/aria-expanded="false"/g)).toHaveLength(11)
         expect(html.match(/class="week[^"]*is-collapsed"/g)).toHaveLength(11)
-        for (const week of plan.weeks) expect(html).toContain(`Week ${week.number} · ${week.targetKm.toFixed(1)} km`)
+        for (const week of plan.weeks) expect(html).toContain(`Week ${week.number}`)
+        expect(html).not.toMatch(/Week \d+ · \d+\.\d km/)
     })
 
     it('expands week 1 when today is before the plan starts', () => {
@@ -135,13 +150,30 @@ describe('collapsible weeks', () => {
         const plan = planFor()
         const labels = toggleLabels(render(RACE, at(addDays(plan.startDate, 4 * 7))))
         expect(labels).toHaveLength(12)
-        expect(labels[0]).toMatch(/^Week 1, \d+\.\d km, collapsed$/)
-        expect(labels[4]).toMatch(/^Week 5, \d+\.\d km, expanded$/)
+        expect(labels[0]).toBe('Week 1, collapsed')
+        expect(labels[4]).toBe('Week 5, expanded')
     })
 
     it('renders session buttons only for the expanded week', () => {
         const plan = planFor()
         const html = render(RACE, at(addDays(plan.startDate, 4 * 7)))
         expect(html.match(/class="choice workout"/g)).toHaveLength(plan.weeks[4].sessions.length)
+    })
+
+    it('toggles every other week while preserving the current week state', () => {
+        const plan = planFor()
+        const { container } = rtl(<PlanScreen plan={plan} today={NOW} onOpenSession={noop} />)
+        const currentWeekToggle = container.querySelector('.week.current .week-toggle')!
+
+        fireEvent.click(currentWeekToggle)
+        expect(currentWeekToggle.getAttribute('aria-expanded')).toBe('false')
+        fireEvent.click(screen.getByRole('button', { name: 'Expand all weeks except this week' }))
+        expect(screen.getByRole('button', { name: 'Collapse all weeks except this week' }).textContent).toBe('Collapse all other weeks')
+        expect(container.querySelectorAll('.week-toggle[aria-expanded="true"]')).toHaveLength(plan.weeks.length)
+        expect(currentWeekToggle.getAttribute('aria-expanded')).toBe('true')
+
+        fireEvent.click(screen.getByRole('button', { name: 'Collapse all weeks except this week' }))
+        expect(container.querySelectorAll('.week-toggle[aria-expanded="true"]')).toHaveLength(1)
+        expect(currentWeekToggle.getAttribute('aria-expanded')).toBe('true')
     })
 })

@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
 import type { Character } from '../domain/preferences'
 import type { Progression } from '../domain/types'
-import { CurrencyIcon } from './CurrencyIcon'
+import { ShopCurrencyIcon } from './ShopArt'
 import { CURRENCY, questLabel, questState } from '../progression/questState'
 
 interface Props {
@@ -52,9 +52,9 @@ export function QuestBadge({ progression, character, now, onCollect }: Props) {
                 aria-disabled={blocked}
                 onClick={() => void activate()}
             >
-                <CurrencyIcon character={character} />
-                <span className="quest-text">Daily Food</span>
+                <span className="quest-text">Collect</span>
                 {state.kind === 'ready' && <span className="quest-count" aria-hidden="true">{state.pending}</span>}
+                <ShopCurrencyIcon character={character} />
             </button>
             <p className="quest-status" role="status" aria-live="polite">{message}</p>
         </div>

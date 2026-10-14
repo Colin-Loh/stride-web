@@ -295,19 +295,21 @@ describe('ShopScreen purchase confirm panel', () => {
         expect(dialog?.getAttribute('aria-modal')).toBe('true')
     })
 
-    it('shows the item name, price, and balance before and after as numbers with the currency word', () => {
+    it('shows price and before/after balances with currency icons and accessible names', () => {
         openSushi()
         const dialog = confirmDialog() as HTMLElement
         expect(dialog.textContent).toContain('Sushi hat')
-        expect(dialog.textContent).toContain('3 bones')
-        expect(dialog.textContent).toContain('9 bones')
-        expect(dialog.textContent).toContain('6 bones')
+        expect(dialog.querySelectorAll('.shop-confirm-amount .home-currency-icon')).toHaveLength(3)
+        expect(dialog.querySelector('[aria-label="3 bones"]')).not.toBeNull()
+        expect(dialog.querySelector('[aria-label="9 bones"]')).not.toBeNull()
+        expect(dialog.querySelector('[aria-label="6 bones"]')).not.toBeNull()
+        expect(dialog.textContent).not.toContain('bones')
     })
 
     it('uses the singular word when the balance after the purchase is one', () => {
         interactive({ progression: progression({ wallets: { shiba: 4, shooshy: 0 } }) })
         fireEvent.click(screen.getByRole('button', { name: 'Buy Sushi hat for 3 bones' }))
-        expect((confirmDialog() as HTMLElement).textContent).toContain('1 bone')
+        expect((confirmDialog() as HTMLElement).querySelector('[aria-label="1 bone"]')).not.toBeNull()
     })
 
     it('moves focus into the dialog on open', () => {

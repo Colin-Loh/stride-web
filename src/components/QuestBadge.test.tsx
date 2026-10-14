@@ -54,7 +54,7 @@ describe('QuestBadge states', () => {
     it('ready: names the count in the accessible name and is enabled', () => {
         const html = render({ progression: progression({ lastClaimedDate: { shiba: '2026-10-09', shooshy: '2026-10-10' } }) })
         expect(buttonOf(html)).toContain('aria-label="Daily Food: collect 1 bone"')
-        expect(html).toContain('>Daily Food</span>')
+        expect(html).toContain('>Collect</span>')
         expect(buttonOf(html)).toContain('aria-disabled="false"')
         expect(html).toContain('>1</span>')
     })
@@ -62,6 +62,13 @@ describe('QuestBadge states', () => {
     it('ready: uses the plural for more than one unit and the fish name for Shooshy', () => {
         const html = render({ character: 'shooshy', progression: progression({ lastClaimedDate: { shiba: '2026-10-10', shooshy: '2026-10-07' } }) })
         expect(buttonOf(html)).toContain('aria-label="Daily Food: collect 3 fish"')
+        expect(html).toContain('>Collect</span>')
+    })
+
+    it('places the currency icon after the count and Collect label', () => {
+        const html = render({ character: 'shooshy', progression: progression({ lastClaimedDate: { shiba: '2026-10-10', shooshy: '2026-10-07' } }) })
+        expect(html.indexOf('>Collect</span>')).toBeLessThan(html.indexOf('class="quest-count"'))
+        expect(html.indexOf('class="quest-count"')).toBeLessThan(html.indexOf('class="home-currency-icon"'))
     })
 
     it('claimed: shows done today and is aria-disabled, with no count', () => {

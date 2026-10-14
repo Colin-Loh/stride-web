@@ -27,7 +27,7 @@ export type Radius = number | [number, number, number, number]
 export type CardItem =
     | { kind: 'rect'; x: number; y: number; width: number; height: number; fill: string; radius?: Radius; decor?: boolean }
     | { kind: 'circle'; x: number; y: number; radius: number; fill: string; decor: true }
-    | { kind: 'text'; x: number; y: number; text: string; size: number; weight: 400 | 700 | 800; fill: string; suffix?: { text: string; size: number; fill: string } }
+    | { kind: 'text'; x: number; y: number; text: string; size: number; weight: 400 | 700 | 800; fill: string; font?: 'body' | 'display'; suffix?: { text: string; size: number; fill: string } }
     | { kind: 'character'; x: number; y: number; width: number; height: number }
 
 /** What goes on the card. Calories appear only when the runner chose to include them. */
@@ -87,23 +87,23 @@ export function buildCardLayout(data: CardData): CardItem[] {
     const items: CardItem[] = [
         { kind: 'rect', x: 0, y: 0, width: CARD.width, height: CARD.height, fill: CARD.background, decor: true },
         { kind: 'circle', x: 920, y: 250, radius: 310, fill: CARD.glow, decor: true },
-        { kind: 'text', x: left, y: 130, text: BRAND, size: 48, weight: 800, fill: CARD.text, suffix: { text: '.', size: 48, fill: CARD.accent } },
-        { kind: 'text', x: left, y: 210, text: cardEyebrow(data.name), size: 27, weight: 400, fill: CARD.muted },
-        { kind: 'text', x: left, y: 275, text: data.sessionName, size: 48, weight: 700, fill: CARD.text },
-        { kind: 'text', x: left, y: 325, text: 'Treadmill · estimated distance', size: 28, weight: 400, fill: CARD.muted },
+        { kind: 'text', x: left, y: 130, text: BRAND, size: 53, weight: 800, fill: CARD.text, font: 'display', suffix: { text: '.', size: 53, fill: CARD.accent } },
+        { kind: 'text', x: left, y: 210, text: cardEyebrow(data.name), size: 32, weight: 400, fill: CARD.muted },
+        { kind: 'text', x: left, y: 275, text: data.sessionName, size: 53, weight: 700, fill: CARD.text, font: 'display' },
+        { kind: 'text', x: left, y: 325, text: 'Treadmill · estimated distance', size: 33, weight: 400, fill: CARD.muted },
         { kind: 'character', ...CARD.character },
-        { kind: 'text', x: left, y: 550, text: formatKm(summary.distanceKm), size: 154, weight: 800, fill: CARD.text },
-        { kind: 'text', x: left + 8, y: 605, text: 'KILOMETRES · ESTIMATED', size: 34, weight: 400, fill: CARD.accent },
-        { kind: 'text', x: left, y: 760, text: formatClock(summary.activeSeconds), size: 70, weight: 700, fill: CARD.text },
+        { kind: 'text', x: left, y: 550, text: formatKm(summary.distanceKm), size: 159, weight: 800, fill: CARD.text },
+        { kind: 'text', x: left + 8, y: 605, text: 'KILOMETRES · ESTIMATED', size: 39, weight: 400, fill: CARD.accent },
+        { kind: 'text', x: left, y: 760, text: formatClock(summary.activeSeconds), size: 75, weight: 700, fill: CARD.text },
         {
-            kind: 'text', x: 530, y: 760, text: formatPace(summary.paceSecondsPerKm), size: 70, weight: 700, fill: CARD.text,
-            ...(summary.paceSecondsPerKm === null ? {} : { suffix: { text: ' /km', size: 30, fill: CARD.muted } }),
+            kind: 'text', x: 530, y: 760, text: formatPace(summary.paceSecondsPerKm), size: 75, weight: 700, fill: CARD.text,
+            ...(summary.paceSecondsPerKm === null ? {} : { suffix: { text: ' /km', size: 35, fill: CARD.muted } }),
         },
-        { kind: 'text', x: left, y: 810, text: 'ACTIVE TIME', size: 29, weight: 400, fill: CARD.muted },
-        { kind: 'text', x: 530, y: 810, text: 'AVG EST. PACE', size: 29, weight: 400, fill: CARD.muted },
+        { kind: 'text', x: left, y: 810, text: 'ACTIVE TIME', size: 34, weight: 400, fill: CARD.muted },
+        { kind: 'text', x: 530, y: 810, text: 'AVG EST. PACE', size: 34, weight: 400, fill: CARD.muted },
     ]
     if (data.includeCalories && summary.kcal !== null) {
-        items.push({ kind: 'text', x: left, y: 910, text: `${formatKcal(summary.kcal)} kcal · approximate active energy`, size: 32, weight: 400, fill: CARD.text })
+        items.push({ kind: 'text', x: left, y: 910, text: `${formatKcal(summary.kcal)} kcal · approximate active energy`, size: 37, weight: 400, fill: CARD.text })
     }
     const segments = barSegments(summary.rows, barWidth)
     segments.forEach((segment, index) => {
@@ -116,11 +116,11 @@ export function buildCardLayout(data: CardData): CardItem[] {
         })
     })
     const legend = zoneLegend(summary)
-    if (legend) items.push({ kind: 'text', x: left, y: 1065, text: legend, size: 27, weight: 400, fill: CARD.text })
+    if (legend) items.push({ kind: 'text', x: left, y: 1065, text: legend, size: 32, weight: 400, fill: CARD.text })
     items.push(
         { kind: 'rect', x: left, y: 1135, width: barWidth, height: 2, fill: CARD.rule },
-        { kind: 'text', x: left, y: 1200, text: ESTIMATE_NOTE, size: 28, weight: 400, fill: CARD.muted },
-        { kind: 'text', x: left, y: 1255, text: TAGLINE, size: 25, weight: 400, fill: CARD.muted },
+        { kind: 'text', x: left, y: 1200, text: ESTIMATE_NOTE, size: 33, weight: 400, fill: CARD.muted },
+        { kind: 'text', x: left, y: 1255, text: TAGLINE, size: 30, weight: 400, fill: CARD.muted },
     )
     return items
 }

@@ -9,7 +9,8 @@ export interface CardSprite {
     frame: number
 }
 
-const FONT_FAMILY = 'system-ui, "Segoe UI", sans-serif'
+const BODY_FONT_FAMILY = '"Greybeard", monospace'
+const DISPLAY_FONT_FAMILY = '"Pixelify Sans", sans-serif'
 
 const radii = (radius: Radius | undefined): number | [number, number, number, number] => radius ?? 0
 
@@ -30,12 +31,13 @@ export function drawCard(ctx: CanvasRenderingContext2D, items: readonly CardItem
             ctx.textBaseline = 'alphabetic'
             ctx.textAlign = 'left'
             ctx.fillStyle = item.fill
-            ctx.font = `${item.weight} ${item.size}px ${FONT_FAMILY}`
+            const fontFamily = item.font === 'display' ? DISPLAY_FONT_FAMILY : BODY_FONT_FAMILY
+            ctx.font = `${item.weight} ${item.size}px ${fontFamily}`
             ctx.fillText(item.text, item.x, item.y)
             if (item.suffix) {
                 const width = ctx.measureText(item.text).width
                 ctx.fillStyle = item.suffix.fill
-                ctx.font = `${item.weight} ${item.suffix.size}px ${FONT_FAMILY}`
+                ctx.font = `${item.weight} ${item.suffix.size}px ${fontFamily}`
                 ctx.fillText(item.suffix.text, item.x + width, item.y)
             }
         } else if (sprite) {

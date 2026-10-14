@@ -23,7 +23,7 @@ export function BaselineScreen({ initial, submitAction, onBack, onDone }: Props)
     const missing = missingQuestions(answers, today)
 
     return (
-        <section className="card">
+        <section className="card baseline-screen">
             <p className="eyebrow">A few quick details</p>
             <h1>Let&apos;s get you running!</h1>
             <p className="lede">
