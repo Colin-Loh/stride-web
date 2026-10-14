@@ -46,6 +46,8 @@ Removed:
 - `src/assets/pixel-clock.svg`, `pixel-pace.svg`, `pixel-runner.svg`, `pixel-treadmill.svg`: no references anywhere. `PlanScreen` uses the `.png` icons.
 - CSS with no matching element in any component: `.home-stage`, `.home-health`, `.home-balance`, `.session-pace`, `.zone-letter`, `.quest-icon`, `.plan-weeks-title`, `.shop-mirror-icon`.
 - Re-exports from `src/plan/generate.ts` that nothing imports: `validateWorkout`, `setSectionPace`, `setSectionTargetValue`, `planToSchema`. Tests import `planToSchema` from `./schema`; the components import the setters from `./edit`.
+- Unreferenced run overlay sheets `public/cosmetics/run/{chase,shooshy}-sushi-hat-{healthy,obese}.png`: `runOverlay.ts` loads the `-status.png` variant for sushi hats, so the plain variants are never requested. Sushi hats keep `-healthy-status.png` and `-obese-status.png`.
+- `src/retro/atkinson-hyperlegible-latin-400-normal.woff2` and `-700-normal.woff2`: no `@font-face` or import references them; `--px-font` uses Greybeard.
 - `export` keyword on symbols used only inside their own module: `COSMETIC_IDS`, `TAPER_FRACTIONS`, `HEALTH_WINDOW_DAYS`, `BRAND`, `ESTIMATE_NOTE`, `TAGLINE`, `downloadFile`, `isAsked`.
 
 Kept:
