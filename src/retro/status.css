@@ -298,3 +298,110 @@
   font-family: var(--px-font);
   font-size: calc(var(--px-text-body) + 5px);
 }
+/*
+ * Phone fit. Status and Shop aim to show their main state and actions without page scrolling on a
+ * common portrait phone. Nothing here fixes a height or hides overflow: every block keeps its
+ * natural size, so short, landscape and enlarged-text viewports simply scroll the page. The shell
+ * reserves exactly the bottom navigation's height (see retro.css) so no content sits behind it.
+ */
+[data-theme='retro'].shell:has(> :is(.status, .shop)) {
+  padding-top: var(--px-3);
+  padding-bottom: 0;
+}
+
+/*
+ * Screens with the bottom navigation lay out as a column and the bar is sticky, not fixed. It
+ * takes its own space at the end of the page, so content never sits behind it however tall it
+ * grows (text enlargement, long labels), and it stays pinned to the visible viewport bottom.
+ */
+[data-theme='retro'].shell:has(> :is(.status, .shop)):has(> .home-nav) {
+  display: flex;
+  flex-direction: column;
+}
+
+[data-theme='retro'].shell:has(> :is(.status, .shop)) > .home-nav {
+  position: sticky;
+  bottom: env(safe-area-inset-bottom, 0px);
+  margin-top: auto;
+  flex: none;
+  width: 100%;
+}
+
+[data-theme='retro'].shell:has(> :is(.status, .shop)):has(> .home-nav)::after {
+  content: '';
+  flex: none;
+  height: env(safe-area-inset-bottom, 0px);
+}
+
+[data-theme='retro'].shell:has(> :is(.status, .shop)):has(> .home-nav) > .card {
+  margin-bottom: var(--px-3);
+}
+
+[data-theme='retro'][data-screen='status'] .status-header {
+  padding-top: var(--px-5);
+  margin-bottom: var(--px-2);
+}
+
+[data-theme='retro'][data-screen='status'] .status-header h1 {
+  margin-bottom: var(--px-2);
+}
+
+[data-theme='retro'][data-screen='status'] :is(.status-card h2, .status-actions .ghost, .status-wallet-balance) {
+  line-height: 1.25;
+}
+
+[data-theme='retro'] .status-card {
+  gap: var(--px-2);
+  padding-bottom: 0;
+}
+
+[data-theme='retro'] .status-actions {
+  gap: var(--px-2);
+}
+
+[data-theme='retro'] .status-stage.status-room {
+  padding-top: var(--px-5);
+  padding-bottom: var(--px-3);
+}
+
+/* The sprite and its overlay shrink together; the room's own height follows the sprite. */
+[data-theme='retro'] .status-room .still-frame {
+  zoom: 1;
+}
+
+@media (max-height: 800px) {
+  [data-theme='retro'] .status-stage.status-room {
+    min-height: 0;
+  }
+
+  [data-theme='retro'] .status-room .still-frame {
+    zoom: 0.85;
+  }
+}
+
+@media (max-height: 700px) {
+  [data-theme='retro'] .status-room .still-frame {
+    zoom: 0.7;
+  }
+
+  [data-theme='retro'][data-screen='status'] .status-header {
+    padding-top: var(--px-4);
+    padding-bottom: var(--px-2);
+    margin-bottom: var(--px-1);
+  }
+
+  [data-theme='retro'] .status-stage.status-room {
+    padding-top: var(--px-4);
+    padding-bottom: var(--px-2);
+  }
+
+  [data-theme='retro'] .status-card {
+    gap: var(--px-1);
+    padding-top: 0;
+  }
+
+  [data-theme='retro'] .status-actions .ghost {
+    min-height: var(--px-target);
+    padding-block: var(--px-1);
+  }
+}
