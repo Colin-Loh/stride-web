@@ -39,9 +39,9 @@ export interface CardData {
     includeCalories: boolean
 }
 
-export const BRAND = 'chase'
-export const ESTIMATE_NOTE = 'Distance from logged speed × time · no GPS'
-export const TAGLINE = 'A little stronger. One session at a time.'
+const BRAND = 'chase'
+const ESTIMATE_NOTE = 'Distance from logged speed × time · no GPS'
+const TAGLINE = 'A little stronger. One session at a time.'
 
 /** The display name, in capitals, before "SESSION COMPLETE"; the label alone when there is no name. */
 export const cardEyebrow = (name: string): string => (name.trim() ? `${name.trim().toUpperCase()} · SESSION COMPLETE` : 'SESSION COMPLETE')
