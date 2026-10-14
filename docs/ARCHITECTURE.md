@@ -47,7 +47,6 @@ Removed:
 - CSS with no matching element in any component: `.home-stage`, `.home-health`, `.home-balance`, `.session-pace`, `.zone-letter`, `.quest-icon`, `.plan-weeks-title`, `.shop-mirror-icon`.
 - Re-exports from `src/plan/generate.ts` that nothing imports: `validateWorkout`, `setSectionPace`, `setSectionTargetValue`, `planToSchema`. Tests import `planToSchema` from `./schema`; the components import the setters from `./edit`.
 - Unreferenced run overlay sheets `public/cosmetics/run/{chase,shooshy}-sushi-hat-{healthy,obese}.png`: `runOverlay.ts` loads the `-status.png` variant for sushi hats, so the plain variants are never requested. Sushi hats keep `-healthy-status.png` and `-obese-status.png`.
-- `src/retro/atkinson-hyperlegible-latin-400-normal.woff2` and `-700-normal.woff2`: no `@font-face` or import references them; `--px-font` uses Greybeard.
 - `export` keyword on symbols used only inside their own module: `COSMETIC_IDS`, `TAPER_FRACTIONS`, `HEALTH_WINDOW_DAYS`, `BRAND`, `ESTIMATE_NOTE`, `TAGLINE`, `downloadFile`, `isAsked`.
 
 Kept:
@@ -55,6 +54,7 @@ Kept:
 - Dynamic selectors: `.run-layer-*` (built in `RunArt.tsx`) and `.shop-card-unaffordable` (built from `ShopScreen` item state).
 - Overlay PNGs in `public/cosmetics/run/` and `public/sprites/`: loaded by computed filename.
 - `src/cosmetics/legacy.ts` and the progression migration chain.
+- `src/retro/atkinson-hyperlegible-latin-{400,700}-normal.woff2`: no reference on this branch, kept for the font work in PR #49.
 - Exported types with no importers (`HomeDestination`, `ShopFailure`, `SectionRow`, `ZoneTime`, `Condition`, `RunnerState`): they document public function signatures.
 
 No component was split. The largest files (`vdot.ts` 633 lines, `localStorage.ts` 266, `ShopScreen.tsx` 252) are cohesive, and splitting them would add churn without a separation benefit.
