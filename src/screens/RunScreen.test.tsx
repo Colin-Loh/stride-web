@@ -49,3 +49,24 @@ describe('RunScreen run sprite health', () => {
         expect(html).not.toContain('obese')
     })
 })
+
+describe('RunScreen forest stage', () => {
+    it('marks a started, unpaused run as running and keeps scenery decorative', () => {
+        const html = renderRun(runningSession(), 'shiba')
+        expect(html).toContain('data-motion="running"')
+        expect(html).toContain('class="run-decor" aria-hidden="true"')
+    })
+
+    it('freezes the scene when paused and when not yet started', () => {
+        const paused = { ...runningSession(), paused: true }
+        expect(renderRun(paused, 'shooshy')).toContain('data-motion="paused"')
+        const ready = { ...runningSession(), startedAt: 0 }
+        expect(renderRun(ready, 'shooshy')).toContain('data-motion="ready"')
+    })
+
+    it.each(['shiba', 'shooshy'] as const)('draws only the selected character (%s)', (character) => {
+        const html = renderRun(runningSession(), character)
+        const other = character === 'shiba' ? 'shooshy' : 'shiba'
+        expect(html).not.toContain(`sprites/${other}`)
+    })
+})
