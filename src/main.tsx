@@ -9,6 +9,7 @@ import './retro/tokens.css'
 import './retro/retro.css'
 import './retro/shop.css'
 import './retro/status.css'
+import './retro/run.css'
 
 registerSW({ immediate: true })
 

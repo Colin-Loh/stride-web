@@ -1,0 +1,102 @@
+/*
+ * Run stage: a framed pixel forest behind the selected character, in the same frame style as the
+ * Status room and Shop fitting room. Layers are drawn by src/components/RunArt.tsx and scroll by
+ * exactly one tile per loop with stepped timing, so motion lands on whole art pixels. Only
+ * transform animates (compositor only). Typography is inherited from the retro theme untouched.
+ * Motion states: data-motion="running" scrolls; "ready" and "paused" freeze the scene.
+ */
+[data-theme='retro'] .run-stage {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  place-items: end center;
+  min-height: 260px;
+  margin: var(--px-3) 0;
+  padding: 0 var(--px-2) 22px;
+  border: var(--px-stroke) solid var(--shop-ink);
+  overflow: hidden;
+  background: linear-gradient(#6fb6e8 0 55%, #9fd4f0 55% 75%, #cdebf5 75% 100%);
+  box-shadow: inset 0 0 0 4px #3f8f3a, inset 0 0 0 7px #1f5a2a;
+}
+
+[data-theme='retro'] .run-stage .runner {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+}
+
+[data-theme='retro'] .run-decor {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  user-select: none;
+}
+
+[data-theme='retro'] .run-decor * {
+  pointer-events: none;
+}
+
+[data-theme='retro'] .run-layer {
+  --tile: calc(var(--cols) * var(--px));
+  position: absolute;
+  left: 0;
+  display: flex;
+  width: max-content;
+  animation: run-scroll var(--loop) steps(var(--cols)) infinite;
+  animation-play-state: paused;
+}
+
+[data-theme='retro'] .run-layer svg {
+  flex: none;
+  display: block;
+  width: var(--tile);
+  height: calc(var(--rows) * var(--px));
+}
+
+[data-theme='retro'] .run-stage[data-motion='running'] .run-layer {
+  animation-play-state: running;
+}
+
+/* Slower the further away a layer is. */
+[data-theme='retro'] .run-layer-clouds {
+  --loop: 70s;
+  top: 14px;
+  opacity: 0.9;
+}
+
+[data-theme='retro'] .run-layer-far {
+  --loop: 20s;
+  bottom: 22px;
+}
+
+[data-theme='retro'] .run-layer-near {
+  --loop: 9s;
+  bottom: 18px;
+}
+
+[data-theme='retro'] .run-layer-ground {
+  --loop: 1.6s;
+  bottom: 0;
+}
+
+@keyframes run-scroll {
+  to {
+    transform: translateX(calc(-1 * var(--tile)));
+  }
+}
+
+/* The reduced-motion scene never moves, whatever the run state. */
+@media (prefers-reduced-motion: reduce) {
+  [data-theme='retro'] .run-layer {
+    animation: none;
+  }
+}
+
+@media (max-width: 360px) {
+  [data-theme='retro'] .run-stage {
+    min-height: 260px;
+    padding-inline: 0;
+  }
+}

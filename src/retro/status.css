@@ -98,7 +98,7 @@
   isolation: isolate;
   display: grid;
   place-items: end center;
-  min-height: 340px;
+  min-height: 260px;
   margin: 0 var(--px-1);
   padding: 44px var(--px-2) var(--px-4);
   border: var(--px-stroke) solid var(--shop-ink);
