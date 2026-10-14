@@ -12,9 +12,7 @@ import { buildRepeatWorkout } from './repeats'
 import type { PersonalBaseline, PersonalizedWorkout, PlanSection } from './types'
 
 export { calculateSectionMetrics, calculateWorkoutTotals } from './metrics'
-export { validateWorkout } from './validation'
-export { setSectionSpeed, setSectionPace, setSectionTargetValue } from './edit'
-export { planToSchema } from './schema'
+export { setSectionSpeed } from './edit'
 
 const QUALITY: readonly WorkoutId[] = ['threshold', 'interval', 'repetition']
 

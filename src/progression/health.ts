@@ -6,7 +6,7 @@ import { localDateOf } from './localDate'
 export const MIN_QUALIFYING_ELAPSED_MS = 300_000
 
 /** Number of local calendar days in the rolling window, today included. */
-export const HEALTH_WINDOW_DAYS = 7
+const HEALTH_WINDOW_DAYS = 7
 
 export type HealthStatus = 'healthy' | 'obese'
 

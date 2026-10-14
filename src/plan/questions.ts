@@ -204,7 +204,7 @@ export function valueError(input: Input, value: unknown, today?: Date): string |
 }
 
 /** Whether an optional or conditional question applies given the answers so far. */
-export function isAsked(question: Question, answers: AnswerValues): boolean {
+function isAsked(question: Question, answers: AnswerValues): boolean {
     const gate = question.askWhen
     if (!gate) return true
     const current = answers[gate.id as QuestionId]
