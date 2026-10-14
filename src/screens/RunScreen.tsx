@@ -45,7 +45,7 @@ export function RunScreen({ session, muted, character, equipped, onSession, onCo
     {repLabel && <p className="muted">{repLabel}</p>}
     <label className="progress-label">{current.label} · {formatDurationMs(sectionRemaining)} left</label>
     <div className="bar segment" role="progressbar" aria-label={`${current.label} progress`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(progress.segmentProgress * 100)}><span style={{ width: `${progress.segmentProgress * 100}%` }} /></div>
-    <ol className="milestones">{session.plan.sections.map((s, i) => <li key={s.id} className={i < progress.index ? 'done' : i === progress.index ? 'current' : 'upcoming'}>{s.label}</li>)}</ol>
+    <ol className="milestones">{session.plan.sections.map((s, i) => <li key={s.id} className={i < progress.index ? 'done' : i === progress.index ? 'current' : 'upcoming'}>{s.label === 'Marathon pace' ? 'Marathon' : s.label}</li>)}</ol>
     {next && <p className="next">Next section: {next.label}</p>}
     <div className="actions">
       <button type="button" className="primary" onClick={!session.startedAt ? start : session.paused ? resume : pause}>{!session.startedAt ? 'Start run' : session.paused ? 'Resume' : 'Pause'}</button>

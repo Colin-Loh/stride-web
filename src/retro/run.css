@@ -10,8 +10,8 @@
   isolation: isolate;
   display: grid;
   place-items: end center;
-  min-height: 220px;
-  margin: var(--px-3) var(--px-1);
+  min-height: 260px;
+  margin: var(--px-3) 0;
   padding: 0 var(--px-2) 22px;
   border: var(--px-stroke) solid var(--shop-ink);
   overflow: hidden;
@@ -96,7 +96,7 @@
 
 @media (max-width: 360px) {
   [data-theme='retro'] .run-stage {
-    min-height: 200px;
+    min-height: 260px;
     padding-inline: 0;
   }
 }

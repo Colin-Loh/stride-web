@@ -70,3 +70,18 @@ describe('RunScreen forest stage', () => {
         expect(html).not.toContain(`sprites/${other}`)
     })
 })
+
+describe('RunScreen milestones', () => {
+    it('shortens marathon pace to marathon in the milestone list', () => {
+        const session = runningSession()
+        const section = session.plan.sections[0]
+        session.plan.sections = [
+            { ...section, label: 'Warm-up' },
+            { ...section, id: 'main-2', label: 'Marathon pace' },
+        ]
+
+        const html = renderRun(session, 'shiba')
+        expect(html).toContain('<li class="upcoming">Marathon</li>')
+        expect(html).toContain('Next section: Marathon pace')
+    })
+})
