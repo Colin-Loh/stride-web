@@ -234,7 +234,7 @@ interface TrainingEffort {
 }
 
 export const TRAINING_EFFORTS: readonly TrainingEffort[] = [
-    { id: 'base', label: 'ONLY EASY RUNS', qualitySessions: 0 },
+    { id: 'base', label: 'ONLY EASY RUN', qualitySessions: 0 },
     { id: 'base_quality', label: '1 SPEED DAY', qualitySessions: 1 },
     { id: 'advanced_quality', label: '2 SPEED DAY', qualitySessions: 2 },
 ]
