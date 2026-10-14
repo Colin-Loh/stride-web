@@ -54,7 +54,6 @@ Kept:
 - Dynamic selectors: `.run-layer-*` (built in `RunArt.tsx`) and `.shop-card-unaffordable` (built from `ShopScreen` item state).
 - Overlay PNGs in `public/cosmetics/run/` and `public/sprites/`: loaded by computed filename.
 - `src/cosmetics/legacy.ts` and the progression migration chain.
-- `src/retro/atkinson-hyperlegible-latin-{400,700}-normal.woff2`: no reference on this branch, kept for the font work in PR #49.
 - Exported types with no importers (`HomeDestination`, `ShopFailure`, `SectionRow`, `ZoneTime`, `Condition`, `RunnerState`): they document public function signatures.
 
 No component was split. The largest files (`vdot.ts` 633 lines, `localStorage.ts` 266, `ShopScreen.tsx` 252) are cohesive, and splitting them would add churn without a separation benefit.
