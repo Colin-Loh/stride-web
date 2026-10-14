@@ -381,7 +381,6 @@ body:has([data-theme='retro']) {
   color: var(--px-light);
   font-family: var(--px-display);
   font-size: calc(1rem + 5px);
-  line-height: 1.2;
 }
 
 [data-theme='retro'] .home-nav-button:hover:not([aria-current='page']) {
